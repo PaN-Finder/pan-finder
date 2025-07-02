@@ -1,0 +1,53 @@
+name: pan-finder
+services:
+  pgvector:
+    image: pgvector/pgvector:0.8.0-pg17
+    ports:
+      - 5432:5432
+    volumes:
+      - ./pgvector/data:/var/lib/postgresql/data  # for persisting data
+      - ./pgvector/init:/docker-entrypoint-initdb.d # for initializing db
+    environment:
+      - POSTGRES_DB=pan-finder
+      - POSTGRES_USER=usr
+      - POSTGRES_PASSWORD=pwd
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d pan-finder -U usr"]
+
+  server:
+    build:
+      context: ./server
+      dockerfile: docker/Dockerfile.dev
+    container_name: pan-finder-server
+    command: uvicorn src.server:app --reload --host 0.0.0.0 --port 8080
+    ports:
+      - 8080:8080
+    hostname: server
+    volumes:
+      - ./server:/code/app
+      - ./models:/code/models
+    working_dir: /code/app
+    env_file:
+      - ./server/.env.docker
+    environment:
+      - PYTHONPATH=/code/app
+    depends_on:
+      pgvector:
+        condition: service_healthy
+
+  frontend:
+    build: 
+      context: ./searchui
+      dockerfile: ../server/docker/Dockerfile.dev.searchui
+    container_name: pan-finder-frontend
+    command: yarn start
+    ports:
+      - 3000:3000
+    volumes:
+      - ./searchui:/code/app
+    working_dir: /code/app
+    env_file:
+      - ./searchui/.env
+    depends_on: 
+      - server
+      
