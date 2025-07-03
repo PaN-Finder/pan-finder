@@ -5,8 +5,7 @@ resources:
   - frontend-deployment.yaml
   - frontend-service.yaml
 
-patches:
-  - path: server-deployment-patch.yaml
+patches:  
   - path: ingress-patch.yaml
   - path: configmap-patch.yaml
 
