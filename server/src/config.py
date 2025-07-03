@@ -24,8 +24,8 @@ class Settings:
             "EMBEDDING_MODEL_PATH", "/code/models/all-MiniLM-L12-v2"
         )
         self.database_url = self._get_database_url()
-        self.host = os.getenv("HOST", "0.0.0.0")
-        self.port = int(os.getenv("PORT", "8080"))
+        self.api_host = os.getenv("API_HOST", "0.0.0.0")
+        self.api_port = int(os.getenv("API_PORT", "8080"))
 
     def _parse_cors_origins(self) -> List[str]:
         """Parse CORS origins from environment variable."""
