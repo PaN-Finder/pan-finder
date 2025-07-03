@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pan-finder-server
-  namespace: pan-finder
   labels:
     app.kubernetes.io/name: pan-finder-server
     app.kubernetes.io/component: api

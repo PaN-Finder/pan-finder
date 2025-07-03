@@ -13,7 +13,6 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: server-config
-  namespace: pan-finder
   labels:
     app.kubernetes.io/name: pan-finder-server
     app.kubernetes.io/component: api

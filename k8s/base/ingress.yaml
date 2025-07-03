@@ -2,7 +2,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: pan-finder-ingress
-  namespace: pan-finder
   labels:
     app.kubernetes.io/name: pan-finder-ingress
     app.kubernetes.io/part-of: pan-finder

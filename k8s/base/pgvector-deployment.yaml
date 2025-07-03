@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pgvector
-  namespace: pan-finder
   labels:
     app.kubernetes.io/name: pgvector
     app.kubernetes.io/component: database
