@@ -19,6 +19,8 @@ spec:
         app.kubernetes.io/component: api
         app.kubernetes.io/part-of: pan-finder
     spec:
+      imagePullSecrets:
+      - name: ess-gitlab-registry-credentials
       initContainers:
       - name: wait-for-db
         image: pgvector/pgvector:0.8.0-pg17

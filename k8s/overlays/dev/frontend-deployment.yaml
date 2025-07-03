@@ -19,6 +19,8 @@ spec:
         app.kubernetes.io/component: frontend
         app.kubernetes.io/part-of: pan-finder
     spec:
+      imagePullSecrets:
+      - name: ess-gitlab-registry-credentials
       containers:
       - name: frontend
         image: registry.esss.lu.se/swap/pan-finder:frontend
