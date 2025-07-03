@@ -5,16 +5,12 @@ resources:
   - frontend-deployment.yaml
   - frontend-service.yaml
 
-patchesStrategicMerge:
-  - server-deployment-patch.yaml
-  - pvc-patch.yaml
-  - ingress-patch.yaml
+patches:
+  - path: server-deployment-patch.yaml
+  - path: pvc-patch.yaml
+  - path: ingress-patch.yaml
+  - path: configmap-patch.yaml
 
-commonLabels:
-  environment: dev
-
-configMapGenerator:
-  - name: server-config
-    behavior: merge
-    literals:
-      - ALLOWED_ORIGINS=https://pan-finder.dev-sims.ess.eu
+labels:
+  - pairs:
+      environment: dev
