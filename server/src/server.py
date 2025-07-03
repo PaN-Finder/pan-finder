@@ -4,7 +4,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import get_settings
 from .routers import search
 
-# Initialize settings
 settings = get_settings()
 
 app = FastAPI(
@@ -39,4 +38,4 @@ async def root():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    uvicorn.run(app, host=settings.host, port=settings.port)
