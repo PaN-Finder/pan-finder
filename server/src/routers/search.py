@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import List
 
 from ..engine import search
-from ..logging_config import get_logger
+from ..logging import get_logger
 
 # Get logger for this module
 logger = get_logger(__name__)

@@ -9,7 +9,7 @@ from typing import cast, Any, Dict
 from .database import get_connection_pool, get_db_connection
 from .core.search_query_builder import SearchQueryBuilder
 from .core.prompts import QueryExtractionPrompts
-from .logging_config import get_logger
+from .logging import get_logger
 from .config import get_settings
 
 logger = get_logger(__name__)

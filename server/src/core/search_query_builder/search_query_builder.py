@@ -3,7 +3,7 @@ from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
 from sentence_transformers import SentenceTransformer
 
-from ...logging_config import get_logger
+from ...logging import get_logger
 
 NumberTypes = (int, float, complex)
 
