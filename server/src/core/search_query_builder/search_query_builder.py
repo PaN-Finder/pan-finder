@@ -1,12 +1,14 @@
-import logging
 from typing import Any, Dict, List, Set, Tuple, Union
-
+from psycopg.rows import dict_row
+from psycopg_pool import ConnectionPool
 from sentence_transformers import SentenceTransformer
+
+from ...logging_config import get_logger
 
 NumberTypes = (int, float, complex)
 
-# Create logger for this module
-logger = logging.getLogger(__name__)
+# Get logger for this module
+logger = get_logger(__name__)
 
 
 class SearchQueryBuilder:
@@ -29,7 +31,7 @@ class SearchQueryBuilder:
     def __init__(
         self,
         embedding_model: SentenceTransformer,
-        postgres_client: Any,  # PostgreSQL database connection
+        pool: ConnectionPool,  # PostgreSQL
         rrf_k_similarity: int = _DEFAULT_RRF_K,
         rrf_k_chunk: int = _DEFAULT_RRF_K,
         rrf_k_full_match: int = _DEFAULT_RRF_K,
@@ -37,7 +39,7 @@ class SearchQueryBuilder:
         rrf_k_keyword: int = _DEFAULT_RRF_K,
     ):
         self.embedding_model = embedding_model
-        self.db_client = postgres_client
+        self.pool = pool
         self.rrf_k_similarity = rrf_k_similarity
         self.rrf_k_chunk = rrf_k_chunk
         self.rrf_k_full_match = rrf_k_full_match
@@ -210,67 +212,63 @@ class SearchQueryBuilder:
         return sanitized
 
     # --- Filter Name Similarity ---
-
     def _find_similar_names(self, raw_name: str) -> list[str]:
         """Finds similar filter names in the database using vector embeddings."""
         if not raw_name:
             return []
 
         query_vector = self.embedding_model.encode(raw_name).tolist()
-
-        # Import here to avoid circular imports
-        from ...database import get_db_connection
-        from psycopg.rows import dict_row
-
-        with get_db_connection() as conn:
-            with conn.cursor(row_factory=dict_row) as cursor:
-                cursor.execute(
-                    """WITH top_matches AS (
-                        SELECT name, name_vector <=> %s::vector AS distance
-                        FROM filter_key
-                        WHERE name_vector <=> %s::vector < %s
-                        ORDER BY distance
-                    ),
-                    fallback_matches AS (
-                        SELECT name, name_vector <=> %s::vector AS distance
-                        FROM filter_key
-                        WHERE name_vector <=> %s::vector >= %s
+        with (
+            self.pool.connection() as conn,
+            conn.cursor(row_factory=dict_row) as cursor,
+        ):
+            cursor.execute(
+                """WITH top_matches AS (
+                    SELECT name, name_vector <=> %s::vector AS distance
+                    FROM filter_key
+                    WHERE name_vector <=> %s::vector < %s
+                    ORDER BY distance
+                ),
+                fallback_matches AS (
+                    SELECT name, name_vector <=> %s::vector AS distance
+                    FROM filter_key
+                    WHERE name_vector <=> %s::vector >= %s
+                    ORDER BY distance
+                )
+                (
+                    (
+                        SELECT * FROM top_matches
                         ORDER BY distance
                     )
+                    UNION ALL
                     (
-                        (
-                            SELECT * FROM top_matches
-                            ORDER BY distance
-                        )
-                        UNION ALL
-                        (
-                            SELECT * FROM fallback_matches
-                            ORDER BY distance
-                            LIMIT GREATEST(0, 5 - (SELECT COUNT(*) FROM top_matches))
-                        )
+                        SELECT * FROM fallback_matches
+                        ORDER BY distance
+                        LIMIT GREATEST(0, 5 - (SELECT COUNT(*) FROM top_matches))
                     )
-                    ORDER BY distance;
-                    """,
-                    (
-                        query_vector,
-                        query_vector,
-                        self._SIMILARITY_THRESHOLD_NAMES,
-                        query_vector,
-                        query_vector,
-                        self._SIMILARITY_THRESHOLD_NAMES,
-                    ),
                 )
-                result = cursor.fetchall()
-                logger.info(
-                    f"Finding similar names for '{raw_name}'. Found: {[row['name'] for row in result[:5]]}"
-                )
+                ORDER BY distance;
+                """,
+                (
+                    query_vector,
+                    query_vector,
+                    self._SIMILARITY_THRESHOLD_NAMES,
+                    query_vector,
+                    query_vector,
+                    self._SIMILARITY_THRESHOLD_NAMES,
+                ),
+            )
+            result = cursor.fetchall()
+            logger.info(
+                f"Finding similar names for '{raw_name}'. Found: {[row['name'] for row in result[:5]]}"
+            )
 
-                self.similar_names[raw_name] = result
+            self.similar_names[raw_name] = result
 
-                if len(result) == 0:
-                    return [raw_name]
+            if len(result) == 0:
+                return [raw_name]
 
-                return [row["name"] for row in result]
+            return [row["name"] for row in result]
 
     def _update_filter_names_recursive(self, filt: Dict) -> Union[Dict, None]:
         """Recursively finds and replaces 'name' in filter conditions."""

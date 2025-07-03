@@ -1,22 +1,20 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
 
+from .config import get_settings
 from .routers import search
 
-# Load environment variables
-load_dotenv()
+# Initialize settings
+settings = get_settings()
 
 app = FastAPI(
-    title="Pan Finder API",
-    description="A FastAPI application for pan finding functionality",
-    version="1.0.0",
+    title="PaN-Finder API",
 )
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure this for production
+    allow_origins=settings.allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

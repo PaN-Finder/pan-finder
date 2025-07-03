@@ -3,9 +3,11 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import List
 
-from ..engine import search, get_builder, get_openai_client
-from ..core.search_query_builder import SearchQueryBuilder
-from openai import AzureOpenAI
+from ..engine import search
+from ..logging_config import get_logger
+
+# Get logger for this module
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/search")
 
@@ -30,18 +32,9 @@ class SearchResponse(BaseModel):
 
 @router.get("/", response_model=SearchResponse)
 async def search_with_ai(
-    query: str,
-    builder: SearchQueryBuilder = Depends(get_builder),
-    openai_client: AzureOpenAI = Depends(get_openai_client),
+    result: dict = Depends(search),
 ):
-    """
-    Perform a search with the given query and return enhanced results.
-
-    Args:
-        query (str): The search query string.
-
-    Returns:
-        SearchResponse: A response model containing the original query,
-                        structured query, and search results.
-    """
-    return await search(query, builder, openai_client)
+    logger.info(
+        f"Search completed - Query: '{result.get('original_query', 'N/A')}', Results: {result.get('total_results', 0)}"
+    )
+    return result

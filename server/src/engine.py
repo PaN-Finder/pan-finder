@@ -1,61 +1,72 @@
-import os
 import json
-from dotenv import load_dotenv
-
 from fastapi import Depends
+from functools import lru_cache
 from sentence_transformers import SentenceTransformer
 from openai import AzureOpenAI
 from psycopg.rows import dict_row
-from typing import cast, Any
+from typing import cast, Any, Dict
 
-from .database import get_db, get_db_connection
+from .database import get_connection_pool, get_db_connection
 from .core.search_query_builder import SearchQueryBuilder
+from .core.prompts import QueryExtractionPrompts
+from .logging_config import get_logger
+from .config import get_settings
+
+logger = get_logger(__name__)
+settings = get_settings()
 
 
-load_dotenv()
-
-embedding_model = SentenceTransformer("/code/models/all-MiniLM-L12-v2", device="cpu")
-
-
-def load_prompt_content():
-    """Load the structured query extraction prompt from file."""
-    prompt_path = os.path.join(os.path.dirname(__file__), "core", "prompts", "1_0_5.md")
-
-    with open(prompt_path, "r", encoding="utf-8") as f:
-        return f.read()
-
-
-# Dependency for OpenAI client
-def get_openai_client():
-    """Dependency function to get OpenAI client."""
-    api_url = os.getenv("AZURE_OPENAI_ENDPOINT")
-    if not api_url:
-        raise ValueError("AZURE_OPENAI_ENDPOINT environment variable is required")
-    api_key = os.getenv("AZURE_OPENAI_API_KEY")
-    if not api_key:
-        raise ValueError("AZURE_OPENAI_API_KEY environment variable is required")
+@lru_cache()
+def get_openai_client() -> AzureOpenAI:
     return AzureOpenAI(
-        api_key=api_key, azure_endpoint=api_url, api_version="2024-12-01-preview"
+        api_key=settings.azure_openai_api_key,
+        azure_endpoint=settings.azure_openai_endpoint,
+        api_version=settings.azure_openai_api_version,
     )
 
 
-# Dependency for FastAPI to get Query Builder
-def get_builder():
-    """Dependency function for FastAPI routes."""
-    return SearchQueryBuilder(postgres_client=None, embedding_model=embedding_model)
+@lru_cache()
+def get_embedding_model() -> SentenceTransformer:
+    """Get the embedding model for text similarity calculations."""
+    return SentenceTransformer(settings.embedding_model_path, device="cpu")
+
+
+@lru_cache()
+def get_builder(
+    pool=Depends(get_connection_pool),
+    embedding_model: SentenceTransformer = Depends(get_embedding_model),
+) -> SearchQueryBuilder:
+    """Get the search query builder with injected dependencies."""
+    return SearchQueryBuilder(pool=pool, embedding_model=embedding_model)
 
 
 async def search(
     query: str,
-    builder: SearchQueryBuilder,
-    openai_client: AzureOpenAI,
-):
+    builder: SearchQueryBuilder = Depends(get_builder),
+    openai_client: AzureOpenAI = Depends(get_openai_client),
+) -> Dict[str, Any]:
     """
     Search function that combines OpenAI processing with the search query builder.
     This function can be used in router endpoints.
+
+    Args:
+        query: The search query string
+        builder: SearchQueryBuilder instance for generating SQL queries
+        openai_client: Azure OpenAI client for query processing
+
+    Returns:
+        Dictionary containing search results and metadata
     """
-    # Load the structured query extraction prompt
-    system_prompt = load_prompt_content()
+    # Input validation
+    if not query or not query.strip():
+        logger.warning("Empty or whitespace-only query provided")
+        return {
+            "original_query": query,
+            "structured_query": {"intention": "", "keywords": [], "filters": {}},
+            "results": [],
+            "total_results": 0,
+            "error": "Query cannot be empty",
+        }
 
     # Use OpenAI to extract structured information from the query
     try:
@@ -64,7 +75,7 @@ async def search(
             messages=[
                 {
                     "role": "system",
-                    "content": system_prompt,
+                    "content": QueryExtractionPrompts.get_structured_query_extraction_prompt(),
                 },
                 {
                     "role": "user",
@@ -96,8 +107,8 @@ async def search(
             search_data.setdefault("filters", {})
 
         except (json.JSONDecodeError, ValueError) as e:
-            print(f"Failed to parse OpenAI response as JSON: {e}")
-            print(f"Raw response: {response_content}")
+            logger.error(f"Failed to parse OpenAI response as JSON: {e}")
+            logger.debug(f"Raw response: {response_content}")
 
             # Fallback to simple processing if JSON parsing fails
             search_data = {
@@ -107,7 +118,7 @@ async def search(
             }
 
     except Exception as e:
-        print(f"OpenAI API error: {e}")
+        logger.error(f"OpenAI API error: {e}")
 
         # Fallback to simple processing if OpenAI fails
         search_data = {
@@ -123,9 +134,6 @@ async def search(
     search_results = []
     try:
         with get_db_connection() as conn:
-            # Set autocommit mode for read operations
-            conn.autocommit = True
-
             with conn.cursor(row_factory=dict_row) as cursor:
                 # Execute the search query
                 # We need to use the cursor's execute method with proper typing
@@ -133,7 +141,10 @@ async def search(
                 cursor.execute(cast(Any, sql_query))
                 raw_results = cursor.fetchall()
 
-                print(f"Raw search results: {raw_results}")
+                logger.debug(f"Raw search results count: {len(raw_results)}")
+
+                # Initialize document_details to avoid variable scope issues
+                document_details = []
 
                 # Get document details for each DOI returned by the search
                 if raw_results:
@@ -180,7 +191,7 @@ async def search(
 
     except Exception as e:
         # Log the error and return empty results
-        print(f"Database query error: {e}")
+        logger.error(f"Database query error: {e}")
         search_results = []
 
     return {
