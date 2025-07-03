@@ -5,9 +5,10 @@ metadata:
   labels:
     app.kubernetes.io/name: pgvector
     app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: pan-finder
 spec:
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
   resources:
     requests:
       storage: 10Gi
