@@ -1,10 +1,9 @@
 import json
-from fastapi import Depends
 from functools import lru_cache
 from sentence_transformers import SentenceTransformer
 from openai import AzureOpenAI
 from psycopg.rows import dict_row
-from typing import cast, Any, Dict, List
+from typing import cast, Any, List, Optional
 from pydantic import BaseModel
 
 from .database import get_connection_pool, get_db_connection
@@ -13,7 +12,6 @@ from .core.prompts import QueryExtractionPrompts
 from .logging import get_logger
 from .config import get_settings
 
-logger = get_logger(__name__)
 settings = get_settings()
 
 
@@ -35,80 +33,145 @@ class SearchResponse(BaseModel):
     total_results: int
 
 
-@lru_cache()
-def get_openai_client() -> AzureOpenAI:
-    return AzureOpenAI(
-        api_key=settings.azure_openai_api_key,
-        azure_endpoint=settings.azure_openai_endpoint,
-        api_version=settings.azure_openai_api_version,
-    )
-
-
-@lru_cache()
-def get_embedding_model() -> SentenceTransformer:
-    """Get the embedding model for text similarity calculations."""
-    return SentenceTransformer(settings.embedding_model_path, device="cpu")
-
-
-@lru_cache()
-def get_builder(
-    pool=Depends(get_connection_pool),
-    embedding_model: SentenceTransformer = Depends(get_embedding_model),
-) -> SearchQueryBuilder:
-    """Get the search query builder with injected dependencies."""
-    return SearchQueryBuilder(pool=pool, embedding_model=embedding_model)
-
-
-async def search(
-    query: str,
-    builder: SearchQueryBuilder = Depends(get_builder),
-    openai_client: AzureOpenAI = Depends(get_openai_client),
-) -> SearchResponse:
+class SearchEngine:
     """
-    Search function that combines OpenAI processing with the search query builder.
-    This function can be used in router endpoints.
+    A search engine that combines OpenAI processing with database search capabilities.
 
-    Args:
-        query: The search query string
-        builder: SearchQueryBuilder instance for generating SQL queries
-        openai_client: Azure OpenAI client for query processing
-
-    Returns:
-        Dictionary containing search results and metadata
+    This class encapsulates the search functionality including query processing,
+    structured query extraction, and result retrieval.
     """
-    # Input validation
-    if not query or not query.strip():
-        logger.warning("Empty or whitespace-only query provided")
+
+    def __init__(
+        self,
+        openai_client: Optional[AzureOpenAI] = None,
+        embedding_model: Optional[SentenceTransformer] = None,
+        query_builder: Optional[SearchQueryBuilder] = None,
+    ):
+        """
+        Initialize the SearchEngine with optional dependencies.
+
+        Args:
+            openai_client: Azure OpenAI client for query processing
+            embedding_model: SentenceTransformer model for embeddings
+            query_builder: SearchQueryBuilder for generating SQL queries
+        """
+        self._openai_client = openai_client
+        self._embedding_model = embedding_model
+        self._query_builder = query_builder
+        self._logger = get_logger(self.__class__.__name__)
+
+    @property
+    def openai_client(self) -> AzureOpenAI:
+        """Lazy-loaded OpenAI client."""
+        if self._openai_client is None:
+            self._openai_client = AzureOpenAI(
+                api_key=settings.azure_openai_api_key,
+                azure_endpoint=settings.azure_openai_endpoint,
+                api_version=settings.azure_openai_api_version,
+            )
+        return self._openai_client
+
+    @property
+    def embedding_model(self) -> SentenceTransformer:
+        """Lazy-loaded embedding model."""
+        if self._embedding_model is None:
+            self._embedding_model = SentenceTransformer(
+                settings.embedding_model_path, device="cpu"
+            )
+        return self._embedding_model
+
+    @property
+    def query_builder(self) -> SearchQueryBuilder:
+        """Lazy-loaded search query builder."""
+        if self._query_builder is None:
+            self._query_builder = SearchQueryBuilder(
+                pool=get_connection_pool(), embedding_model=self.embedding_model
+            )
+        return self._query_builder
+
+    async def search(self, query: str) -> SearchResponse:
+        """
+        Search function that combines OpenAI processing with the search query builder.
+
+        Args:
+            query: The search query string
+
+        Returns:
+            SearchResponse containing search results and metadata
+        """
+        # Input validation
+        if not query or not query.strip():
+            self._logger.warning("Empty or whitespace-only query provided")
+            return SearchResponse(
+                original_query=query,
+                structured_query={"intention": "", "keywords": [], "filters": {}},
+                results=[],
+                total_results=0,
+            )
+
+        # Extract structured information from the query
+        search_data = await self._extract_structured_query(query)
+
+        # Generate SQL query and execute search
+        search_results = await self._execute_search(search_data)
+
         return SearchResponse(
             original_query=query,
-            structured_query={"intention": "", "keywords": [], "filters": {}},
-            results=[],
-            total_results=0,
+            structured_query=search_data,
+            results=search_results,
+            total_results=len(search_results),
         )
 
-    # Use OpenAI to extract structured information from the query
-    try:
-        llm_response = openai_client.chat.completions.create(
-            model="gpt-4.1-mini",
-            messages=[
-                {
-                    "role": "system",
-                    "content": QueryExtractionPrompts.get_structured_query_extraction_prompt(),
-                },
-                {
-                    "role": "user",
-                    "content": query,
-                },
-            ],
-            max_tokens=500,
-            temperature=0.1,  # Low temperature for consistent structured output
-            response_format={"type": "json_object"},
-        )
+    async def _extract_structured_query(self, query: str) -> dict:
+        """
+        Extract structured information from the query using OpenAI.
 
-        # Extract the response content
-        response_content = llm_response.choices[0].message.content
+        Args:
+            query: The search query string
 
-        # Parse the JSON response
+        Returns:
+            Dictionary containing structured query information
+        """
+        try:
+            llm_response = self.openai_client.chat.completions.create(
+                model=settings.azure_openai_model_name,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": QueryExtractionPrompts.get_structured_query_extraction_prompt(),
+                    },
+                    {
+                        "role": "user",
+                        "content": query,
+                    },
+                ],
+                max_tokens=500,
+                temperature=0.1,  # Low temperature for consistent structured output
+                response_format={"type": "json_object"},
+            )
+
+            # Extract and parse the response content
+            response_content = llm_response.choices[0].message.content
+
+            return self._parse_openai_response(response_content, query)
+
+        except Exception as e:
+            self._logger.error(f"OpenAI API error: {e}")
+            return self._create_fallback_query_data(query)
+
+    def _parse_openai_response(
+        self, response_content: Optional[str], query: str
+    ) -> dict:
+        """
+        Parse the OpenAI response content into structured query data.
+
+        Args:
+            response_content: Raw response from OpenAI
+            query: Original query for fallback
+
+        Returns:
+            Dictionary containing structured query information
+        """
         try:
             if response_content is None:
                 raise ValueError("Empty response from OpenAI")
@@ -124,97 +187,171 @@ async def search(
             search_data.setdefault("keywords", [])
             search_data.setdefault("filters", {})
 
+            return search_data
+
         except (json.JSONDecodeError, ValueError) as e:
-            logger.error(f"Failed to parse OpenAI response as JSON: {e}")
-            logger.debug(f"Raw response: {response_content}")
+            self._logger.error(f"Failed to parse OpenAI response as JSON: {e}")
+            self._logger.debug(f"Raw response: {response_content}")
 
             # Fallback to simple processing if JSON parsing fails
-            search_data = {
+            return {
                 "intention": response_content if response_content else query,
                 "keywords": query.split() if query else [],
                 "filters": {},
             }
 
-    except Exception as e:
-        logger.error(f"OpenAI API error: {e}")
+    def _create_fallback_query_data(self, query: str) -> dict:
+        """
+        Create fallback query data when OpenAI processing fails.
 
-        # Fallback to simple processing if OpenAI fails
-        search_data = {
+        Args:
+            query: Original query string
+
+        Returns:
+            Dictionary with basic query structure
+        """
+        return {
             "intention": query,
             "keywords": query.split() if query else [],
             "filters": {},
         }
 
-    # Use the builder to generate the SQL query
-    sql_query = builder.build_query(search_data)
+    async def _execute_search(self, search_data: dict) -> List[EnhancedSearchResult]:
+        """
+        Execute the search using the structured query data.
 
-    # Execute the query using the database client
-    search_results = []
-    try:
-        with get_db_connection() as conn:
-            with conn.cursor(row_factory=dict_row) as cursor:
-                # Execute the search query
-                # We need to use the cursor's execute method with proper typing
-                # Cast to Any to bypass the type checker for the dynamically generated SQL
-                cursor.execute(cast(Any, sql_query))
-                raw_results = cursor.fetchall()
+        Args:
+            search_data: Structured query information
 
-                logger.debug(f"Raw search results count: {len(raw_results)}")
+        Returns:
+            List of enhanced search results
+        """
+        try:
+            # Generate SQL query
+            sql_query = self.query_builder.build_query(search_data)
 
-                # Initialize document_details to avoid variable scope issues
-                document_details = []
+            # Execute the query
+            return await self._execute_database_query(sql_query)
 
-                # Get document details for each DOI returned by the search
-                if raw_results:
-                    dois = [row["doi"] for row in raw_results]
+        except Exception as e:
+            self._logger.error(f"Search execution error: {e}")
+            return []
 
-                    # Use parameterized query for document details
-                    document_query = """
-                    SELECT doi, title
-                    FROM document 
-                    WHERE doi = ANY(%s)
-                    """
+    async def _execute_database_query(
+        self, sql_query: str
+    ) -> List[EnhancedSearchResult]:
+        """
+        Execute the database query and process results.
 
-                    cursor.execute(document_query, [dois])
-                    document_details = cursor.fetchall()
+        Args:
+            sql_query: SQL query to execute
 
-                # Create a mapping of DOI to document details
-                doc_map = {doc["doi"]: doc for doc in document_details}
-
-                # Combine search scores with document details
-                for result in raw_results:
-                    doi = result["doi"]
-                    if doi in doc_map:
-                        doc = doc_map[doi]
-                        search_results.append(
-                            EnhancedSearchResult(
-                                doi=doi,
-                                title=doc.get("title", ""),
-                                overall_score=float(result.get("overall_score", 0)),
-                                similarity_score=float(
-                                    result.get("similarity_score", 0)
-                                ),
-                                chunk_similarity_score=float(
-                                    result.get("chunk_similarity_score", 0)
-                                ),
-                                full_match_score=float(
-                                    result.get("full_match_score", 0)
-                                ),
-                                partial_match_score=float(
-                                    result.get("partial_match_score", 0)
-                                ),
-                                keyword_score=float(result.get("keyword_score", 0)),
-                            )
-                        )
-
-    except Exception as e:
-        # Log the error and return empty results
-        logger.error(f"Database query error: {e}")
+        Returns:
+            List of enhanced search results
+        """
         search_results = []
 
-    return SearchResponse(
-        original_query=query,
-        structured_query=search_data,
-        results=search_results,
-        total_results=len(search_results),
-    )
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor(row_factory=dict_row) as cursor:
+                    # Execute the search query
+                    cursor.execute(cast(Any, sql_query))
+                    raw_results = cursor.fetchall()
+
+                    self._logger.debug(f"Raw search results count: {len(raw_results)}")
+
+                    # Get document details if we have results
+                    if raw_results:
+                        document_details = self._get_document_details(
+                            cursor, raw_results
+                        )
+                        search_results = self._process_search_results(
+                            raw_results, document_details
+                        )
+
+        except Exception as e:
+            self._logger.error(f"Database query error: {e}")
+
+        return search_results
+
+    def _get_document_details(self, cursor, raw_results: List[dict]) -> List[dict]:
+        """
+        Get document details for the search results.
+
+        Args:
+            cursor: Database cursor
+            raw_results: Raw search results from the query
+
+        Returns:
+            List of document details
+        """
+        dois = [row["doi"] for row in raw_results]
+
+        # Use parameterized query for document details
+        document_query = """
+        SELECT doi, title
+        FROM document 
+        WHERE doi = ANY(%s)
+        """
+
+        cursor.execute(document_query, [dois])
+        return cursor.fetchall()
+
+    def _process_search_results(
+        self, raw_results: List[dict], document_details: List[dict]
+    ) -> List[EnhancedSearchResult]:
+        """
+        Process and combine search results with document details.
+
+        Args:
+            raw_results: Raw search results
+            document_details: Document details from database
+
+        Returns:
+            List of enhanced search results
+        """
+        # Create a mapping of DOI to document details
+        doc_map = {doc["doi"]: doc for doc in document_details}
+        search_results = []
+
+        # Combine search scores with document details
+        for result in raw_results:
+            doi = result["doi"]
+            if doi in doc_map:
+                doc = doc_map[doi]
+                search_results.append(
+                    EnhancedSearchResult(
+                        doi=doi,
+                        title=doc.get("title", ""),
+                        overall_score=float(result.get("overall_score", 0)),
+                        similarity_score=float(result.get("similarity_score", 0)),
+                        chunk_similarity_score=float(
+                            result.get("chunk_similarity_score", 0)
+                        ),
+                        full_match_score=float(result.get("full_match_score", 0)),
+                        partial_match_score=float(result.get("partial_match_score", 0)),
+                        keyword_score=float(result.get("keyword_score", 0)),
+                    )
+                )
+
+        return search_results
+
+
+@lru_cache()
+def get_search_engine() -> SearchEngine:
+    """Get a cached SearchEngine instance."""
+    return SearchEngine()
+
+
+async def search(query: str) -> SearchResponse:
+    """
+    Convenience function for backward compatibility.
+
+    Args:
+        query: The search query string
+
+    Returns:
+        SearchResponse containing search results and metadata
+    """
+    engine = get_search_engine()
+    return await engine.search(query)
