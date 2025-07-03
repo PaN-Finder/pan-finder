@@ -31,6 +31,10 @@ MANIFEST
 pgvector/
 models/
 
+# Kubernetes secrets with actual values
+k8s/**/secret.yaml
+!k8s/**/secret.yaml.template
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
