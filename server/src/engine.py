@@ -4,7 +4,8 @@ from functools import lru_cache
 from sentence_transformers import SentenceTransformer
 from openai import AzureOpenAI
 from psycopg.rows import dict_row
-from typing import cast, Any, Dict
+from typing import cast, Any, Dict, List
+from pydantic import BaseModel
 
 from .database import get_connection_pool, get_db_connection
 from .core.search_query_builder import SearchQueryBuilder
@@ -14,6 +15,24 @@ from .config import get_settings
 
 logger = get_logger(__name__)
 settings = get_settings()
+
+
+class EnhancedSearchResult(BaseModel):
+    doi: str
+    title: str
+    overall_score: float
+    similarity_score: float
+    chunk_similarity_score: float
+    full_match_score: float
+    partial_match_score: float
+    keyword_score: float
+
+
+class SearchResponse(BaseModel):
+    original_query: str
+    structured_query: dict
+    results: List[EnhancedSearchResult]
+    total_results: int
 
 
 @lru_cache()
@@ -44,7 +63,7 @@ async def search(
     query: str,
     builder: SearchQueryBuilder = Depends(get_builder),
     openai_client: AzureOpenAI = Depends(get_openai_client),
-) -> Dict[str, Any]:
+) -> SearchResponse:
     """
     Search function that combines OpenAI processing with the search query builder.
     This function can be used in router endpoints.
@@ -60,13 +79,12 @@ async def search(
     # Input validation
     if not query or not query.strip():
         logger.warning("Empty or whitespace-only query provided")
-        return {
-            "original_query": query,
-            "structured_query": {"intention": "", "keywords": [], "filters": {}},
-            "results": [],
-            "total_results": 0,
-            "error": "Query cannot be empty",
-        }
+        return SearchResponse(
+            original_query=query,
+            structured_query={"intention": "", "keywords": [], "filters": {}},
+            results=[],
+            total_results=0,
+        )
 
     # Use OpenAI to extract structured information from the query
     try:
@@ -79,7 +97,7 @@ async def search(
                 },
                 {
                     "role": "user",
-                    "content": f"Please analyze this query and return the structured JSON: {query}",
+                    "content": query,
                 },
             ],
             max_tokens=500,
@@ -169,24 +187,24 @@ async def search(
                     if doi in doc_map:
                         doc = doc_map[doi]
                         search_results.append(
-                            {
-                                "doi": doi,
-                                "title": doc.get("title", ""),
-                                "overall_score": float(result.get("overall_score", 0)),
-                                "similarity_score": float(
+                            EnhancedSearchResult(
+                                doi=doi,
+                                title=doc.get("title", ""),
+                                overall_score=float(result.get("overall_score", 0)),
+                                similarity_score=float(
                                     result.get("similarity_score", 0)
                                 ),
-                                "chunk_similarity_score": float(
+                                chunk_similarity_score=float(
                                     result.get("chunk_similarity_score", 0)
                                 ),
-                                "full_match_score": float(
+                                full_match_score=float(
                                     result.get("full_match_score", 0)
                                 ),
-                                "partial_match_score": float(
+                                partial_match_score=float(
                                     result.get("partial_match_score", 0)
                                 ),
-                                "keyword_score": float(result.get("keyword_score", 0)),
-                            }
+                                keyword_score=float(result.get("keyword_score", 0)),
+                            )
                         )
 
     except Exception as e:
@@ -194,9 +212,9 @@ async def search(
         logger.error(f"Database query error: {e}")
         search_results = []
 
-    return {
-        "original_query": query,
-        "structured_query": search_data,
-        "results": search_results,
-        "total_results": len(search_results),
-    }
+    return SearchResponse(
+        original_query=query,
+        structured_query=search_data,
+        results=search_results,
+        total_results=len(search_results),
+    )
