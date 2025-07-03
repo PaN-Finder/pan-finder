@@ -7,7 +7,6 @@ resources:
 
 patches:
   - path: server-deployment-patch.yaml
-  - path: pvc-patch.yaml
   - path: ingress-patch.yaml
   - path: configmap-patch.yaml
 
