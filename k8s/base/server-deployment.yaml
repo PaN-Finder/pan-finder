@@ -40,7 +40,7 @@ spec:
               key: POSTGRES_PASSWORD
       containers:
       - name: server
-        image: registry.esss.lu.se/swap/pan-finder-poc:server
+        image: registry.esss.lu.se/swap/pan-finder:server
         ports:
         - containerPort: 8080
           name: http

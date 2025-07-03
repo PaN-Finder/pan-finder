@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: registry.esss.lu.se/swap/pan-finder-poc:frontend
+        image: registry.esss.lu.se/swap/pan-finder:frontend
         ports:
         - containerPort: 80
           name: http

@@ -16,11 +16,6 @@ patchesStrategicMerge:
   - pvc-patch.yaml
   - ingress-patch.yaml
 
-images:
-  - name: registry.esss.lu.se/swap/pan-finder-poc
-    newName: registry.esss.lu.se/swap/pan-finder-poc
-    newTag: dev
-
 commonLabels:
   environment: dev
 
