@@ -42,6 +42,7 @@ spec:
       containers:
       - name: server
         image: registry.esss.lu.se/swap/pan-finder:server
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
           name: http
