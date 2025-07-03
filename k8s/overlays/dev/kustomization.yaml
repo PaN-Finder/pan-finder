@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: pan-finder-dev
+
+namespace: pan-finder-dev
+
+resources:
+  - ../../base
+  - frontend-deployment.yaml
+  - frontend-service.yaml
+
+patchesStrategicMerge:
+  - server-deployment-patch.yaml
+  - pvc-patch.yaml
+  - ingress-patch.yaml
+
+images:
+  - name: registry.esss.lu.se/swap/pan-finder-poc
+    newName: registry.esss.lu.se/swap/pan-finder-poc
+    newTag: dev
+
+commonLabels:
+  environment: dev
+
+configMapGenerator:
+  - name: server-config
+    behavior: merge
+    literals:
+      - ALLOWED_ORIGINS=https://pan-finder.dev-sims.ess.eu

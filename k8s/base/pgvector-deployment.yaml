@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgvector
+  namespace: pan-finder
+  labels:
+    app.kubernetes.io/name: pgvector
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: pan-finder
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate  # Important for database with persistent storage
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pgvector
+      app.kubernetes.io/component: database
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: pgvector
+        app.kubernetes.io/component: database
+        app.kubernetes.io/part-of: pan-finder
+    spec:
+      containers:
+      - name: pgvector
+        image: pgvector/pgvector:0.8.0-pg17
+        ports:
+        - containerPort: 5432
+          name: postgres
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: pgvector-config
+              key: POSTGRES_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            configMapKeyRef:
+              name: pgvector-config
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pgvector-secret
+              key: POSTGRES_PASSWORD
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: pgvector-data
+          mountPath: /var/lib/postgresql/data
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -d
+            - pan-finder
+            - -U
+            - usr
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -d
+            - pan-finder
+            - -U
+            - usr
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 3
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+      volumes:
+      - name: pgvector-data
+        persistentVolumeClaim:
+          claimName: pgvector-data

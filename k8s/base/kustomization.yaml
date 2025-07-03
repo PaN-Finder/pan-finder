@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: pan-finder-base
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - pvc.yaml
+  - pgvector-deployment.yaml
+  - server-deployment.yaml
+  - service.yaml
+  - ingress.yaml
+
+commonLabels:
+  app.kubernetes.io/part-of: pan-finder
+  app.kubernetes.io/managed-by: kustomize
+
+images:
+  - name: pan-finder-server
+    newTag: latest

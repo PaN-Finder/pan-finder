@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pan-finder-ingress
+  namespace: pan-finder
+  labels:
+    app.kubernetes.io/name: pan-finder-ingress
+    app.kubernetes.io/part-of: pan-finder
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"  # Adjust based on your cert-manager setup
+spec:
+  tls:
+  - hosts:
+    - api.pan-finder.example.com  # Replace with your actual domain
+    secretName: pan-finder-tls
+  rules:
+  - host: api.pan-finder.example.com  # Replace with your actual domain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: pan-finder-server-service
+            port:
+              number: 8080
