@@ -77,8 +77,8 @@ spec:
             memory: "2Gi"
             cpu: "1000m"
           limits:
-            memory: "8Gi"
-            cpu: "4000m"
+            memory: "12Gi"
+            cpu: "5000m"
       volumes:
       - name: pgvector-data
         persistentVolumeClaim:
