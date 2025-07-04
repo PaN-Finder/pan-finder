@@ -28,10 +28,20 @@ def setup_logging(log_level: Optional[str] = None) -> logging.Logger:
     if log_level not in valid_levels:
         log_level = "INFO"
 
+    # Create a formatter with timestamp and elapsed time
+    formatter = logging.Formatter(
+        fmt="%(asctime)s.%(msecs)03d - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+    # Create console handler and set formatter
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+
     # Configure basic logging
     logging.basicConfig(
         level=getattr(logging, log_level),
-        handlers=[logging.StreamHandler()],  # Console output for Docker
+        handlers=[console_handler],  # Console output for Docker
         force=True,  # Override any existing configuration
     )
 

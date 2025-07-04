@@ -145,7 +145,7 @@ class SearchQueryBuilder:
             keyword_score DESC
         LIMIT {self._FINAL_LIMIT};
         """
-        logger.info("Generated SQL query.")
+
         return final_sql
 
     def _build_similarity_query(self, intention_vector: List | None) -> str:

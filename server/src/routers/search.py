@@ -16,8 +16,4 @@ class SearchRequest(BaseModel):
 
 @router.post("", response_model=SearchResponse)
 async def search_with_ai(request: SearchRequest):
-    result = await search(request.query)
-    logger.info(
-        f"Search completed - Query: '{result.original_query}', Results: {result.total_results}"
-    )
-    return result
+    return await search(request.query)

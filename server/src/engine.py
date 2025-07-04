@@ -1,4 +1,5 @@
 import json
+import time
 from functools import lru_cache
 from sentence_transformers import SentenceTransformer
 from openai import AzureOpenAI
@@ -99,6 +100,8 @@ class SearchEngine:
         Returns:
             SearchResponse containing search results and metadata
         """
+        start_time = time.time()
+
         # Input validation
         if not query or not query.strip():
             self._logger.warning("Empty or whitespace-only query provided")
@@ -110,10 +113,24 @@ class SearchEngine:
             )
 
         # Extract structured information from the query
+        extraction_start = time.time()
         search_data = await self._extract_structured_query(query)
+        extraction_time = time.time() - extraction_start
 
         # Generate SQL query and execute search
+        search_start = time.time()
         search_results = await self._execute_search(search_data)
+        search_time = time.time() - search_start
+
+        total_time = time.time() - start_time
+
+        self._logger.info(
+            f"Search completed - Query: '{query}', "
+            f"Extraction Time: {extraction_time:.3f}s, "
+            f"Search Time: {search_time:.3f}s, "
+            f"Total Time: {total_time:.3f}s, "
+            f"Results Found: {len(search_results)}"
+        )
 
         return SearchResponse(
             original_query=query,
@@ -228,10 +245,22 @@ class SearchEngine:
         """
         try:
             # Generate SQL query
+            query_build_start = time.time()
             sql_query = self.query_builder.build_query(search_data)
+            query_build_time = time.time() - query_build_start
+            self._logger.debug(
+                f"SQL query building took {query_build_time:.3f} seconds"
+            )
 
             # Execute the query
-            return await self._execute_database_query(sql_query)
+            db_execution_start = time.time()
+            results = await self._execute_database_query(sql_query)
+            db_execution_time = time.time() - db_execution_start
+            self._logger.debug(
+                f"Database execution took {db_execution_time:.3f} seconds"
+            )
+
+            return results
 
         except Exception as e:
             self._logger.error(f"Search execution error: {e}")
