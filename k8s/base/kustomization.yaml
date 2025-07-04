@@ -1,6 +1,5 @@
 resources:
   - configmap.yaml
-  - secret.yaml
   - pvc.yaml
   - pgvector-deployment.yaml
   - server-deployment.yaml
