@@ -21,24 +21,6 @@ spec:
     spec:
       imagePullSecrets:
       - name: ess-gitlab-registry-credentials
-      initContainers:
-      - name: wait-for-db
-        image: pgvector/pgvector:0.8.0-pg17
-        command:
-        - sh
-        - -c
-        - |
-          until pg_isready -h pgvector-service -p 5432 -d pan-finder -U usr; do
-            echo "Waiting for database to be ready..."
-            sleep 5
-          done
-          echo "Database is ready!"
-        env:
-        - name: PGPASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: pgvector-secret
-              key: POSTGRES_PASSWORD
       containers:
       - name: server
         image: registry.esss.lu.se/swap/pan-finder:server
