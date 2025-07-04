@@ -48,7 +48,7 @@ spec:
         args:
           - postgres
           - -c
-          - logging_collector=on
+          - logging_collector=off
           - -c
           - log_destination=stderr
           - -c
