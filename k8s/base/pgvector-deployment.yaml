@@ -47,16 +47,24 @@ spec:
           value: /var/lib/postgresql/data/pgdata
         args:
           - postgres
-          - -c logging_collector=on
-          - -c log_destination=stderr
-          - -c log_min_duration_statement=1000
-          - -c log_statement=mod
-          - -c log_duration=on
-          - '-c log_line_prefix=%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '
-          - -c shared_buffers=3GB
-          - -c work_mem=256MB
-          - -c maintenance_work_mem=1GB
-          - -c effective_cache_size=9GB
+          - -c
+          - logging_collector=on
+          - -c
+          - log_destination=stderr
+          - -c
+          - log_min_duration_statement=1000
+          - -c
+          - log_statement=mod
+          - -c
+          - log_duration=on
+          - -c
+          - shared_buffers=3GB
+          - -c
+          - work_mem=256MB
+          - -c
+          - maintenance_work_mem=1GB
+          - -c
+          - effective_cache_size=9GB
         volumeMounts:
         - name: pgvector-data
           mountPath: /var/lib/postgresql/data
