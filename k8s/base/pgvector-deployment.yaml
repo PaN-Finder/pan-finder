@@ -52,7 +52,7 @@ spec:
           - -c
           - log_destination=stderr
           - -c
-          - log_min_duration_statement=1000
+          - log_min_duration_statement=100
           - -c
           - log_statement=mod
           - -c
