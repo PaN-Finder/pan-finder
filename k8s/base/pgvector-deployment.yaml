@@ -45,28 +45,18 @@ spec:
               key: POSTGRES_PASSWORD
         - name: PGDATA
           value: /var/lib/postgresql/data/pgdata
-        # Slow query logging configuration
-        - name: POSTGRES_INITDB_ARGS
-          value: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
-        - name: POSTGRES_HOST_AUTH_METHOD
-          value: scram-sha-256
-        # PostgreSQL configuration for performance monitoring
-        - name: POSTGRES_CONFIG_LOG_MIN_DURATION_STATEMENT
-          value: "1000"  # Log queries taking longer than 1 second
-        - name: POSTGRES_CONFIG_LOG_STATEMENT
-          value: "mod"   # Log DDL and data modification statements
-        - name: POSTGRES_CONFIG_LOG_DURATION
-          value: "on"    # Log duration of completed statements
-        - name: POSTGRES_CONFIG_LOG_LINE_PREFIX
-          value: "%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h "
-        - name: POSTGRES_CONFIG_SHARED_BUFFERS
-          value: "3GB"   # ~25% of available memory (12GB limit)
-        - name: POSTGRES_CONFIG_WORK_MEM
-          value: "256MB" # Memory for sorting/hashing operations
-        - name: POSTGRES_CONFIG_MAINTENANCE_WORK_MEM
-          value: "1GB"   # Memory for maintenance operations
-        - name: POSTGRES_CONFIG_EFFECTIVE_CACHE_SIZE
-          value: "9GB"   # ~75% of available memory for query planner
+        args:
+          - postgres
+          - -c logging_collector=on
+          - -c log_destination=stderr
+          - -c log_min_duration_statement=1000
+          - -c log_statement=mod
+          - -c log_duration=on
+          - '-c log_line_prefix=%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '
+          - -c shared_buffers=3GB
+          - -c work_mem=256MB
+          - -c maintenance_work_mem=1GB
+          - -c effective_cache_size=9GB
         volumeMounts:
         - name: pgvector-data
           mountPath: /var/lib/postgresql/data
