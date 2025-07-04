@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from .database import get_connection_pool, get_db_connection
 from .core.search_query_builder import SearchQueryBuilder
 from .core.prompts import QueryExtractionPrompts
+from .core.llm_cache import LLMResponseCache
 from .logging import get_logger
 from .config import get_settings
 
@@ -60,6 +61,7 @@ class SearchEngine:
         self._embedding_model = embedding_model
         self._query_builder = query_builder
         self._logger = get_logger(self.__class__.__name__)
+        self._llm_cache = LLMResponseCache(logger=self._logger)
 
     @property
     def openai_client(self) -> AzureOpenAI:
@@ -149,9 +151,17 @@ class SearchEngine:
         Returns:
             Dictionary containing structured query information
         """
+        model_name = settings.azure_openai_model_name
+
+        # Check if we have a cached response
+        cached_response = self._llm_cache.get(model_name, query)
+        if cached_response is not None:
+            self._logger.debug(f"Using cached LLM response for query: {query}")
+            return self._parse_openai_response(cached_response, query)
+
         try:
             llm_response = self.openai_client.chat.completions.create(
-                model=settings.azure_openai_model_name,
+                model=model_name,
                 messages=[
                     {
                         "role": "system",
@@ -169,6 +179,10 @@ class SearchEngine:
 
             # Extract and parse the response content
             response_content = llm_response.choices[0].message.content
+
+            # Cache the response if it's valid
+            if response_content is not None:
+                self._llm_cache.put(model_name, query, response_content)
 
             return self._parse_openai_response(response_content, query)
 
