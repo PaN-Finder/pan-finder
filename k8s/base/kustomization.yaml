@@ -11,7 +11,3 @@ labels:
   - pairs:
       app.kubernetes.io/part-of: pan-finder
       app.kubernetes.io/managed-by: kustomize
-
-images:
-  - name: pan-finder-server
-    newTag: latest
