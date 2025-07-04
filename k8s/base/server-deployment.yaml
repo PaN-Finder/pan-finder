@@ -28,7 +28,7 @@ spec:
         - sh
         - -c
         - |
-          until pg_isready -h pgvector-service -p 5432 -U usr; do
+          until pg_isready -h pgvector-service -p 5432 -d pan-finder -U usr; do
             echo "Waiting for database to be ready..."
             sleep 5
           done
