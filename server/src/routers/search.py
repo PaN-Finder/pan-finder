@@ -14,7 +14,7 @@ class SearchRequest(BaseModel):
     query: str
 
 
-@router.post("/", response_model=SearchResponse)
+@router.post("", response_model=SearchResponse)
 async def search_with_ai(request: SearchRequest):
     result = await search(request.query)
     logger.info(
