@@ -28,7 +28,7 @@ services:
       - ./models:/code/models
     working_dir: /code/app
     env_file:
-      - ./server/.env.docker
+      - ./server/.env
     environment:
       - PYTHONPATH=/code/app
     depends_on:

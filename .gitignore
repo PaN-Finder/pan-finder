@@ -29,7 +29,8 @@ share/python-wheels/
 MANIFEST
 
 pgvector/
-models/
+models/*
+!models/.gitkeep
 
 # Kubernetes secrets with actual values
 k8s/**/secret.yaml
