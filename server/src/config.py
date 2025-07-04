@@ -27,6 +27,13 @@ class Settings:
         self.api_host = os.getenv("API_HOST", "0.0.0.0")
         self.api_port = int(os.getenv("API_PORT", "8080"))
 
+        # Database connection settings
+        self.db_pool_min_size = int(os.getenv("DB_POOL_MIN_SIZE", "1"))
+        self.db_pool_max_size = int(os.getenv("DB_POOL_MAX_SIZE", "20"))
+        self.db_connection_timeout = int(os.getenv("DB_CONNECTION_TIMEOUT", "30"))
+        self.db_max_idle = int(os.getenv("DB_MAX_IDLE", "300"))  # 5 minutes
+        self.db_max_lifetime = int(os.getenv("DB_MAX_LIFETIME", "3600"))  # 1 hour
+
     def _parse_cors_origins(self) -> List[str]:
         """Parse CORS origins from environment variable."""
         origins_str = os.getenv("ALLOWED_ORIGINS", "*")

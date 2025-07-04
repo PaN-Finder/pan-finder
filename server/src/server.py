@@ -1,10 +1,18 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+import asyncio
 
 from .config import get_settings
 from .routers import search
+from .database import (
+    check_database_health,
+    init_connection_pool,
+    cleanup_connection_pool,
+)
+from .logging import get_logger
 
 settings = get_settings()
+logger = get_logger(__name__)
 
 app = FastAPI(
     title="PaN-Finder API",
@@ -23,10 +31,67 @@ app.add_middleware(
 app.include_router(search.router)
 
 
-# Health check endpoint
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database connection pool on startup."""
+    try:
+        logger.info("Initializing database connection pool...")
+        init_connection_pool()
+
+        # Check database connectivity
+        if check_database_health():
+            logger.info("Database connection established successfully")
+        else:
+            logger.warning("Database connection check failed during startup")
+    except Exception as e:
+        logger.error(f"Failed to initialize database during startup: {e}")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Clean up resources on shutdown."""
+    try:
+        logger.info("Shutting down application...")
+        cleanup_connection_pool()
+        logger.info("Application shutdown complete")
+    except Exception as e:
+        logger.error(f"Error during shutdown: {e}")
+
+
+# Enhanced health check endpoint
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "message": "Pan Finder API is running"}
+    """Comprehensive health check including database connectivity."""
+    health_status = {
+        "status": "healthy",
+        "message": "Pan Finder API is running",
+        "database": "unknown",
+    }
+
+    try:
+        # Check database in a separate thread to avoid blocking
+        db_healthy = await asyncio.get_event_loop().run_in_executor(
+            None, check_database_health
+        )
+
+        if db_healthy:
+            health_status["database"] = "healthy"
+        else:
+            health_status["database"] = "unhealthy"
+            health_status["status"] = "degraded"
+            health_status["message"] = "API running but database connectivity issues"
+
+    except Exception as e:
+        logger.error(f"Health check database error: {e}")
+        health_status["database"] = "error"
+        health_status["status"] = "degraded"
+        health_status["message"] = "API running but database connectivity issues"
+
+    # Return 503 if database is not healthy
+    if health_status["database"] != "healthy":
+        raise HTTPException(status_code=503, detail=health_status)
+
+    return health_status
 
 
 # Root endpoint
