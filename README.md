@@ -16,12 +16,20 @@ Todo
 
 ## Using Frontend (Optional)
 
-(Repository: https://github.com/panosc-eu/searchui)\
-Clone the frontend repository somewhere and run it.\
+(Repository: https://github.com/panosc-eu/searchui)<br>
+Clone the frontend repository somewhere and run it.<br>
 It automatically connects to the PanFinder API server running on [127.0.0.1:8080](http://127.0.0.1:8080).
 
+## Tasks
 
-
-
-
-
+- [ ] Improve number handling (database) – resolve slow query issue
+- [ ] Implement unit handling
+- [ ] Use rate limiting vs. CAPTCHA vs. [alternative?]
+- [ ] Design frontend interface
+- [ ] Add input validation and clarification → Build a dataset that can be used for validation
+- [ ] No datasets found → Provide example queries based on input and stored data
+- [ ] Allow extracted data to be modified by the client and re-executed
+- [ ] Add statistics tracking
+- [ ] Implement autocorrect in textarea
+- [ ] Add SQL injection protection
+- [ ] Implement the ingestor service !!!
