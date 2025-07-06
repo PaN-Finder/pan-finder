@@ -92,6 +92,7 @@ class SearchEngine:
             )
         return self._query_builder
 
+    # REMOVE IT LATER
     async def search(self, query: str) -> SearchResponse:
         """
         Search function that combines OpenAI processing with the search query builder.
@@ -116,12 +117,12 @@ class SearchEngine:
 
         # Extract structured information from the query
         extraction_start = time.time()
-        search_data = await self._extract_structured_query(query)
+        search_data = await self.extract_structured_query(query)
         extraction_time = time.time() - extraction_start
 
         # Generate SQL query and execute search
         search_start = time.time()
-        search_results = await self._execute_search(search_data)
+        search_results = await self.execute_search(search_data)
         search_time = time.time() - search_start
 
         total_time = time.time() - start_time
@@ -141,7 +142,7 @@ class SearchEngine:
             total_results=len(search_results),
         )
 
-    async def _extract_structured_query(self, query: str) -> dict:
+    async def extract_structured_query(self, query: str) -> dict:
         """
         Extract structured information from the query using OpenAI.
 
@@ -247,7 +248,7 @@ class SearchEngine:
             "filters": {},
         }
 
-    async def _execute_search(self, search_data: dict) -> List[EnhancedSearchResult]:
+    async def execute_search(self, search_data: dict) -> List[EnhancedSearchResult]:
         """
         Execute the search using the structured query data.
 
