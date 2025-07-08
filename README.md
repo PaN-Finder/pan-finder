@@ -12,7 +12,7 @@ docker compose -f docker-compose.dev.yml up
 
 ## Database
 
-Todo
+The database can be restored from the Pan-Finder-Poc repository: [pan-finder-poc/backups](https://gitlab.esss.lu.se/swap/pan-finder-poc/-/tree/main/backups?ref_type=heads)
 
 ## Using Frontend (Optional)
 
@@ -33,3 +33,25 @@ It automatically connects to the PanFinder API server running on [127.0.0.1:8080
 - [ ] Implement autocorrect in textarea
 - [ ] Add SQL injection protection
 - [ ] Implement the ingestor service !!!
+
+## Temporary docker commands (local development)
+
+Build:
+```bash
+docker build -f server/docker/Dockerfile.k8s . -t registry.esss.lu.se/swap/pan-finder:server --platform linux/amd64
+```
+Push:
+```bash
+docker push registry.esss.lu.se/swap/pan-finder:server
+```
+
+Frontend:
+```bash
+cd searchui
+docker build --build-arg API=https://federated.panosc.ess.eu/api --build-arg PAN_FINDER_API=https://pan-finder-api.dev-sims.ess.eu -f Dockerfile . -t registry.esss.lu.se/swap/pan-finder:frontend --platform linux/amd64
+```
+
+Push Frontend:
+```bash
+docker push registry.esss.lu.se/swap/pan-finder:frontend
+```
