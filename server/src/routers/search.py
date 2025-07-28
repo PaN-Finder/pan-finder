@@ -1,11 +1,12 @@
 import json
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 import asyncio
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from typing import AsyncGenerator
 
 from ..engine import SearchResponse, get_search_engine
+from ..database import get_connection_pool
 from ..logging import get_logger
 
 logger = get_logger(__name__)
@@ -115,3 +116,67 @@ async def search_with_ai_stream(request: SearchRequest):
             "X-Accel-Buffering": "no",  # Disable nginx buffering for real-time streaming
         },
     )
+
+
+@router.get("/document/{doi:path}")
+async def get_document_details(doi: str):
+    """
+    Get detailed document information by DOI.
+    Returns: id, doi, title, text, summary, raw, facility_name
+    """
+    try:
+        logger.info(f"Fetching document details for DOI: {doi}")
+
+        pool = get_connection_pool()
+        if not pool:
+            raise HTTPException(
+                status_code=503, detail="Database connection not available"
+            )
+
+        connection = pool.getconn()
+        try:
+            with connection.cursor() as cursor:
+                query = """
+                    SELECT 
+                        d.id,
+                        d.doi,
+                        d.title,
+                        d.text,
+                        d.summary,
+                        d.raw,
+                        f.name AS facility_name
+                    FROM document d
+                    LEFT JOIN facility f ON d.facility_id = f.id
+                    WHERE d.doi = %s
+                """
+                cursor.execute(query, (doi,))
+                result = cursor.fetchone()
+
+                if not result:
+                    raise HTTPException(
+                        status_code=404, detail=f"Document with DOI '{doi}' not found"
+                    )
+
+                # Convert result to dictionary
+                if cursor.description:
+                    columns = [desc[0] for desc in cursor.description]
+                    document_data = dict(zip(columns, result))
+                else:
+                    raise HTTPException(
+                        status_code=500,
+                        detail="Database query returned no column information",
+                    )
+
+                logger.info(f"Successfully fetched document details for DOI: {doi}")
+                return document_data
+
+        finally:
+            pool.putconn(connection)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching document details for DOI {doi}: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch document details: {str(e)}"
+        )
