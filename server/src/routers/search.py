@@ -120,9 +120,6 @@ async def search_with_ai_stream(request: SearchRequest):
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Headers": "Content-Type, Cache-Control",
-            "Access-Control-Allow-Methods": "POST, OPTIONS",
             "X-Accel-Buffering": "no",  # Disable nginx buffering for real-time streaming
         },
     )
@@ -185,9 +182,6 @@ async def search_with_structured_data(request: StructuredSearchRequest):
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Headers": "Content-Type, Cache-Control",
-            "Access-Control-Allow-Methods": "POST, OPTIONS",
             "X-Accel-Buffering": "no",  # Disable nginx buffering for real-time streaming
         },
     )
