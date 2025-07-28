@@ -19,6 +19,14 @@ class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1, description="Search query (cannot be empty)")
 
 
+class StructuredSearchRequest(BaseModel):
+    structured_data: dict = Field(..., description="Structured search data")
+    original_query: str = Field(
+        default="",
+        description="Original user query that generated this structured data",
+    )
+
+
 class StreamEvent(BaseModel):
     event: str
     data: dict
@@ -105,6 +113,71 @@ async def search_with_ai_stream(request: SearchRequest):
             return
         finally:
             logger.info(f"Search stream {connection_id} ended")
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Content-Type, Cache-Control",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "X-Accel-Buffering": "no",  # Disable nginx buffering for real-time streaming
+        },
+    )
+
+
+@router.post("/structured")
+async def search_with_structured_data(request: StructuredSearchRequest):
+    """
+    Search endpoint that accepts structured search data directly, bypassing LLM analysis.
+    """
+
+    async def event_generator() -> AsyncGenerator[str, None]:
+        connection_id = id(asyncio.current_task())
+        logger.info(
+            f"Starting structured search stream {connection_id} for data: {request.structured_data}, original query: '{request.original_query}'"
+        )
+
+        try:
+            # Step 1: Start database query (no LLM analysis needed)
+            evt = StreamEvent(
+                event="database_query_started",
+                data={"message": "Start querying database"},
+            )
+            yield f"event: {evt.event}\ndata: {json.dumps(evt.data)}\n\n"
+            await asyncio.sleep(0.1)
+
+            engine = get_search_engine()
+
+            structured_data = copy.deepcopy(request.structured_data)
+
+            # Step 2: Execute search directly with structured data
+            search_results = await engine.execute_search(request.structured_data)
+            response = SearchResponse(
+                original_query=request.original_query or "Structured data search",
+                raw_structured_data=structured_data,
+                results=search_results,
+                total_results=len(search_results),
+            )
+            evt = StreamEvent(event="results", data=response.model_dump())
+            yield f"event: {evt.event}\ndata: {json.dumps(evt.data)}\n\n"
+            await asyncio.sleep(0.1)
+
+        except asyncio.CancelledError:
+            logger.info(f"Structured search stream {connection_id} cancelled by client")
+            return
+        except Exception as e:
+            logger.error(f"Error in structured search stream {connection_id}: {e}")
+            evt = StreamEvent(
+                event="error", data={"message": f"Search failed: {str(e)}"}
+            )
+            yield f"event: {evt.event}\ndata: {json.dumps(evt.data)}\n\n"
+            await asyncio.sleep(0.1)
+            return
+        finally:
+            logger.info(f"Structured search stream {connection_id} ended")
 
     return StreamingResponse(
         event_generator(),
