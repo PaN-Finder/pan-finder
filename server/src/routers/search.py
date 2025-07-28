@@ -1,3 +1,4 @@
+import copy
 import json
 from fastapi import APIRouter, HTTPException
 import asyncio
@@ -54,11 +55,12 @@ async def search_with_ai_stream(request: SearchRequest):
 
             # Step 2: Extract structured query (LLM processing)
             raw_query = request.query
-            search_data = await engine.extract_structured_query(raw_query)
+            search_data = await engine.parse_query_to_structured_data(raw_query)
+            raw_structured_data = copy.deepcopy(search_data)
 
             evt = StreamEvent(
                 event="analysis_completed",
-                data={"message": "Analysis completed", "structured_query": search_data},
+                data={"message": "Analysis completed"},
             )
             yield f"event: {evt.event}\ndata: {json.dumps(evt.data)}\n\n"
             await asyncio.sleep(
@@ -79,7 +81,7 @@ async def search_with_ai_stream(request: SearchRequest):
             search_results = await engine.execute_search(search_data)
             response = SearchResponse(
                 original_query=raw_query,
-                structured_query=search_data,
+                raw_structured_data=raw_structured_data,
                 results=search_results,
                 total_results=len(search_results),
             )

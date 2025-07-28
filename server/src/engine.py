@@ -30,7 +30,7 @@ class EnhancedSearchResult(BaseModel):
 
 class SearchResponse(BaseModel):
     original_query: str
-    structured_query: dict
+    raw_structured_data: dict
     results: List[EnhancedSearchResult]
     total_results: int
 
@@ -92,65 +92,15 @@ class SearchEngine:
             )
         return self._query_builder
 
-    # REMOVE IT LATER
-    async def search(self, query: str) -> SearchResponse:
+    async def parse_query_to_structured_data(self, query: str) -> dict:
         """
-        Search function that combines OpenAI processing with the search query builder.
+        Parse a natural language query into structured components using OpenAI.
 
         Args:
             query: The search query string
 
         Returns:
-            SearchResponse containing search results and metadata
-        """
-        start_time = time.time()
-
-        # Input validation
-        if not query or not query.strip():
-            self._logger.warning("Empty or whitespace-only query provided")
-            return SearchResponse(
-                original_query=query,
-                structured_query={"intention": "", "keywords": [], "filters": {}},
-                results=[],
-                total_results=0,
-            )
-
-        # Extract structured information from the query
-        extraction_start = time.time()
-        search_data = await self.extract_structured_query(query)
-        extraction_time = time.time() - extraction_start
-
-        # Generate SQL query and execute search
-        search_start = time.time()
-        search_results = await self.execute_search(search_data)
-        search_time = time.time() - search_start
-
-        total_time = time.time() - start_time
-
-        self._logger.info(
-            f"Search completed - Query: '{query}', "
-            f"Extraction Time: {extraction_time:.3f}s, "
-            f"Search Time: {search_time:.3f}s, "
-            f"Total Time: {total_time:.3f}s, "
-            f"Results Found: {len(search_results)}"
-        )
-
-        return SearchResponse(
-            original_query=query,
-            structured_query=search_data,
-            results=search_results,
-            total_results=len(search_results),
-        )
-
-    async def extract_structured_query(self, query: str) -> dict:
-        """
-        Extract structured information from the query using OpenAI.
-
-        Args:
-            query: The search query string
-
-        Returns:
-            Dictionary containing structured query information
+            Dictionary containing structured query information with intention, keywords, and filters
         """
         model_name = settings.azure_openai_model_name
 
@@ -385,17 +335,3 @@ class SearchEngine:
 def get_search_engine() -> SearchEngine:
     """Get a cached SearchEngine instance."""
     return SearchEngine()
-
-
-async def search(query: str) -> SearchResponse:
-    """
-    Convenience function for backward compatibility.
-
-    Args:
-        query: The search query string
-
-    Returns:
-        SearchResponse containing search results and metadata
-    """
-    engine = get_search_engine()
-    return await engine.search(query)

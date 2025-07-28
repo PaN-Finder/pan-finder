@@ -1,4 +1,0 @@
-Server:
-docker build -f server/docker/Dockerfile.k8s . -t registry.esss.lu.se/swap/pan-finder:server --platform linux/amd64
-Frontend:
-docker build --build-arg API=https://federated.panosc.ess.eu/api --build-arg PAN_FINDER_API=https://pan-finder-api.dev-sims.ess.eu -f Dockerfile . -t registry.esss.lu.se/swap/pan-finder:frontend --platform linux/amd64
