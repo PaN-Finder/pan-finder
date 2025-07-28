@@ -11,7 +11,7 @@ from .database import get_connection_pool, get_db_connection
 from .core.search_query_builder import SearchQueryBuilder
 from .core.prompts import QueryExtractionPrompts
 from .core.llm_cache import LLMResponseCache
-from .logging import get_logger
+from .setup_logging import get_logger
 from .config import get_settings
 
 settings = get_settings()

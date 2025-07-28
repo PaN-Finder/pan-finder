@@ -1,0 +1,16 @@
+{
+    "python-envs.pythonProjects": [],
+    "python.defaultInterpreterPath": "./.venv/bin/python",
+    "python.terminal.activateEnvironment": true,
+    "python.analysis.extraPaths": [
+        "./server/src"
+    ],
+    "python.analysis.autoImportCompletions": true,
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [
+        "server"
+    ],
+    "files.associations": {
+        "*.py": "python"
+    }
+}

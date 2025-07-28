@@ -7,7 +7,7 @@ from typing import AsyncGenerator
 
 from ..engine import SearchResponse, get_search_engine
 from ..database import get_connection_pool
-from ..logging import get_logger
+from ..setup_logging import get_logger
 
 logger = get_logger(__name__)
 

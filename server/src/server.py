@@ -9,7 +9,7 @@ from .database import (
     init_connection_pool,
     cleanup_connection_pool,
 )
-from .logging import get_logger
+from .setup_logging import get_logger
 
 settings = get_settings()
 logger = get_logger(__name__)

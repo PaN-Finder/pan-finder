@@ -9,3 +9,4 @@ openai==1.93.0
 pytest
 pytest-dotenv
 pytest-snapshot
+debugpy==1.8.9

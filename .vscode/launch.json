@@ -1,0 +1,38 @@
+{
+    "version": "0.2.0",
+    "configurations": [        
+        {
+            "name": "Debug FastAPI Server (Docker)",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/server",
+                    "remoteRoot": "/code/app"
+                }
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "Debug FastAPI Server (Docker - Wait)",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/server",
+                    "remoteRoot": "/code/app"
+                }
+            ],
+            "justMyCode": true,
+            "preLaunchTask": "Start Docker with Debug Wait"
+        }
+    ]
+}
