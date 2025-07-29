@@ -10,7 +10,6 @@ from ..engine import SearchResponse, get_search_engine
 from ..models.statistics import Statistics
 from ..models.statistics_repository import StatisticsRepository
 from ..models.document_repository import DocumentRepository
-from ..database import get_connection_pool
 from ..setup_logging import get_logger
 
 logger = get_logger(__name__)
