@@ -7,9 +7,6 @@ from ...setup_logging import get_logger
 
 NumberTypes = (int, float, complex)
 
-# Get logger for this module
-logger = get_logger(__name__)
-
 
 class SearchQueryBuilder:
     """
@@ -45,6 +42,7 @@ class SearchQueryBuilder:
         self.rrf_k_full_match = rrf_k_full_match
         self.rrf_k_partial_match = rrf_k_partial_match
         self.rrf_k_keyword = rrf_k_keyword
+        self._logger = get_logger(self.__class__.__name__)
 
     # --- Attributes ---
     # Similarity names for filters (debugging purposes)
@@ -68,7 +66,9 @@ class SearchQueryBuilder:
         # 1. Preprocess: Update filter names with similar ones
         self.similar_names = {}
         processed_data = self._update_filter_names(data)
-        logger.info(f"Processed filter names: {processed_data.get('filters', 'N/A')}")
+        self._logger.info(
+            f"Processed filter names: {processed_data.get('filters', 'N/A')}"
+        )
 
         # 2. Prepare components
         intention = processed_data.get("intention", "")
@@ -259,7 +259,7 @@ class SearchQueryBuilder:
                 ),
             )
             result = cursor.fetchall()
-            logger.info(
+            self._logger.info(
                 f"Finding similar names for '{raw_name}'. Found: {[row['name'] for row in result[:5]]}"
             )
 
@@ -280,7 +280,9 @@ class SearchQueryBuilder:
                     if updated_cond:  # Keep condition only if it's valid after update
                         updated_conditions.append(updated_cond)
                 else:
-                    logger.info(f"Skipping invalid condition at index {i}: {cond}")
+                    self._logger.info(
+                        f"Skipping invalid condition at index {i}: {cond}"
+                    )
             # Return None if a logic block has no valid conditions left
             filt["conditions"] = updated_conditions
             return filt if updated_conditions else None
@@ -294,17 +296,19 @@ class SearchQueryBuilder:
                 )  # Ensure name is always a list
                 return filt
             else:
-                logger.info(f"Skipping condition with invalid or missing name: {filt}")
+                self._logger.info(
+                    f"Skipping condition with invalid or missing name: {filt}"
+                )
                 return None  # Invalid condition structure
         else:
-            logger.info(f"Skipping condition with unexpected structure: {filt}")
+            self._logger.info(f"Skipping condition with unexpected structure: {filt}")
             return None  # Invalid condition structure
 
     def _update_filter_names(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Updates the 'filters' part of the data by replacing names with similar ones."""
         filters_obj = data.get("filters")
         if not isinstance(filters_obj, dict) or not filters_obj.get("conditions"):
-            logger.info(
+            self._logger.info(
                 "No valid filters found or filters are not a dict, skipping name update."
             )
             return data  # Return original data if no filters or invalid format
@@ -318,7 +322,7 @@ class SearchQueryBuilder:
             data["filters"] = updated_filters
         else:
             # If filters become empty/invalid after update, remove the key or set to empty
-            logger.info("Filters became empty or invalid after name update.")
+            self._logger.info("Filters became empty or invalid after name update.")
             data["filters"] = None  # Or {} or remove key data.pop('filters', None)
 
         return data
@@ -327,14 +331,16 @@ class SearchQueryBuilder:
     def _build_filter_subquery(self, filters_obj: Union[Dict, None]) -> str:
         """Builds the SQL subquery for filtering documents based on the filter object."""
         if not filters_obj or not filters_obj.get("conditions"):
-            logger.info("No valid filters provided, creating empty filter subquery.")
+            self._logger.info(
+                "No valid filters provided, creating empty filter subquery."
+            )
             return self._get_empty_subquery()
 
         try:
             # 1. Generate flag definitions (MAX(CASE...) AS has_condition_N)
             flag_definitions, condition_count = self._generate_filter_flags(filters_obj)
             if not flag_definitions:
-                logger.info(
+                self._logger.info(
                     "Could not generate any filter flags from the provided structure."
                 )
                 return self._get_empty_subquery()
@@ -344,7 +350,7 @@ class SearchQueryBuilder:
             unique_keys = set()
             self._collect_keys_recursive(filters_obj, unique_keys)
             if not unique_keys:
-                logger.info("No filter keys found in the provided structure.")
+                self._logger.info("No filter keys found in the provided structure.")
                 return self._get_empty_subquery()
 
             # Sort keys for deterministic SQL generation
@@ -354,7 +360,9 @@ class SearchQueryBuilder:
             # 3. Build the logic expression (e.g., (has_condition_1 > 0 AND has_condition_2 > 0) OR has_condition_3 > 0)
             filter_logic_sql = self._build_filter_logic(filters_obj)
             if not filter_logic_sql or filter_logic_sql == "FALSE":
-                logger.info("Filter logic resulted in an empty or FALSE condition.")
+                self._logger.info(
+                    "Filter logic resulted in an empty or FALSE condition."
+                )
                 return self._get_empty_subquery()
 
             # 4. Construct the filter subquery using CTEs
@@ -409,7 +417,7 @@ class SearchQueryBuilder:
             -- NO LIMIT here, we want to get all documents that match the filter
             """
         except Exception as e:
-            logger.info(f"Unexpected error building filter subquery: {e}")
+            self._logger.info(f"Unexpected error building filter subquery: {e}")
             raise
 
     def _get_empty_subquery(self) -> str:
@@ -436,7 +444,7 @@ class SearchQueryBuilder:
                 if isinstance(sub_condition, dict):
                     self._build_flags_recursive(sub_condition, flag_counter, all_flags)
                 else:
-                    logger.info(
+                    self._logger.info(
                         f"Skipping non-dict item in nested conditions: {sub_condition}"
                     )
 
@@ -450,7 +458,7 @@ class SearchQueryBuilder:
             value = condition["value"]
 
             if not isinstance(name_list, list) or not name_list:
-                logger.info(
+                self._logger.info(
                     f"Skipping flag {flag_name} due to invalid 'name': {name_list} in condition: {condition}"
                 )
                 flag_counter[0] -= 1
@@ -485,7 +493,7 @@ class SearchQueryBuilder:
                                     f"f.value {operator} '{safe_v1}' AND '{safe_v2}'"
                                 )
                         else:
-                            logger.info(
+                            self._logger.info(
                                 f"Invalid value for {operator} on {flag_name}: {value}. Condition will be FALSE."
                             )
                             comparison_clause = "FALSE"
@@ -507,7 +515,7 @@ class SearchQueryBuilder:
                                     f"f.value {operator} ({', '.join(safe_values)})"
                                 )
                         else:
-                            logger.info(
+                            self._logger.info(
                                 f"Invalid value for {operator} on {flag_name}: {value}. Condition will be FALSE."
                             )
                             comparison_clause = "FALSE"
@@ -547,7 +555,7 @@ class SearchQueryBuilder:
 
                     case "=" | "!=" | ">" | "<" | ">=" | "<=":
                         if isinstance(value, list):
-                            logger.info(
+                            self._logger.info(
                                 f"List value for {operator} on {flag_name}: {value}. Condition will be FALSE."
                             )
                             comparison_clause = "FALSE"
@@ -585,7 +593,7 @@ class SearchQueryBuilder:
                                         f"f.value {operator} '{sanitized_value}'"
                                     )
                     case _:
-                        logger.info(
+                        self._logger.info(
                             f"Unsupported operator '{operator}' for {flag_name}. Condition will be FALSE."
                         )
                         comparison_clause = "FALSE"
@@ -600,19 +608,19 @@ class SearchQueryBuilder:
                     generic_flag_sql = f"MAX(CASE WHEN {sql_condition} THEN 1 ELSE 0 END) AS {flag_name}"
                     all_flags.append(generic_flag_sql)
                 else:  # No specific SQL and comparison_clause is FALSE or empty
-                    logger.info(
+                    self._logger.info(
                         f"Skipping flag {flag_name} due to FALSE or empty comparison clause."
                     )
                     flag_counter[0] -= 1  # Decrement as no flag was actually added
 
             except Exception as e:  # Catch errors from type casting or value processing
-                logger.info(
+                self._logger.info(
                     f"Error processing value for condition {flag_name} ({condition}): {e}. Skipping flag."
                 )
                 # Decrement counter as no flag was actually added due to error
                 flag_counter[0] -= 1
         else:
-            logger.info(
+            self._logger.info(
                 f"Skipping flag generation for invalid/incomplete condition structure: {condition}"
             )
 
@@ -622,7 +630,7 @@ class SearchQueryBuilder:
         try:
             self._build_flags_recursive(filt, flag_counter, all_flags)
         except Exception as e:
-            logger.info(f"Unexpected error during recursive flag building: {e}")
+            self._logger.info(f"Unexpected error during recursive flag building: {e}")
             return [], 0
         return all_flags, flag_counter[0]
 
@@ -657,7 +665,7 @@ class SearchQueryBuilder:
         if "logic" in condition and "conditions" in condition:
             nested_conditions = condition.get("conditions", [])
             if not nested_conditions:
-                logger.info(
+                self._logger.info(
                     f"Empty nested conditions for logic '{condition['logic']}'. Returning FALSE."
                 )
                 return "FALSE"
@@ -669,12 +677,12 @@ class SearchQueryBuilder:
                     if part and part != "FALSE":
                         logic_parts.append(part)
                 else:
-                    logger.info(
+                    self._logger.info(
                         f"Skipping non-dict item in logic conditions: {sub_condition}"
                     )
 
             if not logic_parts:  # All sub-conditions were invalid or resulted in FALSE
-                logger.info(
+                self._logger.info(
                     f"No valid logic parts for logic '{condition['logic']}'. Returning FALSE."
                 )
                 return "FALSE"
@@ -694,7 +702,7 @@ class SearchQueryBuilder:
             # We need to ensure this base condition is valid before consuming a flag index.
             name_list = condition.get("name")
             if not isinstance(name_list, list) or not name_list:
-                logger.info(
+                self._logger.info(
                     f"Skipping logic part for condition with invalid 'name': {condition}. Returning FALSE."
                 )
                 return "FALSE"  # This effectively makes this branch of logic false
@@ -704,7 +712,7 @@ class SearchQueryBuilder:
             return f"has_condition_{flag_idx_counter[0]} > 0"
         else:
             # This path might be hit if the filter structure is malformed at this level
-            logger.info(
+            self._logger.info(
                 f"Invalid condition structure for logic building (not a logic block or base condition): {condition}. Returning FALSE."
             )
             return "FALSE"  # Treat malformed parts as FALSE

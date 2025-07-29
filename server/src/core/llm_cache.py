@@ -6,7 +6,8 @@ to avoid redundant API calls and improve performance.
 """
 
 from typing import Optional, Dict, Tuple
-import logging
+from logging import Logger
+from ..setup_logging import get_logger
 
 
 class LLMResponseCache:
@@ -21,7 +22,7 @@ class LLMResponseCache:
         self,
         max_size: int = 1000,
         max_query_length: int = 10000,
-        logger: Optional[logging.Logger] = None,
+        logger: Optional[Logger] = None,
     ):
         """
         Initialize the LLM response cache.
@@ -34,7 +35,7 @@ class LLMResponseCache:
         self._cache: Dict[Tuple[str, str], str] = {}
         self._max_size = max_size
         self._max_query_length = max_query_length
-        self._logger = logger or logging.getLogger(self.__class__.__name__)
+        self._logger = logger or get_logger(self.__class__.__name__)
 
     def get(self, model: str, query: str) -> Optional[str]:
         """

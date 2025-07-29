@@ -1,14 +1,13 @@
 from psycopg_pool import ConnectionPool
 from contextlib import contextmanager
 from typing import Optional
-import logging
 import time
 from psycopg import OperationalError
-
+from .setup_logging import get_logger
 from .config import get_settings
 
 settings = get_settings()
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Connection pool for efficient database connections
 _connection_pool: Optional[ConnectionPool] = None

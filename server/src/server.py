@@ -41,6 +41,10 @@ async def startup_event():
         # Check database connectivity
         if check_database_health():
             logger.info("Database connection established successfully")
+            # Run migrations after DB is up
+            from .migrate import run_migrations
+
+            run_migrations()
         else:
             logger.warning("Database connection check failed during startup")
     except Exception as e:
