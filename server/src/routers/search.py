@@ -2,7 +2,7 @@ import copy
 import json
 import asyncio
 from typing import AsyncGenerator, Dict
-from fastapi import APIRouter, HTTPException, Path
+from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
