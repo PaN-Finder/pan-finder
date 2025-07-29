@@ -30,7 +30,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(search.router)
-app.include_router(document.document_router)
+app.include_router(document.router)
 
 
 @app.on_event("startup")

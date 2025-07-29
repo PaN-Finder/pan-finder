@@ -4,10 +4,10 @@ from ..setup_logging import get_logger
 
 logger = get_logger(__name__)
 
-document_router = APIRouter(prefix="/document")
+router = APIRouter(prefix="/document")
 
 
-@document_router.get("/{doi:path}")
+@router.get("/{doi:path}")
 async def get_document_details(
     doi: str = Path(..., min_length=1, description="Document DOI (cannot be empty)")
 ) -> dict:
