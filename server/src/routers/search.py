@@ -1,12 +1,14 @@
 import copy
 import json
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Path
 import asyncio
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from typing import AsyncGenerator
 
 from ..engine import SearchResponse, get_search_engine
+from ..models.statistics import Statistics
+from ..models.statistics_repository import StatisticsRepository
 from ..database import get_connection_pool
 from ..setup_logging import get_logger
 
@@ -22,7 +24,7 @@ class SearchRequest(BaseModel):
 class StructuredSearchRequest(BaseModel):
     structured_data: dict = Field(..., description="Structured search data")
     original_query: str = Field(
-        default="",
+        min_length=1,
         description="Original user query that generated this structured data",
     )
 
@@ -93,6 +95,20 @@ async def search_with_ai_stream(request: SearchRequest):
                 results=search_results,
                 total_results=len(search_results),
             )
+
+            # Store statistics
+            try:
+                stat = Statistics(
+                    search_query=raw_query,
+                    structured_data=raw_structured_data,
+                    results=[result.model_dump() for result in search_results],
+                    execution_time_ms=0,  # Optionally measure and store real execution time
+                    is_modified=False,
+                )
+                StatisticsRepository.insert(stat)
+            except Exception as e:
+                logger.error(f"Failed to store statistics: {e}")
+
             evt = StreamEvent(event="results", data=response.model_dump())
             yield f"event: {evt.event}\ndata: {json.dumps(evt.data)}\n\n"
             await asyncio.sleep(
@@ -153,11 +169,25 @@ async def search_with_structured_data(request: StructuredSearchRequest):
             # Step 2: Execute search directly with structured data
             search_results = await engine.execute_search(request.structured_data)
             response = SearchResponse(
-                original_query=request.original_query or "Structured data search",
+                original_query=request.original_query,
                 raw_structured_data=structured_data,
                 results=search_results,
                 total_results=len(search_results),
             )
+
+            # Store statistics
+            try:
+                stat = Statistics(
+                    search_query=request.original_query,
+                    structured_data=structured_data,
+                    results=[result.model_dump() for result in search_results],
+                    execution_time_ms=0,
+                    is_modified=True,  # Mark as modified since user provided structured data
+                )
+                StatisticsRepository.insert(stat)
+            except Exception as e:
+                logger.error(f"Failed to store statistics: {e}")
+
             evt = StreamEvent(event="results", data=response.model_dump())
             yield f"event: {evt.event}\ndata: {json.dumps(evt.data)}\n\n"
             await asyncio.sleep(0.1)
@@ -188,7 +218,9 @@ async def search_with_structured_data(request: StructuredSearchRequest):
 
 
 @router.get("/document/{doi:path}")
-async def get_document_details(doi: str):
+async def get_document_details(
+    doi: str = Path(..., min_length=1, description="Document DOI (cannot be empty)")
+):
     """
     Get detailed document information by DOI.
     Returns: id, doi, title, text, summary, raw, facility_name
