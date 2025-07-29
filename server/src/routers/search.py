@@ -1,10 +1,10 @@
 import copy
 import json
-from fastapi import APIRouter, HTTPException, Path
 import asyncio
+from typing import AsyncGenerator, Dict
+from fastapi import APIRouter, HTTPException, Path
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
-from typing import AsyncGenerator
 
 from ..engine import SearchResponse, get_search_engine
 from ..models.statistics import Statistics
@@ -22,7 +22,7 @@ class SearchRequest(BaseModel):
 
 
 class StructuredSearchRequest(BaseModel):
-    structured_data: dict = Field(..., description="Structured search data")
+    structured_data: Dict = Field(..., description="Structured search data")
     original_query: str = Field(
         min_length=1,
         description="Original user query that generated this structured data",
@@ -34,8 +34,15 @@ class StreamEvent(BaseModel):
     data: dict
 
 
+# --- Helper functions for streaming events ---
+async def sse_yield(evt: StreamEvent):
+    """Async generator that yields a formatted SSE event and sleeps briefly."""
+    yield f"event: {evt.event}\ndata: {json.dumps(evt.data)}\n\n"
+    await asyncio.sleep(0.1)  # Ensure client receives the event
+
+
 @router.post("")
-async def search_with_ai_stream(request: SearchRequest):
+async def search_with_ai_stream(request: SearchRequest) -> StreamingResponse:
     """
     Streaming search endpoint that sends Server-Sent Events (SSE) with real-time updates:
     1. Analysing your query
@@ -52,14 +59,13 @@ async def search_with_ai_stream(request: SearchRequest):
 
         try:
             # Step 1: Analysis started
-            evt = StreamEvent(
-                event="analysis_started",
-                data={"message": "Analysing your query", "query": request.query},
-            )
-            yield f"event: {evt.event}\ndata: {json.dumps(evt.data)}\n\n"
-            await asyncio.sleep(
-                0.1
-            )  # Without this, the client does not receive the event
+            async for event in sse_yield(
+                StreamEvent(
+                    event="analysis_started",
+                    data={"message": "Analysing your query", "query": request.query},
+                )
+            ):
+                yield event
 
             engine = get_search_engine()
 
@@ -68,24 +74,22 @@ async def search_with_ai_stream(request: SearchRequest):
             search_data = await engine.parse_query_to_structured_data(raw_query)
             raw_structured_data = copy.deepcopy(search_data)
 
-            evt = StreamEvent(
-                event="analysis_completed",
-                data={"message": "Analysis completed"},
-            )
-            yield f"event: {evt.event}\ndata: {json.dumps(evt.data)}\n\n"
-            await asyncio.sleep(
-                0.1
-            )  # Without this, the client does not receive the event
+            async for event in sse_yield(
+                StreamEvent(
+                    event="analysis_completed",
+                    data={"message": "Analysis completed"},
+                )
+            ):
+                yield event
 
             # Step 3: Start database query
-            evt = StreamEvent(
-                event="database_query_started",
-                data={"message": "Start querying database"},
-            )
-            yield f"event: {evt.event}\ndata: {json.dumps(evt.data)}\n\n"
-            await asyncio.sleep(
-                0.1
-            )  # Without this, the client does not receive the event
+            async for event in sse_yield(
+                StreamEvent(
+                    event="database_query_started",
+                    data={"message": "Start querying database"},
+                )
+            ):
+                yield event
 
             # Step 4: Execute search and stream final results
             search_results = await engine.execute_search(search_data)
@@ -109,23 +113,21 @@ async def search_with_ai_stream(request: SearchRequest):
             except Exception as e:
                 logger.error(f"Failed to store statistics: {e}")
 
-            evt = StreamEvent(event="results", data=response.model_dump())
-            yield f"event: {evt.event}\ndata: {json.dumps(evt.data)}\n\n"
-            await asyncio.sleep(
-                0.1
-            )  # Without this, the client does not receive the event
+            async for event in sse_yield(
+                StreamEvent(event="results", data=response.model_dump())
+            ):
+                yield event
 
         except asyncio.CancelledError:
             logger.info(f"Search stream {connection_id} cancelled by client")
+            # Yield a cancelled event if desired, or just end the stream
             return
         except Exception as e:
             logger.error(f"Error in streaming search {connection_id}: {e}")
-            evt = StreamEvent(
-                event="error", data={"message": f"Search failed: {str(e)}"}
-            )
-            yield f"event: {evt.event}\ndata: {json.dumps(evt.data)}\n\n"
-            # Small delay to ensure error message is sent
-            await asyncio.sleep(0.1)
+            async for event in sse_yield(
+                StreamEvent(event="error", data={"message": f"Search failed: {str(e)}"})
+            ):
+                yield event
             return
         finally:
             logger.info(f"Search stream {connection_id} ended")
@@ -142,7 +144,9 @@ async def search_with_ai_stream(request: SearchRequest):
 
 
 @router.post("/structured")
-async def search_with_structured_data(request: StructuredSearchRequest):
+async def search_with_structured_data(
+    request: StructuredSearchRequest,
+) -> StreamingResponse:
     """
     Search endpoint that accepts structured search data directly, bypassing LLM analysis.
     """
@@ -155,15 +159,15 @@ async def search_with_structured_data(request: StructuredSearchRequest):
 
         try:
             # Step 1: Start database query (no LLM analysis needed)
-            evt = StreamEvent(
-                event="database_query_started",
-                data={"message": "Start querying database"},
-            )
-            yield f"event: {evt.event}\ndata: {json.dumps(evt.data)}\n\n"
-            await asyncio.sleep(0.1)
+            async for event in sse_yield(
+                StreamEvent(
+                    event="database_query_started",
+                    data={"message": "Start querying database"},
+                )
+            ):
+                yield event
 
             engine = get_search_engine()
-
             structured_data = copy.deepcopy(request.structured_data)
 
             # Step 2: Execute search directly with structured data
@@ -188,20 +192,20 @@ async def search_with_structured_data(request: StructuredSearchRequest):
             except Exception as e:
                 logger.error(f"Failed to store statistics: {e}")
 
-            evt = StreamEvent(event="results", data=response.model_dump())
-            yield f"event: {evt.event}\ndata: {json.dumps(evt.data)}\n\n"
-            await asyncio.sleep(0.1)
+            async for event in sse_yield(
+                StreamEvent(event="results", data=response.model_dump())
+            ):
+                yield event
 
         except asyncio.CancelledError:
             logger.info(f"Structured search stream {connection_id} cancelled by client")
             return
         except Exception as e:
             logger.error(f"Error in structured search stream {connection_id}: {e}")
-            evt = StreamEvent(
-                event="error", data={"message": f"Search failed: {str(e)}"}
-            )
-            yield f"event: {evt.event}\ndata: {json.dumps(evt.data)}\n\n"
-            await asyncio.sleep(0.1)
+            async for event in sse_yield(
+                StreamEvent(event="error", data={"message": f"Search failed: {str(e)}"})
+            ):
+                yield event
             return
         finally:
             logger.info(f"Structured search stream {connection_id} ended")
@@ -220,7 +224,7 @@ async def search_with_structured_data(request: StructuredSearchRequest):
 @router.get("/document/{doi:path}")
 async def get_document_details(
     doi: str = Path(..., min_length=1, description="Document DOI (cannot be empty)")
-):
+) -> dict:
     """
     Get detailed document information by DOI.
     Returns: id, doi, title, text, summary, raw, facility_name
