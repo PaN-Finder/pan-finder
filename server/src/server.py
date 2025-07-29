@@ -4,6 +4,7 @@ import asyncio
 
 from .config import get_settings
 from .routers import search
+from .routers import document
 from .database import (
     check_database_health,
     init_connection_pool,
@@ -29,6 +30,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(search.router)
+app.include_router(document.document_router)
 
 
 @app.on_event("startup")
