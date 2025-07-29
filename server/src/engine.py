@@ -219,7 +219,7 @@ class SearchEngine:
 
             # Execute the query
             db_execution_start = time.time()
-            results = await self._execute_database_query(sql_query)
+            results = self._execute_database_query(sql_query)
             db_execution_time = time.time() - db_execution_start
             self._logger.debug(
                 f"Database execution took {db_execution_time:.3f} seconds"
@@ -231,9 +231,7 @@ class SearchEngine:
             self._logger.error(f"Search execution error: {e}")
             return []
 
-    async def _execute_database_query(
-        self, sql_query: str
-    ) -> List[EnhancedSearchResult]:
+    def _execute_database_query(self, sql_query: str) -> List[EnhancedSearchResult]:
         """
         Execute the database query and process results.
 
