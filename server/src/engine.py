@@ -28,13 +28,6 @@ class EnhancedSearchResult(BaseModel):
     keyword_score: float
 
 
-class SearchResponse(BaseModel):
-    original_query: str
-    raw_structured_data: dict
-    results: List[EnhancedSearchResult]
-    total_results: int
-
-
 class SearchEngine:
     """
     A search engine that combines OpenAI processing with database search capabilities.
