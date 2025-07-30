@@ -7,3 +7,6 @@ CREATE TABLE IF NOT EXISTS feedback (
     FOREIGN KEY (statistic_id) REFERENCES statistic(id) ON DELETE CASCADE,
     UNIQUE (statistic_id, metadata) -- Ensure uniqueness of feedback for each statistic
 );
+
+-- Composite index to speed up queries filtering by statistic_id and metadata together
+CREATE INDEX IF NOT EXISTS idx_feedback_statistic_id_metadata ON feedback(statistic_id, metadata);
