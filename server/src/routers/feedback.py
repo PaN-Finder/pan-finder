@@ -54,6 +54,26 @@ def submit_feedback(feedback_request: FeedbackRequest) -> dict:
                 status_code=400, detail="DOI not found in statistic results."
             )
 
+        # Fetch feedback table to see if feedback already exists
+        existing_feedback = FeedbackRepository.select_by_statistic_id_and_metadata(
+            feedback_request.statistic_id, {"doi": feedback_request.doi}
+        )
+
+        if existing_feedback and existing_feedback.id is not None:
+            existing_feedback.feedback_type = feedback_request.feedback_type
+            updated_feedback = FeedbackRepository.update_feedback_type(
+                existing_feedback.id, feedback_request.feedback_type
+            )
+            if not updated_feedback:
+                logger.error(
+                    f"Failed to update feedback for ID {existing_feedback.id}."
+                )
+                raise HTTPException(
+                    status_code=500, detail="Failed to update feedback."
+                )
+
+            return updated_feedback.to_dict()
+
         feedback = Feedback(
             statistic_id=feedback_request.statistic_id,
             feedback_type=feedback_request.feedback_type,

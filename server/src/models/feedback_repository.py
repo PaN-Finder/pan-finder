@@ -32,3 +32,51 @@ class FeedbackRepository:
             if row:
                 return int(row[0])
             raise RuntimeError("Failed to insert feedback record.")
+
+    @staticmethod
+    def select_by_statistic_id_and_metadata(
+        statistic_id: str, metadata: dict
+    ) -> Feedback | None:
+        """
+        Select feedback by statistic ID and metadata.
+        Returns a Feedback instance or None if not found.
+        """
+        query = """
+            SELECT * FROM feedback
+            WHERE statistic_id = %s AND metadata = %s
+        """
+        with get_db_connection() as conn:
+            cur = conn.execute(
+                query,
+                [
+                    statistic_id,
+                    json.dumps(metadata) if metadata is not None else None,
+                ],
+            )
+            row = cur.fetchone()
+            if row:
+                if cur.description:
+                    columns = [desc[0] for desc in cur.description]
+                return Feedback.from_row(dict(zip(columns, row)))
+            return None
+
+    @staticmethod
+    def update_feedback_type(feedback_id: int, feedback_type: str) -> Feedback | None:
+        """
+        Update the feedback type for an existing feedback record.
+        Returns the updated Feedback instance or None if not found.
+        """
+        query = """
+            UPDATE feedback
+            SET feedback_type = %s
+            WHERE id = %s
+            RETURNING *
+        """
+        with get_db_connection() as conn:
+            cur = conn.execute(query, [feedback_type, feedback_id])
+            row = cur.fetchone()
+            if row:
+                if cur.description:
+                    columns = [desc[0] for desc in cur.description]
+                return Feedback.from_row(dict(zip(columns, row)))
+            return None
