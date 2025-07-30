@@ -7,8 +7,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from ..engine import EnhancedSearchResult, get_search_engine
-from ..models.statistics import Statistics
-from ..models.statistics_repository import StatisticsRepository
+from ..models.statistic import Statistic
+from ..models.statistic_repository import StatisticRepository
 from ..setup_logging import get_logger
 
 logger = get_logger(__name__)
@@ -87,13 +87,13 @@ async def search_with_ai_stream(request: SearchRequest) -> StreamingResponse:
             # Store statistics
             stat_id = None
             try:
-                stat = Statistics(
+                stat = Statistic(
                     search_query=raw_query,
                     structured_data=raw_structured_data,
                     results=[result.model_dump() for result in search_results],
                     execution_time_ms=0,  # Optionally measure and store real execution time
                 )
-                stat_id = StatisticsRepository.insert(stat)
+                stat_id = StatisticRepository.insert(stat)
             except Exception as e:
                 logger.error(f"Failed to store statistics: {e}")
 
@@ -153,7 +153,7 @@ async def search_with_structured_data(
             async for event in sse_yield(StreamEvent(event="analysing_query")):
                 yield event
 
-            original = StatisticsRepository.select_by_id(request.modified_query_id)
+            original = StatisticRepository.select_by_id(request.modified_query_id)
             if not original:
                 raise ValueError(
                     f"Original query with ID {request.modified_query_id} not found."
@@ -174,14 +174,14 @@ async def search_with_structured_data(
 
             stat_id = None
             try:
-                stat = Statistics(
+                stat = Statistic(
                     search_query=original.search_query,
                     structured_data=structured_data,
                     results=[result.model_dump() for result in search_results],
                     execution_time_ms=0,
                     modified_query_id=request.modified_query_id,
                 )
-                stat_id = StatisticsRepository.insert(stat)
+                stat_id = StatisticRepository.insert(stat)
             except Exception as e:
                 logger.error(f"Failed to store statistics: {e}")
 

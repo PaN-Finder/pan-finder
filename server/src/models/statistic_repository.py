@@ -1,41 +1,41 @@
 from ..database import get_db_connection
-from .statistics import Statistics
+from .statistic import Statistic
 import json
 
 
-class StatisticsRepository:
+class StatisticRepository:
     """
-    Repository for CRUD operations on the statistics table.
+    Repository for CRUD operations on the statistic table.
     """
 
     """ Select row by id"""
 
     @staticmethod
-    def select_by_id(stat_id: str) -> Statistics:
+    def select_by_id(stat_id: str) -> Statistic:
         """
-        Select a statistics record by its UUID.
-        Returns a Statistics instance or raises an error if not found.
+        Select a statistic record by its UUID.
+        Returns a Statistic instance or raises an error if not found.
         """
-        query = "SELECT * FROM statistics WHERE id = %s"
+        query = "SELECT * FROM statistic WHERE id = %s"
         with get_db_connection() as conn:
             cur = conn.execute(query, (stat_id,))
             row = cur.fetchone()
             if row:
                 if cur.description:
                     columns = [desc[0] for desc in cur.description]
-                    return Statistics.from_row(dict(zip(columns, row)))
+                    return Statistic.from_row(dict(zip(columns, row)))
                 else:
                     raise RuntimeError("Database query returned no column information")
             raise ValueError(f"Statistics record with id {stat_id} not found.")
 
     @staticmethod
-    def insert(stat: Statistics) -> str:
+    def insert(stat: Statistic) -> str:
         """
-        Insert a new statistics record into the database.
+        Insert a new statistic record into the database.
         Returns the new record's UUID as a string.
         """
         query = """
-            INSERT INTO statistics (search_query, structured_data, results, execution_time_ms, modified_query_id)
+            INSERT INTO statistic (search_query, structured_data, results, execution_time_ms, modified_query_id)
             VALUES (%s, %s, %s, %s, %s)
             RETURNING id
         """
@@ -53,4 +53,4 @@ class StatisticsRepository:
             row = cur.fetchone()
             if row:
                 return str(row[0])
-            raise RuntimeError("Failed to insert statistics record.")
+            raise RuntimeError("Failed to insert statistic record.")

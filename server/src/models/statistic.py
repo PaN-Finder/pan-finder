@@ -2,9 +2,9 @@ from datetime import datetime
 from typing import Optional, Any
 
 
-class Statistics:
+class Statistic:
     """
-    Model class representing a row in the 'statistics' table.
+    Model class representing a row in the 'statistic' table.
     """
 
     def __init__(
@@ -28,7 +28,7 @@ class Statistics:
     @classmethod
     def from_row(cls, row: dict):
         """
-        Create a Statistics instance from a database row (dict).
+        Create a Statistic instance from a database row (dict).
         """
         return cls(
             id=str(row.get("id")),
@@ -42,7 +42,7 @@ class Statistics:
 
     def to_dict(self):
         """
-        Convert the Statistics instance to a dict for database operations.
+        Convert the Statistic instance to a dict for database operations.
         """
         return {
             "id": self.id,

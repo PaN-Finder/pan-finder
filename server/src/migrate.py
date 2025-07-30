@@ -19,7 +19,7 @@ def ensure_migrations_table():
     with get_db_connection() as conn:
         conn.execute(
             """
-            CREATE TABLE IF NOT EXISTS migrations (
+            CREATE TABLE IF NOT EXISTS migration (
                 id SERIAL PRIMARY KEY,
                 filename TEXT UNIQUE NOT NULL,
                 applied_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -30,7 +30,7 @@ def ensure_migrations_table():
 
 def get_applied_migrations():
     with get_db_connection() as conn:
-        result = conn.execute("SELECT filename FROM migrations").fetchall()
+        result = conn.execute("SELECT filename FROM migration").fetchall()
         return set(row[0] for row in result)
 
 
@@ -52,7 +52,7 @@ def apply_migration(filename):
                 )
                 raise
         conn.execute(
-            sql.SQL("INSERT INTO migrations (filename, applied_at) VALUES (%s, %s)"),
+            sql.SQL("INSERT INTO migration (filename, applied_at) VALUES (%s, %s)"),
             (os.path.basename(filename), datetime.now()),
         )
     logger.info(f"Migration {os.path.basename(filename)} applied successfully.")

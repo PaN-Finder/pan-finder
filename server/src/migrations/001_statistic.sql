@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS statistics (
+CREATE TABLE IF NOT EXISTS statistic (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     search_query TEXT NOT NULL,
     structured_data JSONB NOT NULL, -- Extracted structured data from the search query (LLM or modified by user)
