@@ -9,7 +9,7 @@ router = APIRouter(prefix="/document")
 
 @router.get("/{doi:path}")
 async def get_document_details(
-    doi: str = Path(..., min_length=1, description="Document DOI (cannot be empty)")
+    doi: str = Path(..., min_length=1, description="Document DOI")
 ) -> dict:
     """
     Get detailed document information by DOI.

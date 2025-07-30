@@ -2,9 +2,11 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 
+
 from .config import get_settings
 from .routers import search
 from .routers import document
+from .routers import feedback
 from .database import (
     check_database_health,
     init_connection_pool,
@@ -31,6 +33,7 @@ app.add_middleware(
 # Include routers
 app.include_router(search.router)
 app.include_router(document.router)
+app.include_router(feedback.router)
 
 
 @app.on_event("startup")
