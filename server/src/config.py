@@ -34,6 +34,9 @@ class Settings:
         self.db_max_idle = int(os.getenv("DB_MAX_IDLE", "300"))  # 5 minutes
         self.db_max_lifetime = int(os.getenv("DB_MAX_LIFETIME", "3600"))  # 1 hour
 
+        # Cloudflare Turnstile
+        self.turnstile_secret_key = os.getenv("TURNSTILE_SECRET_KEY", "")
+
     def _parse_cors_origins(self) -> List[str]:
         """Parse CORS origins from environment variable."""
         origins_str = os.getenv("ALLOWED_ORIGINS", "*")

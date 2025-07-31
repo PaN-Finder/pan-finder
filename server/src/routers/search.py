@@ -2,7 +2,7 @@ import copy
 import json
 import asyncio
 from typing import AsyncGenerator, Dict, List
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -10,6 +10,7 @@ from ..engine import EnhancedSearchResult, get_search_engine
 from ..models.statistic import Statistic
 from ..models.statistic_repository import StatisticRepository
 from ..setup_logging import get_logger
+from ..utils.turnstile import verify_turnstile_token
 
 logger = get_logger(__name__)
 
@@ -18,6 +19,7 @@ router = APIRouter(prefix="/search")
 
 class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1, description="Search query (cannot be empty)")
+    turnstile_token: str = Field(..., description="Cloudflare Turnstile token")
 
 
 class SearchResponse(BaseModel):
@@ -47,14 +49,12 @@ async def sse_yield(evt: StreamEvent):
 
 
 @router.post("")
-async def search_with_ai_stream(request: SearchRequest) -> StreamingResponse:
-    """
-    Streaming search endpoint that sends Server-Sent Events (SSE) with real-time updates:
-    1. Analysing your query
-    2. Analyse done (LLM response got)
-    3. Start querying database
-    4. Results
-    """
+async def search_with_ai_stream(
+    request: SearchRequest, fastapi_request: Request
+) -> StreamingResponse:
+    # Validate Turnstile token before processing
+    client_ip = fastapi_request.client.host if fastapi_request.client else None
+    await verify_turnstile_token(request.turnstile_token, remoteip=client_ip or "")
 
     async def event_generator() -> AsyncGenerator[str, None]:
         connection_id = id(asyncio.current_task())
