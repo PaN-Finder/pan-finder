@@ -2,11 +2,11 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 
-
 from .config import get_settings
 from .routers import search
 from .routers import document
 from .routers import feedback
+from .routers import session
 from .database import (
     check_database_health,
     init_connection_pool,
@@ -34,6 +34,7 @@ app.add_middleware(
 app.include_router(search.router)
 app.include_router(document.router)
 app.include_router(feedback.router)
+app.include_router(session.router)
 
 
 @app.on_event("startup")
@@ -52,8 +53,28 @@ async def startup_event():
             run_migrations()
         else:
             logger.warning("Database connection check failed during startup")
+
+        # Start session cleanup task
+        asyncio.create_task(session_cleanup_task())
+        logger.info("Session cleanup task started")
+
     except Exception as e:
         logger.error(f"Failed to initialize database during startup: {e}")
+
+
+async def session_cleanup_task():
+    """Background task to clean up expired sessions every 30 minutes."""
+    from .models.session_repository import SessionRepository
+
+    while True:
+        try:
+            await asyncio.sleep(1800)  # Wait 30 minutes
+            removed_count = SessionRepository.cleanup_expired_sessions()
+            if removed_count > 0:
+                logger.info(f"Cleaned up {removed_count} expired sessions")
+        except Exception as e:
+            logger.error(f"Error in session cleanup task: {e}")
+            await asyncio.sleep(60)  # Wait 1 minute before retrying
 
 
 @app.on_event("shutdown")

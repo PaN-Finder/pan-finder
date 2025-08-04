@@ -10,7 +10,7 @@ from ..engine import EnhancedSearchResult, get_search_engine
 from ..models.statistic import Statistic
 from ..models.statistic_repository import StatisticRepository
 from ..setup_logging import get_logger
-from ..utils.turnstile import verify_turnstile_token
+from ..routers.session import verify_session
 
 logger = get_logger(__name__)
 
@@ -19,7 +19,7 @@ router = APIRouter(prefix="/search")
 
 class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1, description="Search query (cannot be empty)")
-    turnstile_token: str = Field(..., description="Cloudflare Turnstile token")
+    session_id: str = Field(..., description="Session ID for authentication")
 
 
 class SearchResponse(BaseModel):
@@ -34,6 +34,7 @@ class StructuredSearchRequest(BaseModel):
         ..., description="ID of the modified query (required)"
     )
     structured_data: Dict = Field(..., description="Structured search data")
+    session_id: str = Field(..., description="Session ID for authentication")
 
 
 class StreamEvent(BaseModel):
@@ -52,9 +53,8 @@ async def sse_yield(evt: StreamEvent):
 async def search_with_ai_stream(
     request: SearchRequest, fastapi_request: Request
 ) -> StreamingResponse:
-    # Validate Turnstile token before processing
-    client_ip = fastapi_request.client.host if fastapi_request.client else None
-    await verify_turnstile_token(request.turnstile_token, remoteip=client_ip or "")
+    # Verify session before processing
+    verify_session(request.session_id)
 
     async def event_generator() -> AsyncGenerator[str, None]:
         connection_id = id(asyncio.current_task())
@@ -141,6 +141,8 @@ async def search_with_structured_data(
     """
     Search endpoint that accepts structured search data directly, bypassing LLM analysis.
     """
+    # Verify session before processing
+    verify_session(request.session_id)
 
     async def event_generator() -> AsyncGenerator[str, None]:
         connection_id = id(asyncio.current_task())
