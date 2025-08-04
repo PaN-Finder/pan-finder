@@ -5,6 +5,7 @@ from ..setup_logging import get_logger
 from ..models.feedback import Feedback
 from ..models.feedback_repository import FeedbackRepository
 from ..models.statistic_repository import StatisticRepository
+from ..routers.session import verify_session
 
 logger = get_logger(__name__)
 
@@ -21,6 +22,7 @@ class FeedbackRequest(BaseModel):
         pattern=r"^(positive|negative)$",
     )
     doi: str = Field(..., description="DOI to which the feedback is related")
+    session_id: str = Field(..., description="Session ID for authentication")
 
 
 @router.post("/submit")
@@ -29,6 +31,9 @@ def submit_feedback(feedback_request: FeedbackRequest) -> dict:
     Submit feedback for a statistic.
     Returns: id, statistic_id, feedback_type, metadata, created_at
     """
+    # Verify session before processing
+    verify_session(feedback_request.session_id)
+
     try:
         logger.info(
             f"Submitting feedback for statistic ID: {feedback_request.statistic_id}"
