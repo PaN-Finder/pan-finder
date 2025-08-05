@@ -5,7 +5,8 @@ This module provides a cache implementation for storing and managing LLM respons
 to avoid redundant API calls and improve performance.
 """
 
-from typing import Optional, Dict, Tuple
+import hashlib
+from typing import Optional, Dict
 from logging import Logger
 from ..setup_logging import get_logger
 
@@ -32,10 +33,25 @@ class LLMResponseCache:
             max_query_length: Maximum query length to cache (in characters)
             logger: Optional logger instance for debugging
         """
-        self._cache: Dict[Tuple[str, str], str] = {}
+        self._cache: Dict[str, str] = {}
         self._max_size = max_size
         self._max_query_length = max_query_length
         self._logger = logger or get_logger(self.__class__.__name__)
+
+    def _get_cache_key(self, model: str, query: str) -> str:
+        """
+        Generate a hash-based cache key from model and query.
+
+        Args:
+            model: The model name
+            query: The query string
+
+        Returns:
+            SHA-256 hash of the model and query combination
+        """
+        # Combine model and query with a separator
+        combined = f"{model}|{query}"
+        return hashlib.sha256(combined.encode("utf-8")).hexdigest()
 
     def get(self, model: str, query: str) -> Optional[str]:
         """
@@ -51,7 +67,7 @@ class LLMResponseCache:
         if len(query) > self._max_query_length:
             return None
 
-        cache_key = (model, query)
+        cache_key = self._get_cache_key(model, query)
         cached_response = self._cache.get(cache_key)
 
         if cached_response is not None:
@@ -83,7 +99,7 @@ class LLMResponseCache:
             self._evict_oldest_entries()
 
         # Cache the response
-        cache_key = (model, query)
+        cache_key = self._get_cache_key(model, query)
         self._cache[cache_key] = response
 
         self._logger.debug(

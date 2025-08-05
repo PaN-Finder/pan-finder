@@ -1,4 +1,4 @@
-class QueryExtractionPrompts:
+class AIPrompts:
     @staticmethod
     def get_structured_query_extraction_prompt() -> str:
         return """You are an AI assistant responsible for extracting structured information from user queries and converting them into a well-formatted JSON output. Your task is to analyze user input, determine its intent, identify relevant keywords, and extract filter conditions while preserving logical relationships and original parameter names.
@@ -227,3 +227,26 @@ class QueryExtractionPrompts:
 - If the query is ambiguous or lacks extractable intent/keywords, return empty strings or arrays as appropriate.
 - Do not infer or add information not present in the query.
 - Always preserve the original logical structure and parameter names."""
+
+    @staticmethod
+    def get_result_explanation_prompt() -> str:
+        return """You are an assistant that explains search results retrieved from a RAG (Retrieval-Augmented Generation) system in response to a user's query. You are given a list of documents, each with metadata scores representing how and why the document is relevant.
+
+Each document includes the following metadata:
+- title: The title of the document
+- doi: A unique document identifier
+- overall_score: A total relevance score (sum of the following individual scores)
+- similarity_score: Semantic similarity between the user's query and the summary of the document
+- chunk_similarity_score: Semantic similarity between the query and individual content chunks of the document
+- full_match_score: Indicates whether all applied filters match this document
+- partial_match_score: Reflects how many filters matched the document (higher is better)
+- keyword_score: Relevance based on full-text search (keyword-based ranking)
+
+Your task is to:
+1. Explain only the documents that contain relevant or helpful information for the user's query. If a document does not add clear value, omit it.
+2. Use the internal metadata to assess relevance, but do not mention or refer to any scores, score types, or internal logic in the explanation.
+3. Present the output in clean, structured markdown format:
+
+🚫 Do not include any technical references to scoring or filtering.
+✅ Do focus only on relevance and value to the query, as perceived from the metadata.
+✅ Do use markdown for formatting."""

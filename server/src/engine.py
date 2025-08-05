@@ -4,12 +4,12 @@ from functools import lru_cache
 from sentence_transformers import SentenceTransformer
 from openai import AzureOpenAI
 from psycopg.rows import dict_row
-from typing import cast, Any, List, Optional
+from typing import cast, Any, List, Optional, AsyncGenerator
 from pydantic import BaseModel
 
 from .database import get_connection_pool, get_db_connection
 from .core.search_query_builder import SearchQueryBuilder
-from .core.prompts import QueryExtractionPrompts
+from .core.prompts import AIPrompts
 from .core.llm_cache import LLMResponseCache
 from .setup_logging import get_logger
 from .config import get_settings
@@ -109,7 +109,7 @@ class SearchEngine:
                 messages=[
                     {
                         "role": "system",
-                        "content": QueryExtractionPrompts.get_structured_query_extraction_prompt(),
+                        "content": AIPrompts.get_structured_query_extraction_prompt(),
                     },
                     {
                         "role": "user",
@@ -320,6 +320,128 @@ class SearchEngine:
                 )
 
         return search_results
+
+    async def explain_search_results(
+        self, query: str, search_results: List[EnhancedSearchResult]
+    ) -> AsyncGenerator[str, None]:
+        """
+        Generate a streaming explanation of search results using OpenAI.
+
+        Args:
+            query: The original search query
+            search_results: List of search results to explain
+
+        Yields:
+            Streaming explanation content
+        """
+        model_name = settings.azure_openai_model_name
+
+        # Prepare the results data for the LLM
+        results_summary = {
+            "total_results": len(search_results),
+            "results": [
+                {
+                    "title": result.title,
+                    "doi": result.doi,
+                    "overall_score": result.overall_score,
+                    "similarity_score": result.similarity_score,
+                    "chunk_similarity_score": result.chunk_similarity_score,
+                    "full_match_score": result.full_match_score > 0,
+                    "partial_match_score": result.partial_match_score,
+                    "keyword_score": result.keyword_score,
+                }
+                for result in search_results[:10]  # Limit to top 10 for context
+            ],
+        }
+
+        # Create cache key from query and results summary
+        results_json = json.dumps(results_summary, sort_keys=True)
+        cache_key = f"{query}||{results_json}"
+
+        # Check if we have a cached response
+        cached_response = self._llm_cache.get(model_name, cache_key)
+        if cached_response is not None:
+            self._logger.debug(f"Using cached explanation for query: {query}")
+            # Yield cached response as a single chunk
+            yield cached_response
+            return
+
+        try:
+            # Prepare the prompt with query and results
+            user_content = f"""
+            Original Query: "{query}"
+            
+            Search Results Summary:
+            - Total results found: {results_summary['total_results']}
+            
+            Top Results:
+            {json.dumps(results_summary['results'], indent=2)}
+            
+            Please explain these search results in relation to the user's query.
+            """
+
+            stream = self.openai_client.chat.completions.create(
+                model=model_name,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": AIPrompts.get_result_explanation_prompt(),
+                    },
+                    {
+                        "role": "user",
+                        "content": user_content,
+                    },
+                ],
+                max_tokens=800,
+                temperature=0.3,  # Slightly higher temperature for more natural explanations
+                stream=True,  # Enable streaming
+            )
+
+            # Stream the response and collect for caching
+            collected_content = ""
+            for chunk in stream:
+                if hasattr(chunk, "choices") and len(chunk.choices) > 0:
+                    content = getattr(chunk.choices[0].delta, "content", "")
+                    if content:
+                        collected_content += content
+                        yield content
+                    else:
+                        self._logger.warning("Received empty content chunk from OpenAI")
+                else:
+                    self._logger.warning(
+                        "Unexpected chunk format from OpenAI: %s", chunk
+                    )
+
+            self._logger.debug("OpenAI streaming completed")
+
+            # Cache the complete response if it's valid
+            if collected_content:
+                self._llm_cache.put(model_name, cache_key, collected_content)
+
+        except Exception as e:
+            self._logger.error(f"OpenAI API error during explanation: {e}")
+            fallback_explanation = self._create_fallback_explanation(
+                query, len(search_results)
+            )
+            yield fallback_explanation
+
+    def _create_fallback_explanation(self, query: str, result_count: int) -> str:
+        """
+        Create a fallback explanation when OpenAI processing fails.
+
+        Args:
+            query: Original query string
+            result_count: Number of results found
+
+        Returns:
+            Basic explanation string
+        """
+        if result_count == 0:
+            return f"No results were found for your search query '{query}'. You might want to try using different keywords or broader search terms."
+        elif result_count == 1:
+            return f"Found 1 result for your search query '{query}'. The result appears to be relevant to your search criteria."
+        else:
+            return f"Found {result_count} results for your search query '{query}'. The results are ranked by relevance to your search criteria, with the most relevant results appearing first."
 
 
 @lru_cache()

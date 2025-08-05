@@ -109,6 +109,34 @@ async def search_with_ai_stream(
             ):
                 yield event
 
+            # Step 5: Stream explanation
+            async for event in sse_yield(StreamEvent(event="generating_explanation")):
+                yield event
+
+            try:
+                async for explanation_chunk in engine.explain_search_results(
+                    raw_query, search_results
+                ):
+                    async for event in sse_yield(
+                        StreamEvent(
+                            event="explanation_chunk",
+                            data={"content": explanation_chunk},
+                        )
+                    ):
+                        yield event
+
+            except Exception as e:
+                logger.error(f"Failed to generate explanation: {e}")
+                async for event in sse_yield(
+                    StreamEvent(
+                        event="explanation_error",
+                        data={
+                            "message": "Unable to generate explanation for these results."
+                        },
+                    )
+                ):
+                    yield event
+
         except asyncio.CancelledError:
             logger.info(f"Search stream {connection_id} cancelled by client")
             # Yield a cancelled event if desired, or just end the stream
@@ -198,6 +226,38 @@ async def search_with_structured_data(
                 StreamEvent(event="results", data=response.model_dump())
             ):
                 yield event
+
+            # Step 4: Stream explanation
+            async for event in sse_yield(StreamEvent(event="generating_explanation")):
+                yield event
+
+            try:
+                async for explanation_chunk in engine.explain_search_results(
+                    original.search_query, search_results
+                ):
+                    async for event in sse_yield(
+                        StreamEvent(
+                            event="explanation_chunk",
+                            data={"content": explanation_chunk},
+                        )
+                    ):
+                        yield event
+
+                # Send explanation complete event
+                async for event in sse_yield(StreamEvent(event="explanation_complete")):
+                    yield event
+
+            except Exception as e:
+                logger.error(f"Failed to generate explanation: {e}")
+                async for event in sse_yield(
+                    StreamEvent(
+                        event="explanation_error",
+                        data={
+                            "message": "Unable to generate explanation for these results."
+                        },
+                    )
+                ):
+                    yield event
 
         except asyncio.CancelledError:
             logger.info(f"Structured search stream {connection_id} cancelled by client")
