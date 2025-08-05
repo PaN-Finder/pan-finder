@@ -82,7 +82,13 @@ class SearchEngine:
         """Lazy-loaded search query builder."""
         if self._query_builder is None:
             self._query_builder = SearchQueryBuilder(
-                pool=get_connection_pool(), embedding_model=self.embedding_model
+                pool=get_connection_pool(),
+                embedding_model=self.embedding_model,
+                rrf_k_similarity=settings.rrf_k_similarity,
+                rrf_k_chunk=settings.rrf_k_chunk,
+                rrf_k_full_match=settings.rrf_k_full_match,
+                rrf_k_partial_match=settings.rrf_k_partial_match,
+                rrf_k_keyword=settings.rrf_k_keyword,
             )
         return self._query_builder
 

@@ -37,6 +37,13 @@ class Settings:
         # Cloudflare Turnstile
         self.turnstile_secret_key = os.getenv("TURNSTILE_SECRET_KEY", "")
 
+        # RRF (Reciprocal Rank Fusion) configuration
+        self.rrf_k_similarity = int(os.getenv("RRF_K_SIMILARITY", "6"))
+        self.rrf_k_chunk = int(os.getenv("RRF_K_CHUNK", "6"))
+        self.rrf_k_full_match = int(os.getenv("RRF_K_FULL_MATCH", "6"))
+        self.rrf_k_partial_match = int(os.getenv("RRF_K_PARTIAL_MATCH", "6"))
+        self.rrf_k_keyword = int(os.getenv("RRF_K_KEYWORD", "10"))
+
     def _parse_cors_origins(self) -> List[str]:
         """Parse CORS origins from environment variable."""
         origins_str = os.getenv("ALLOWED_ORIGINS", "*")
