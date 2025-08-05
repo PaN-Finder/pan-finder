@@ -50,7 +50,7 @@ docker push registry.esss.lu.se/swap/pan-finder:server
 Frontend:
 ```bash
 cd searchui
-docker build --build-arg API=https://federated.panosc.ess.eu/api --build-arg PAN_FINDER_API=https://pan-finder-api.dev-sims.ess.eu -f Dockerfile . -t registry.esss.lu.se/swap/pan-finder:frontend --platform linux/amd64
+docker build --build-arg API=https://federated.panosc.ess.eu/api --build-arg PAN_FINDER_API=https://pan-finder-api.dev-sims.ess.eu --build-arg TURNSTILE_SITE_KEY=*** -f Dockerfile . -t registry.esss.lu.se/swap/pan-finder:frontend --platform linux/amd64
 ```
 
 Push Frontend:
