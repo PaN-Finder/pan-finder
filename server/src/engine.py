@@ -20,6 +20,7 @@ settings = get_settings()
 class EnhancedSearchResult(BaseModel):
     doi: str
     title: str
+    summary: str
     overall_score: float
     similarity_score: float
     chunk_similarity_score: float
@@ -274,7 +275,7 @@ class SearchEngine:
 
         # Use parameterized query for document details
         document_query = """
-        SELECT doi, title
+        SELECT doi, title, summary
         FROM document 
         WHERE doi = ANY(%s)
         """
@@ -308,6 +309,7 @@ class SearchEngine:
                     EnhancedSearchResult(
                         doi=doi,
                         title=doc.get("title", ""),
+                        summary=doc.get("summary", ""),
                         overall_score=float(result.get("overall_score", 0)),
                         similarity_score=float(result.get("similarity_score", 0)),
                         chunk_similarity_score=float(
@@ -320,6 +322,41 @@ class SearchEngine:
                 )
 
         return search_results
+
+    def _group_results_by_relevance(
+        self, search_results: List[EnhancedSearchResult]
+    ) -> dict:
+        """
+        Group search results into high, medium, and low relevance based on overall_score.
+
+        Args:
+            search_results: List of search results to group
+
+        Returns:
+            Dictionary with high, medium, low relevance groups
+        """
+        if not search_results:
+            return {"high": [], "medium": [], "low": []}
+
+        # Find the maximum overall score
+        max_score = max(result.overall_score for result in search_results)
+
+        # Define thresholds based on max score
+        high_threshold = max_score * 0.8  # Top 20% range
+        medium_threshold = max_score * 0.5  # Middle range (50-80%)
+        # Low is everything below 50%
+
+        groups = {"high": [], "medium": [], "low": []}
+
+        for result in search_results:
+            if result.overall_score >= high_threshold:
+                groups["high"].append(result)
+            elif result.overall_score >= medium_threshold:
+                groups["medium"].append(result)
+            else:
+                groups["low"].append(result)
+
+        return groups
 
     async def explain_search_results(
         self, query: str, search_results: List[EnhancedSearchResult]
@@ -336,22 +373,71 @@ class SearchEngine:
         """
         model_name = settings.azure_openai_model_name
 
+        # Group results by relevance
+        relevance_groups = self._group_results_by_relevance(search_results)
+
         # Prepare the results data for the LLM
         results_summary = {
             "total_results": len(search_results),
-            "results": [
-                {
-                    "title": result.title,
-                    "doi": result.doi,
-                    "overall_score": result.overall_score,
-                    "similarity_score": result.similarity_score,
-                    "chunk_similarity_score": result.chunk_similarity_score,
-                    "full_match_score": result.full_match_score > 0,
-                    "partial_match_score": result.partial_match_score,
-                    "keyword_score": result.keyword_score,
-                }
-                for result in search_results[:10]  # Limit to top 10 for context
-            ],
+            "relevance_groups": {
+                "high": {
+                    "count": len(relevance_groups["high"]),
+                    "results": [
+                        {
+                            "title": result.title,
+                            "doi": result.doi,
+                            "summary": result.summary,
+                            "overall_score": result.overall_score,
+                            "similarity_score": result.similarity_score,
+                            "chunk_similarity_score": result.chunk_similarity_score,
+                            "full_match_score": result.full_match_score > 0,
+                            "partial_match_score": result.partial_match_score,
+                            "keyword_score": result.keyword_score,
+                        }
+                        for result in relevance_groups["high"][
+                            :5
+                        ]  # Limit to top 5 per group
+                    ],
+                },
+                "medium": {
+                    "count": len(relevance_groups["medium"]),
+                    "results": [
+                        {
+                            "title": result.title,
+                            "doi": result.doi,
+                            "summary": result.summary,
+                            "overall_score": result.overall_score,
+                            "similarity_score": result.similarity_score,
+                            "chunk_similarity_score": result.chunk_similarity_score,
+                            "full_match_score": result.full_match_score > 0,
+                            "partial_match_score": result.partial_match_score,
+                            "keyword_score": result.keyword_score,
+                        }
+                        for result in relevance_groups["medium"][
+                            :3
+                        ]  # Limit to top 3 per group
+                    ],
+                },
+                "low": {
+                    "count": len(relevance_groups["low"]),
+                    "results": [
+                        {
+                            "title": result.title,
+                            "doi": result.doi,
+                            "summary": result.summary,
+                            "overall_score": result.overall_score,
+                            "similarity_score": result.similarity_score,
+                            "chunk_similarity_score": result.chunk_similarity_score,
+                            "full_match_score": result.full_match_score > 0,
+                            "partial_match_score": result.partial_match_score,
+                            "keyword_score": result.keyword_score,
+                        }
+                        for result in relevance_groups["low"][
+                            :2
+                        ]  # Limit to top 2 per group
+                    ],
+                },
+            },
         }
 
         # Create cache key from query and results summary
@@ -373,11 +459,14 @@ class SearchEngine:
             
             Search Results Summary:
             - Total results found: {results_summary['total_results']}
+            - High relevance results: {results_summary['relevance_groups']['high']['count']}
+            - Medium relevance results: {results_summary['relevance_groups']['medium']['count']}
+            - Low relevance results: {results_summary['relevance_groups']['low']['count']}
             
-            Top Results:
-            {json.dumps(results_summary['results'], indent=2)}
+            Results by Relevance Groups:
+            {json.dumps(results_summary['relevance_groups'], indent=2)}
             
-            Please explain these search results in relation to the user's query.
+            Please explain these search results in relation to the user's query, organizing your explanation by relevance groups (high, medium, low).
             """
 
             stream = self.openai_client.chat.completions.create(
