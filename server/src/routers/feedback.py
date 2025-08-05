@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Header
 from pydantic import Field, BaseModel
 
 from ..setup_logging import get_logger
@@ -22,17 +22,18 @@ class FeedbackRequest(BaseModel):
         pattern=r"^(positive|negative)$",
     )
     doi: str = Field(..., description="DOI to which the feedback is related")
-    session_id: str = Field(..., description="Session ID for authentication")
 
 
 @router.post("/submit")
-def submit_feedback(feedback_request: FeedbackRequest) -> dict:
+def submit_feedback(
+    feedback_request: FeedbackRequest,
+    x_session_id: str = Header(..., alias="X-Session-ID"),
+) -> dict:
     """
     Submit feedback for a statistic.
     Returns: id, statistic_id, feedback_type, metadata, created_at
     """
-    # Verify session before processing
-    verify_session(feedback_request.session_id)
+    verify_session(x_session_id)
 
     try:
         logger.info(

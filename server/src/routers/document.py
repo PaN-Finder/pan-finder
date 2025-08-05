@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, Path
+from fastapi import APIRouter, HTTPException, Header, Path
 from ..models.document_repository import DocumentRepository
 from ..setup_logging import get_logger
+from ..routers.session import verify_session
 
 logger = get_logger(__name__)
 
@@ -9,12 +10,15 @@ router = APIRouter(prefix="/document")
 
 @router.get("/{doi:path}")
 async def get_document_details(
-    doi: str = Path(..., min_length=1, description="Document DOI")
+    doi: str = Path(..., min_length=1, description="Document DOI"),
+    x_session_id: str = Header(..., alias="X-Session-ID"),
 ) -> dict:
     """
     Get detailed document information by DOI.
     Returns: id, doi, title, text, summary, raw, facility_name
     """
+    verify_session(x_session_id)
+
     try:
         logger.info(f"Fetching document details for DOI: {doi}")
         document = DocumentRepository.get_by_doi(doi)
