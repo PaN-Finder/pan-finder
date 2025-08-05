@@ -242,10 +242,6 @@ async def search_with_structured_data(
                     ):
                         yield event
 
-                # Send explanation complete event
-                async for event in sse_yield(StreamEvent(event="explanation_complete")):
-                    yield event
-
             except Exception as e:
                 logger.error(f"Failed to generate explanation: {e}")
                 async for event in sse_yield(
