@@ -259,20 +259,11 @@ Your task is to:
 Format Guidelines:
 🚫 Do not include any technical references to scoring, filtering, or score thresholds
 🚫 Do not mention specific score values or calculations
+✅ Include the DOIs of the documents in the explanation and link them to their respective sources
 ✅ Do focus on the practical relevance and value to the query
 ✅ Do use markdown headers to organize by relevance groups (## Most Directly Related Results, ## Also Worth Considering, ## Additional Background & Context)
 ✅ Do explain why documents are particularly relevant or how they relate to the query
 ✅ Do mention if a relevance group has no results or if certain groups should be prioritized
-
-Structure your response as:
-## Most Directly Related Results (if there are any)
-[Explanation of most relevant documents]
-
-## Also Worth Considering (if there are any)
-[Explanation of moderately relevant documents]
-
-## Additional Background & Context (if there are any)
-[Explanation of less relevant but potentially useful documents]
 
 Example Output:
 ## Most Directly Related Results
