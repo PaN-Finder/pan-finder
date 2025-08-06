@@ -27,8 +27,9 @@ It automatically connects to the PanFinder API server running on [127.0.0.1:8080
 - [x] Add feedback functionality
 - [x] Use rate limiting vs. CAPTCHA vs. Cloudflare Turnstile (https://developers.cloudflare.com/turnstile)
 - [x] Having LLM response in the end of the query
+- [ ] Score normalization (0-1) and UI changes based on the new scores (in progress)
+- [ ] Improve No Document Found (NDF) UI and LLM respones
 - [ ] Use SQL injection protection
-- [ ] Design frontend interface (In progress)
 - [ ] Improve number handling (database) – resolve slow query issue
 - [ ] Implement unit handling
 - [ ] Add input validation and clarification → Build a dataset that can be used for validation
