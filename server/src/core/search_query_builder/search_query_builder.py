@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Set, Tuple, Union
+from typing import Any, Dict, List, Set, Tuple, Union, TypedDict
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
 from sentence_transformers import SentenceTransformer
@@ -6,6 +6,21 @@ from sentence_transformers import SentenceTransformer
 from ...setup_logging import get_logger
 
 NumberTypes = (int, float, complex)
+
+
+class SearchResult(TypedDict):
+    """
+    Type definition for the result returned by SearchQueryBuilder.build_query().
+    Matches the structure of the SQL query results.
+    """
+
+    doi: str
+    overall_score: float
+    similarity_score: float
+    chunk_similarity_score: float
+    full_match_score: float
+    partial_match_score: float
+    keyword_score: float
 
 
 class SearchQueryBuilder:

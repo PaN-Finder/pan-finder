@@ -5,17 +5,28 @@ from functools import lru_cache
 from sentence_transformers import SentenceTransformer
 from openai import AzureOpenAI
 from psycopg.rows import dict_row
-from typing import cast, Any, List, Optional, AsyncGenerator, Dict
+from typing import cast, Any, List, Optional, AsyncGenerator, Dict, TypedDict
 from pydantic import BaseModel
 
 from .database import get_connection_pool, get_db_connection
-from .core.search_query_builder import SearchQueryBuilder
+from .core.search_query_builder import SearchQueryBuilder, SearchResult
 from .core.prompts import AIPrompts
 from .core.llm_cache import LLMResponseCache
 from .setup_logging import get_logger
 from .config import get_settings
 
 settings = get_settings()
+
+
+class DocumentDetails(TypedDict):
+    """
+    Type definition for document details returned by _get_document_details().
+    Matches the structure of the SQL query results from the document table.
+    """
+
+    doi: str
+    title: str
+    summary: str
 
 
 class StructuredQueryData(BaseModel):
@@ -299,7 +310,9 @@ class SearchEngine:
                 with conn.cursor(row_factory=dict_row) as cursor:
                     # Execute the search query
                     cursor.execute(cast(Any, sql_query))
-                    raw_results = cursor.fetchall()
+                    raw_results: List[SearchResult] = cast(
+                        List[SearchResult], cursor.fetchall()
+                    )
 
                     self._logger.debug(f"Raw search results count: {len(raw_results)}")
 
@@ -317,7 +330,9 @@ class SearchEngine:
 
         return search_results
 
-    def _get_document_details(self, cursor, raw_results: List[dict]) -> List[dict]:
+    def _get_document_details(
+        self, cursor, raw_results: List[SearchResult]
+    ) -> List[DocumentDetails]:
         """
         Get document details for the search results.
 
@@ -338,7 +353,8 @@ class SearchEngine:
         """
 
         cursor.execute(document_query, [dois])
-        return cursor.fetchall()
+
+        return cast(List[DocumentDetails], cursor.fetchall())
 
     def _normalize_scores(
         self, results: List[EnhancedSearchResult], query_data: StructuredQueryData
@@ -372,10 +388,10 @@ class SearchEngine:
                 result.overall_score = 0.0
 
             self._logger.debug(
-                f"Dinamicly normalized score 0-1 range: {result.overall_score}"
+                f"Dynamically normalized score 0-1 range: {result.overall_score}"
             )
 
-            # Boost Overall Score (to enhance low scores)
+            # Boost overall score (to enhance low scores)
             # Apply logarithmic transformation to boost low scores while keeping them under 1
             # Formula: y = ln(b*x+1) / ln(b+1) where b controls the boost strength
             boost_factor = 4.0  # Adjust this to control how much boost to apply
@@ -386,7 +402,7 @@ class SearchEngine:
             self._logger.debug(f"Overall score after boosting: {result.overall_score}")
 
     def _process_search_results(
-        self, raw_results: List[dict], document_details: List[dict]
+        self, raw_results: List[SearchResult], document_details: List[DocumentDetails]
     ) -> List[EnhancedSearchResult]:
         """
         Process and combine search results with document details.
