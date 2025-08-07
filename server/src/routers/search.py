@@ -62,7 +62,7 @@ async def search_with_ai_stream(
 
         try:
             # Step 1: Analysis started
-            async for event in sse_yield(StreamEvent(event="analysing_query")):
+            async for event in sse_yield(StreamEvent(event="analysis_started")):
                 yield event
 
             engine = get_search_engine()
@@ -72,11 +72,11 @@ async def search_with_ai_stream(
             search_data = await engine.parse_query_to_structured_data(raw_query)
             raw_structured_data = search_data.model_dump()
 
-            async for event in sse_yield(StreamEvent(event="analysing_done")):
+            async for event in sse_yield(StreamEvent(event="analysis_completed")):
                 yield event
 
             # Step 3: Start database query
-            async for event in sse_yield(StreamEvent(event="fetching_data")):
+            async for event in sse_yield(StreamEvent(event="data_fetching")):
                 yield event
 
             # Step 4: Execute search and stream final results
@@ -107,33 +107,37 @@ async def search_with_ai_stream(
             ):
                 yield event
 
-            # Step 5: Stream explanation
-            async for event in sse_yield(StreamEvent(event="generating_explanation")):
-                yield event
+            if len(search_results) > 0:
+                # Step 5: Stream explanation
+                async for event in sse_yield(StreamEvent(event="explanation_started")):
+                    yield event
 
-            try:
-                async for explanation_chunk in engine.explain_search_results(
-                    raw_query, search_results, search_data
-                ):
+                try:
+                    async for explanation_chunk in engine.explain_search_results(
+                        raw_query, search_results, search_data
+                    ):
+                        async for event in sse_yield(
+                            StreamEvent(
+                                event="explanation_chunk",
+                                data={"content": explanation_chunk},
+                            )
+                        ):
+                            yield event
+
+                except Exception as e:
+                    logger.error(f"Failed to generate explanation: {e}")
                     async for event in sse_yield(
                         StreamEvent(
-                            event="explanation_chunk",
-                            data={"content": explanation_chunk},
+                            event="explanation_error",
+                            data={
+                                "message": "Unable to generate explanation for these results."
+                            },
                         )
                     ):
                         yield event
 
-            except Exception as e:
-                logger.error(f"Failed to generate explanation: {e}")
-                async for event in sse_yield(
-                    StreamEvent(
-                        event="explanation_error",
-                        data={
-                            "message": "Unable to generate explanation for these results."
-                        },
-                    )
-                ):
-                    yield event
+            async for event in sse_yield(StreamEvent(event="search_completed")):
+                yield event
 
         except asyncio.CancelledError:
             logger.info(f"Search stream {connection_id} cancelled by client")
@@ -179,7 +183,7 @@ async def search_with_structured_data(
 
         try:
             # Step 1: Find the original query in database
-            async for event in sse_yield(StreamEvent(event="analysing_query")):
+            async for event in sse_yield(StreamEvent(event="analysis_started")):
                 yield event
 
             original = StatisticRepository.select_by_id(request.modified_query_id)
@@ -188,11 +192,11 @@ async def search_with_structured_data(
                     f"Original query with ID {request.modified_query_id} not found."
                 )
 
-            async for event in sse_yield(StreamEvent(event="analysing_done")):
+            async for event in sse_yield(StreamEvent(event="analysis_completed")):
                 yield event
 
             # Step 2: Start database query (no LLM analysis needed)
-            async for event in sse_yield(StreamEvent(event="fetching_data")):
+            async for event in sse_yield(StreamEvent(event="data_fetching")):
                 yield event
 
             engine = get_search_engine()
@@ -228,33 +232,37 @@ async def search_with_structured_data(
             ):
                 yield event
 
-            # Step 4: Stream explanation
-            async for event in sse_yield(StreamEvent(event="generating_explanation")):
-                yield event
+            if len(search_results) == 0:
+                # Step 4: Stream explanation
+                async for event in sse_yield(StreamEvent(event="explanation_started")):
+                    yield event
 
-            try:
-                async for explanation_chunk in engine.explain_search_results(
-                    original.search_query, search_results, structured_data
-                ):
+                try:
+                    async for explanation_chunk in engine.explain_search_results(
+                        original.search_query, search_results, structured_data
+                    ):
+                        async for event in sse_yield(
+                            StreamEvent(
+                                event="explanation_chunk",
+                                data={"content": explanation_chunk},
+                            )
+                        ):
+                            yield event
+
+                except Exception as e:
+                    logger.error(f"Failed to generate explanation: {e}")
                     async for event in sse_yield(
                         StreamEvent(
-                            event="explanation_chunk",
-                            data={"content": explanation_chunk},
+                            event="explanation_error",
+                            data={
+                                "message": "Unable to generate explanation for these results."
+                            },
                         )
                     ):
                         yield event
 
-            except Exception as e:
-                logger.error(f"Failed to generate explanation: {e}")
-                async for event in sse_yield(
-                    StreamEvent(
-                        event="explanation_error",
-                        data={
-                            "message": "Unable to generate explanation for these results."
-                        },
-                    )
-                ):
-                    yield event
+            async for event in sse_yield(StreamEvent(event="search_completed")):
+                yield event
 
         except asyncio.CancelledError:
             logger.info(f"Structured search stream {connection_id} cancelled by client")
