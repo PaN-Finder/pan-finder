@@ -1,10 +1,11 @@
 import json
 import time
+import math
 from functools import lru_cache
 from sentence_transformers import SentenceTransformer
 from openai import AzureOpenAI
 from psycopg.rows import dict_row
-from typing import cast, Any, List, Optional, AsyncGenerator
+from typing import cast, Any, List, Optional, AsyncGenerator, Dict
 from pydantic import BaseModel
 
 from .database import get_connection_pool, get_db_connection
@@ -15,6 +16,61 @@ from .setup_logging import get_logger
 from .config import get_settings
 
 settings = get_settings()
+
+
+class StructuredQueryData(BaseModel):
+    """
+    Structured representation of a parsed search query.
+
+    This model represents the structured data extracted from a natural language
+    search query, containing the user's intention, relevant keywords, and any
+    filters to apply to the search.
+    """
+
+    intention: str
+    keywords: List[str]
+    filters: Dict[str, Any]
+
+
+class MaxScores:
+    """
+    Class to hold maximum scores based on RRF parameters.
+    These are used to normalize the search result scores.
+    """
+
+    similarity_score_max = 1 / (1 + settings.rrf_k_similarity)
+    chunk_similarity_score_max = 1 / (1 + settings.rrf_k_chunk)
+    full_match_score_max = 1 / (1 + settings.rrf_k_full_match)
+    partial_match_score_max = 1 / (1 + settings.rrf_k_partial_match)
+    keyword_score_max = 1 / (1 + settings.rrf_k_keyword)
+
+    @staticmethod
+    def overall_score_max(query_data: StructuredQueryData) -> float:
+        """
+        Calculate the overall maximum score based on individual max scores and query data.
+        This is used to normalize the overall score of search results.
+
+        Args:
+            query_data: StructuredQueryData containing structured query information
+        """
+
+        total_max_score = 0.0
+
+        # Include similarity scores only if intention is not empty
+        if query_data.intention and query_data.intention.strip():
+            total_max_score += MaxScores.similarity_score_max
+            total_max_score += MaxScores.chunk_similarity_score_max
+
+        # Include keyword score only if keywords are provided
+        if query_data.keywords and len(query_data.keywords) > 0:
+            total_max_score += MaxScores.keyword_score_max
+
+        # Include full_match and partial_match scores only if filters are provided
+        if query_data.filters and len(query_data.filters) > 0:
+            total_max_score += MaxScores.full_match_score_max
+            total_max_score += MaxScores.partial_match_score_max
+
+        return total_max_score
 
 
 class EnhancedSearchResult(BaseModel):
@@ -92,7 +148,7 @@ class SearchEngine:
             )
         return self._query_builder
 
-    async def parse_query_to_structured_data(self, query: str) -> dict:
+    async def parse_query_to_structured_data(self, query: str) -> StructuredQueryData:
         """
         Parse a natural language query into structured components using OpenAI.
 
@@ -100,7 +156,7 @@ class SearchEngine:
             query: The search query string
 
         Returns:
-            Dictionary containing structured query information with intention, keywords, and filters
+            StructuredQueryData containing structured query information with intention, keywords, and filters
         """
         model_name = settings.azure_openai_model_name
 
@@ -139,11 +195,13 @@ class SearchEngine:
 
         except Exception as e:
             self._logger.error(f"OpenAI API error: {e}")
-            return self._create_fallback_query_data(query)
+            return StructuredQueryData(
+                intention=query, keywords=query.split() if query else [], filters={}
+            )
 
     def _parse_openai_response(
         self, response_content: Optional[str], query: str
-    ) -> dict:
+    ) -> StructuredQueryData:
         """
         Parse the OpenAI response content into structured query data.
 
@@ -152,7 +210,7 @@ class SearchEngine:
             query: Original query for fallback
 
         Returns:
-            Dictionary containing structured query information
+            StructuredQueryData containing structured query information
         """
         try:
             if response_content is None:
@@ -169,36 +227,26 @@ class SearchEngine:
             search_data.setdefault("keywords", [])
             search_data.setdefault("filters", {})
 
-            return search_data
+            return StructuredQueryData(
+                intention=search_data["intention"],
+                keywords=search_data["keywords"],
+                filters=search_data["filters"],
+            )
 
         except (json.JSONDecodeError, ValueError) as e:
             self._logger.error(f"Failed to parse OpenAI response as JSON: {e}")
             self._logger.debug(f"Raw response: {response_content}")
 
             # Fallback to simple processing if JSON parsing fails
-            return {
-                "intention": response_content if response_content else query,
-                "keywords": query.split() if query else [],
-                "filters": {},
-            }
+            return StructuredQueryData(
+                intention=response_content if response_content else query,
+                keywords=query.split() if query else [],
+                filters={},
+            )
 
-    def _create_fallback_query_data(self, query: str) -> dict:
-        """
-        Create fallback query data when OpenAI processing fails.
-
-        Args:
-            query: Original query string
-
-        Returns:
-            Dictionary with basic query structure
-        """
-        return {
-            "intention": query,
-            "keywords": query.split() if query else [],
-            "filters": {},
-        }
-
-    async def execute_search(self, search_data: dict) -> List[EnhancedSearchResult]:
+    async def execute_search(
+        self, search_data: StructuredQueryData
+    ) -> List[EnhancedSearchResult]:
         """
         Execute the search using the structured query data.
 
@@ -211,7 +259,7 @@ class SearchEngine:
         try:
             # Generate SQL query
             query_build_start = time.time()
-            sql_query = self.query_builder.build_query(search_data)
+            sql_query = self.query_builder.build_query(search_data.model_dump())
             query_build_time = time.time() - query_build_start
             self._logger.debug(
                 f"SQL query building took {query_build_time:.3f} seconds"
@@ -224,6 +272,9 @@ class SearchEngine:
             self._logger.debug(
                 f"Database execution took {db_execution_time:.3f} seconds"
             )
+
+            # Normalize scores to a 0-1 range
+            self._normalize_scores(results, search_data)
 
             return results
 
@@ -289,6 +340,51 @@ class SearchEngine:
         cursor.execute(document_query, [dois])
         return cursor.fetchall()
 
+    def _normalize_scores(
+        self, results: List[EnhancedSearchResult], query_data: StructuredQueryData
+    ) -> None:
+        """
+        Normalize the scores of search results to a 0-1 range.
+
+        Args:
+            results: List of EnhancedSearchResult objects to normalize
+        """
+        if not results:
+            return
+
+        for result in results:
+            self._logger.debug(
+                f"Overall score (raw number from query): {result.overall_score}"
+            )
+
+            # Normalize individual scores to a 0-1 range
+            result.similarity_score /= MaxScores.similarity_score_max
+            result.chunk_similarity_score /= MaxScores.chunk_similarity_score_max
+            result.keyword_score /= MaxScores.keyword_score_max
+            result.full_match_score /= MaxScores.full_match_score_max
+            result.partial_match_score /= MaxScores.partial_match_score_max
+
+            # Normalize overall score based on the maximum possible score
+            overall_max = MaxScores.overall_score_max(query_data)
+            if overall_max > 0:
+                result.overall_score /= overall_max
+            else:
+                result.overall_score = 0.0
+
+            self._logger.debug(
+                f"Dinamicly normalized score 0-1 range: {result.overall_score}"
+            )
+
+            # Boost Overall Score (to enhance low scores)
+            # Apply logarithmic transformation to boost low scores while keeping them under 1
+            # Formula: y = ln(b*x+1) / ln(b+1) where b controls the boost strength
+            boost_factor = 4.0  # Adjust this to control how much boost to apply
+            result.overall_score = math.log(
+                boost_factor * result.overall_score + 1
+            ) / math.log(boost_factor + 1)
+
+            self._logger.debug(f"Overall score after boosting: {result.overall_score}")
+
     def _process_search_results(
         self, raw_results: List[dict], document_details: List[dict]
     ) -> List[EnhancedSearchResult]:
@@ -335,6 +431,11 @@ class SearchEngine:
         """
         Group search results into high, medium, and low relevance based on overall_score.
 
+        Score ranges (0-1 scale where 1 is best):
+        - High: 0.7 and above (highly relevant)
+        - Medium: 0.4 to 0.7 (moderately relevant)
+        - Low: below 0.4 (less relevant)
+
         Args:
             search_results: List of search results to group
 
@@ -344,13 +445,10 @@ class SearchEngine:
         if not search_results:
             return {"high": [], "medium": [], "low": []}
 
-        # Find the maximum overall score
-        max_score = max(result.overall_score for result in search_results)
-
-        # Define thresholds based on max score
-        high_threshold = max_score * 0.8  # Top 20% range
-        medium_threshold = max_score * 0.5  # Middle range (50-80%)
-        # Low is everything below 50%
+        # Define absolute thresholds based on 0-1 score scale
+        high_threshold = 0.7  # High relevance: 70% and above
+        medium_threshold = 0.4  # Medium relevance: 40-70%
+        # Low relevance: below 40%
 
         groups = {"high": [], "medium": [], "low": []}
 

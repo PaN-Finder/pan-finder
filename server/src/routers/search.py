@@ -6,7 +6,7 @@ from fastapi import APIRouter, Header
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from ..engine import EnhancedSearchResult, get_search_engine
+from ..engine import EnhancedSearchResult, StructuredQueryData, get_search_engine
 from ..models.statistic import Statistic
 from ..models.statistic_repository import StatisticRepository
 from ..setup_logging import get_logger
@@ -70,7 +70,7 @@ async def search_with_ai_stream(
             # Step 2: Extract structured query (LLM processing)
             raw_query = request.query
             search_data = await engine.parse_query_to_structured_data(raw_query)
-            raw_structured_data = copy.deepcopy(search_data)
+            raw_structured_data = search_data.model_dump()
 
             async for event in sse_yield(StreamEvent(event="analysing_done")):
                 yield event
@@ -196,16 +196,18 @@ async def search_with_structured_data(
                 yield event
 
             engine = get_search_engine()
-            structured_data = copy.deepcopy(request.structured_data)
+            structured_data: StructuredQueryData = StructuredQueryData(
+                **copy.deepcopy(request.structured_data)
+            )
 
             # Step 3: Execute search directly with structured data
-            search_results = await engine.execute_search(request.structured_data)
+            search_results = await engine.execute_search(structured_data)
 
             stat_id = None
             try:
                 stat = Statistic(
                     search_query=original.search_query,
-                    structured_data=structured_data,
+                    structured_data=request.structured_data,
                     results=[result.model_dump() for result in search_results],
                     execution_time_ms=0,
                     modified_query_id=request.modified_query_id,
@@ -216,7 +218,7 @@ async def search_with_structured_data(
 
             response = SearchResponse(
                 id=stat_id,
-                raw_structured_data=structured_data,
+                raw_structured_data=request.structured_data,
                 results=search_results,
                 total_results=len(search_results),
             )
