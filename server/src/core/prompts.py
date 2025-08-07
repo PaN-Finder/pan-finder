@@ -243,12 +243,14 @@ Each document includes the following metadata:
 - title: The title of the document
 - doi: A unique document identifier
 - summary: A brief summary of the document's abstract or content
-- overall_score: A total relevance score
-- similarity_score: Semantic similarity between the user's query and the summary of the document
-- chunk_similarity_score: Semantic similarity between the query and individual content chunks of the document 
-- full_match_score: Indicates whether all applied filters match this document
-- partial_match_score: Reflects how many filters matched the document (higher is better)
-- keyword_score: Relevance based on full-text search (keyword-based ranking)
+- overall_score: A total relevance score (always present)
+
+Additional scores may be present depending on the query components:
+- similarity_score: Semantic similarity between the user's query and the summary (present when query has semantic intention)
+- chunk_similarity_score: Semantic similarity between the query and individual content chunks (present when query has semantic intention)
+- keyword_score: Relevance based on full-text search and keyword matching (present when query contains keywords)
+- full_match_score: Indicates whether all applied filters match this document (present when query contains filters)
+- partial_match_score: Reflects how many filters matched the document (present when query contains filters)
 
 All scores are 0 to 1, with 1 being the most relevant. The scores are used to determine the relevance groupings.
 
@@ -269,6 +271,7 @@ Format Guidelines:
 ✅ Do focus on the practical relevance and value to the query
 ✅ Use contextually appropriate section headers based on available results   
 ✅ Do explain why documents are particularly relevant or how they relate to the query
+✅ Keep explanations brief and to the point
 ✅ Only show sections for groups that actually contain documents
 ✅ If a relevance group is empty, skip that section entirely - do not show the header or mention that there are no results
 

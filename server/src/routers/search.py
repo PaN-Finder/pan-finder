@@ -113,7 +113,7 @@ async def search_with_ai_stream(
 
             try:
                 async for explanation_chunk in engine.explain_search_results(
-                    raw_query, search_results
+                    raw_query, search_results, search_data
                 ):
                     async for event in sse_yield(
                         StreamEvent(
@@ -234,7 +234,7 @@ async def search_with_structured_data(
 
             try:
                 async for explanation_chunk in engine.explain_search_results(
-                    original.search_query, search_results
+                    original.search_query, search_results, structured_data
                 ):
                     async for event in sse_yield(
                         StreamEvent(

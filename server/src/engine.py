@@ -478,8 +478,48 @@ class SearchEngine:
 
         return groups
 
+    def _build_result_dict(
+        self, result: EnhancedSearchResult, structured_data: StructuredQueryData
+    ) -> dict:
+        """
+        Build result dictionary with scores dynamically based on structured data components.
+        Follows the same logic as MaxScores.overall_score_max.
+
+        Args:
+            result: EnhancedSearchResult to build dictionary for
+            structured_data: StructuredQueryData containing query components
+
+        Returns:
+            Dictionary with relevant score fields based on query components
+        """
+        result_dict = {
+            "title": result.title,
+            "doi": result.doi,
+            "summary": result.summary,
+            "overall_score": result.overall_score,
+        }
+
+        # Include similarity scores only if intention is not empty
+        if structured_data.intention and structured_data.intention.strip():
+            result_dict["similarity_score"] = result.similarity_score
+            result_dict["chunk_similarity_score"] = result.chunk_similarity_score
+
+        # Include keyword score only if keywords are provided
+        if structured_data.keywords and len(structured_data.keywords) > 0:
+            result_dict["keyword_score"] = result.keyword_score
+
+        # Include full_match and partial_match scores only if filters are provided
+        if structured_data.filters and len(structured_data.filters) > 0:
+            result_dict["full_match_score"] = result.full_match_score > 0
+            result_dict["partial_match_score"] = result.partial_match_score
+
+        return result_dict
+
     async def explain_search_results(
-        self, query: str, search_results: List[EnhancedSearchResult]
+        self,
+        query: str,
+        search_results: List[EnhancedSearchResult],
+        structured_data: StructuredQueryData,
     ) -> AsyncGenerator[str, None]:
         """
         Generate a streaming explanation of search results using OpenAI.
@@ -503,17 +543,7 @@ class SearchEngine:
                 "high": {
                     "count": len(relevance_groups["high"]),
                     "results": [
-                        {
-                            "title": result.title,
-                            "doi": result.doi,
-                            "summary": result.summary,
-                            "overall_score": result.overall_score,
-                            "similarity_score": result.similarity_score,
-                            "chunk_similarity_score": result.chunk_similarity_score,
-                            "full_match_score": result.full_match_score > 0,
-                            "partial_match_score": result.partial_match_score,
-                            "keyword_score": result.keyword_score,
-                        }
+                        self._build_result_dict(result, structured_data)
                         for result in relevance_groups["high"][
                             :5
                         ]  # Limit to top 5 per group
@@ -522,17 +552,7 @@ class SearchEngine:
                 "medium": {
                     "count": len(relevance_groups["medium"]),
                     "results": [
-                        {
-                            "title": result.title,
-                            "doi": result.doi,
-                            "summary": result.summary,
-                            "overall_score": result.overall_score,
-                            "similarity_score": result.similarity_score,
-                            "chunk_similarity_score": result.chunk_similarity_score,
-                            "full_match_score": result.full_match_score > 0,
-                            "partial_match_score": result.partial_match_score,
-                            "keyword_score": result.keyword_score,
-                        }
+                        self._build_result_dict(result, structured_data)
                         for result in relevance_groups["medium"][
                             :3
                         ]  # Limit to top 3 per group
@@ -541,17 +561,7 @@ class SearchEngine:
                 "low": {
                     "count": len(relevance_groups["low"]),
                     "results": [
-                        {
-                            "title": result.title,
-                            "doi": result.doi,
-                            "summary": result.summary,
-                            "overall_score": result.overall_score,
-                            "similarity_score": result.similarity_score,
-                            "chunk_similarity_score": result.chunk_similarity_score,
-                            "full_match_score": result.full_match_score > 0,
-                            "partial_match_score": result.partial_match_score,
-                            "keyword_score": result.keyword_score,
-                        }
+                        self._build_result_dict(result, structured_data)
                         for result in relevance_groups["low"][
                             :2
                         ]  # Limit to top 2 per group
