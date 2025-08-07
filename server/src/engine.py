@@ -531,7 +531,7 @@ class SearchEngine:
         Yields:
             Streaming explanation content
         """
-        model_name = settings.azure_openai_model_name
+        model_name = settings.azure_openai_explanation_model_name
 
         # Group results by relevance
         relevance_groups = self._group_results_by_relevance(search_results)

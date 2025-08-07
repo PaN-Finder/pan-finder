@@ -11,4 +11,5 @@ data:
   ALLOWED_ORIGINS: "https://pan-finder.dev-sims.ess.eu"
   AZURE_OPENAI_API_VERSION: "2024-12-01-preview"
   AZURE_OPENAI_MODEL_NAME: "gpt-4.1-mini"
+  AZURE_OPENAI_EXPLANATION_MODEL_NAME: "gpt-4.1"
   EMBEDDING_MODEL_PATH: "/app/models/all-MiniLM-L12-v2"

@@ -17,9 +17,15 @@ class Settings:
         self.azure_openai_api_version = os.getenv(
             "AZURE_OPENAI_API_VERSION", "2024-12-01-preview"
         )
+        # Model name for extracting structured data
         self.azure_openai_model_name = os.getenv(
             "AZURE_OPENAI_MODEL_NAME", "gpt-4.1-mini"
         )
+        # Model name for generating explanations
+        self.azure_openai_explanation_model_name = os.getenv(
+            "AZURE_OPENAI_EXPLANATION_MODEL_NAME", "gpt-4.1"
+        )
+
         self.embedding_model_path = os.getenv(
             "EMBEDDING_MODEL_PATH", "/code/models/all-MiniLM-L12-v2"
         )
