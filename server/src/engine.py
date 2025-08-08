@@ -1,112 +1,23 @@
 import json
 import time
-import math
 from functools import lru_cache
 from sentence_transformers import SentenceTransformer
 from openai import AzureOpenAI
 from psycopg.rows import dict_row
-from typing import cast, Any, List, Optional, AsyncGenerator, Dict, TypedDict, Callable
-from pydantic import BaseModel
+from typing import cast, Any, List, Optional, AsyncGenerator, Dict, Callable
 
+from .models.document import DocumentTypedDict
+from .models.document_repository import DocumentRepository
+from .models.search import StructuredQueryData, EnhancedSearchResult
 from .database import get_connection_pool, get_db_connection
 from .core.search_query_builder import SearchQueryBuilder, SearchResult
 from .core.prompts import AIPrompts
 from .core.llm_cache import LLMResponseCache
 from .setup_logging import get_logger
 from .config import get_settings
+from .scoring import Scoring
 
 settings = get_settings()
-
-
-class DocumentDetails(TypedDict):
-    """
-    Type definition for document details returned by _get_document_details().
-    Matches the structure of the SQL query results from the document table.
-    """
-
-    doi: str
-    title: str
-    summary: str
-
-
-class StructuredQueryData(BaseModel):
-    """
-    Structured representation of a parsed search query.
-
-    This model represents the structured data extracted from a natural language
-    search query, containing the user's intention, relevant keywords, and any
-    filters to apply to the search.
-    """
-
-    intention: str
-    keywords: List[str]
-    filters: Dict[str, Any]
-
-
-class MaxScores:
-    """
-    Class to hold maximum scores based on RRF parameters.
-    These are used to normalize the search result scores.
-    """
-
-    similarity_score_max = 1 / (1 + settings.rrf_k_similarity)
-    chunk_similarity_score_max = 1 / (1 + settings.rrf_k_chunk)
-    full_match_score_max = 1 / (1 + settings.rrf_k_full_match)
-    partial_match_score_max = 1 / (1 + settings.rrf_k_partial_match)
-    keyword_score_max = 1 / (1 + settings.rrf_k_keyword)
-
-    @staticmethod
-    def overall_score_max(query_data: StructuredQueryData) -> float:
-        """
-        Calculate the overall maximum score based on individual max scores and query data.
-        This is used to normalize the overall score of search results.
-
-        Args:
-            query_data: StructuredQueryData containing structured query information
-        """
-
-        total_max_score = 0.0
-
-        # Include similarity scores only if intention is not empty
-        if query_data.intention and query_data.intention.strip():
-            total_max_score += MaxScores.similarity_score_max
-            total_max_score += MaxScores.chunk_similarity_score_max
-
-        # Include keyword score only if keywords are provided
-        if query_data.keywords and len(query_data.keywords) > 0:
-            total_max_score += MaxScores.keyword_score_max
-
-        # Include full_match and partial_match scores only if filters are provided
-        if query_data.filters and len(query_data.filters) > 0:
-            total_max_score += MaxScores.full_match_score_max
-            total_max_score += MaxScores.partial_match_score_max
-
-        return total_max_score
-
-    @staticmethod
-    def components_enabled(query_data: StructuredQueryData) -> Dict[str, bool]:
-        """Return which individual score components are logically enabled for a query."""
-        return {
-            "similarity": bool(query_data.intention and query_data.intention.strip()),
-            "chunk_similarity": bool(
-                query_data.intention and query_data.intention.strip()
-            ),
-            "keyword": bool(query_data.keywords),
-            "full_match": bool(query_data.filters),
-            "partial_match": bool(query_data.filters),
-        }
-
-
-class EnhancedSearchResult(BaseModel):
-    doi: str
-    title: str
-    summary: str
-    overall_score: float
-    similarity_score: float
-    chunk_similarity_score: float
-    full_match_score: float
-    partial_match_score: float
-    keyword_score: float
 
 
 class SearchEngine:
@@ -301,7 +212,7 @@ class SearchEngine:
             )
 
             # Normalize scores to a 0-1 range
-            self._normalize_scores(results, search_data)
+            Scoring.normalize_scores(results, search_data)
 
             return results
 
@@ -334,8 +245,10 @@ class SearchEngine:
 
                     # Get document details if we have results
                     if raw_results:
-                        document_details = self._get_document_details(
-                            cursor, raw_results
+                        document_details = (
+                            DocumentRepository.get_document_details_by_dois(
+                                dois=[result["doi"] for result in raw_results]
+                            )
                         )
                         search_results = self._process_search_results(
                             raw_results, document_details
@@ -346,105 +259,8 @@ class SearchEngine:
 
         return search_results
 
-    def _get_document_details(
-        self, cursor, raw_results: List[SearchResult]
-    ) -> List[DocumentDetails]:
-        """
-        Get document details for the search results.
-
-        Args:
-            cursor: Database cursor
-            raw_results: Raw search results from the query
-
-        Returns:
-            List of document details
-        """
-        dois = [row["doi"] for row in raw_results]
-
-        # Use parameterized query for document details
-        document_query = """
-        SELECT doi, title, summary
-        FROM document
-        WHERE doi = ANY(%s)
-        """
-
-        cursor.execute(document_query, [dois])
-
-        return cast(List[DocumentDetails], cursor.fetchall())
-
-    def _normalize_scores(
-        self, results: List[EnhancedSearchResult], query_data: StructuredQueryData
-    ) -> None:
-        """
-        Normalize the scores of search results to a 0-1 range.
-
-        Args:
-            results: List of EnhancedSearchResult objects to normalize
-        """
-        if not results:
-            return
-
-        enabled = MaxScores.components_enabled(query_data)
-
-        def safe_div(value: float, denom: float) -> float:
-            if denom <= 0:
-                return 0.0
-            return value / denom
-
-        for result in results:
-            self._logger.debug(
-                f"Raw overall score before normalization: {result.overall_score}"
-            )
-
-            if enabled["similarity"]:
-                result.similarity_score = safe_div(
-                    result.similarity_score, MaxScores.similarity_score_max
-                )
-                result.chunk_similarity_score = safe_div(
-                    result.chunk_similarity_score, MaxScores.chunk_similarity_score_max
-                )
-            else:
-                # Ensure disabled component scores are zeroed
-                result.similarity_score = 0.0
-                result.chunk_similarity_score = 0.0
-
-            if enabled["keyword"]:
-                result.keyword_score = safe_div(
-                    result.keyword_score, MaxScores.keyword_score_max
-                )
-            else:
-                result.keyword_score = 0.0
-
-            if enabled["full_match"]:
-                result.full_match_score = safe_div(
-                    result.full_match_score, MaxScores.full_match_score_max
-                )
-                result.partial_match_score = safe_div(
-                    result.partial_match_score, MaxScores.partial_match_score_max
-                )
-            else:
-                result.full_match_score = 0.0
-                result.partial_match_score = 0.0
-
-            overall_max = MaxScores.overall_score_max(query_data)
-            result.overall_score = (
-                safe_div(result.overall_score, overall_max) if overall_max > 0 else 0.0
-            )
-
-            # Boost (log) and clamp
-            boost_factor = 4.0
-            boosted = math.log(boost_factor * result.overall_score + 1) / math.log(
-                boost_factor + 1
-            )
-            # Prevent tiny floating point drift outside [0,1]
-            result.overall_score = max(0.0, min(1.0, boosted))
-
-            self._logger.debug(
-                f"Normalized+boosted overall score: {result.overall_score} (enabled components: {enabled})"
-            )
-
     def _process_search_results(
-        self, raw_results: List[SearchResult], document_details: List[DocumentDetails]
+        self, raw_results: List[SearchResult], document_details: List[DocumentTypedDict]
     ) -> List[EnhancedSearchResult]:
         """
         Process and combine search results with document details.
@@ -469,7 +285,7 @@ class SearchEngine:
                     EnhancedSearchResult(
                         doi=doi,
                         title=doc.get("title", ""),
-                        summary=doc.get("summary", ""),
+                        summary=doc.get("summary") or "",
                         overall_score=float(result.get("overall_score", 0)),
                         similarity_score=float(result.get("similarity_score", 0)),
                         chunk_similarity_score=float(

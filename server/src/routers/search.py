@@ -6,7 +6,8 @@ from fastapi import APIRouter, Header
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from ..engine import EnhancedSearchResult, StructuredQueryData, get_search_engine
+from ..engine import get_search_engine
+from ..models.search import EnhancedSearchResult, StructuredQueryData
 from ..models.statistic import Statistic
 from ..models.statistic_repository import StatisticRepository
 from ..setup_logging import get_logger

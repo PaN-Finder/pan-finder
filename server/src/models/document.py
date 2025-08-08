@@ -1,4 +1,14 @@
-from typing import Optional
+from typing import Optional, TypedDict
+
+
+class DocumentTypedDict(TypedDict):
+    id: Optional[int]
+    doi: str
+    title: str
+    text: Optional[str]
+    summary: Optional[str]
+    raw: Optional[str]
+    facility_name: Optional[str]
 
 
 class Document:
