@@ -3,8 +3,8 @@ from contextlib import contextmanager
 from typing import Optional
 import time
 from psycopg import OperationalError
-from .setup_logging import get_logger
-from .config import get_settings
+from ..utils import get_logger
+from ..config import get_settings
 
 settings = get_settings()
 logger = get_logger(__name__)

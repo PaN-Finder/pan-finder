@@ -1,8 +1,8 @@
 import math
 from typing import Dict, List
 
-from .models.search import EnhancedSearchResult, StructuredQueryData
-from .config import get_settings
+from ...db.models.search import EnhancedSearchResult, StructuredQueryData
+from ...config import get_settings
 
 settings = get_settings()
 

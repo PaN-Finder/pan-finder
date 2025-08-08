@@ -6,11 +6,11 @@ from fastapi import APIRouter, Header
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from ..engine import get_search_engine
-from ..models.search import EnhancedSearchResult, StructuredQueryData
-from ..models.statistic import Statistic
-from ..models.statistic_repository import StatisticRepository
-from ..setup_logging import get_logger
+from ..core.engine import get_search_engine
+from ..db.models.search import EnhancedSearchResult, StructuredQueryData
+from ..db.models.statistic import Statistic
+from ..db.models.statistic_repository import StatisticRepository
+from ..utils import get_logger
 from ..routers.session import verify_session
 
 logger = get_logger(__name__)

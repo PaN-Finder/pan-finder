@@ -1,7 +1,7 @@
 from psycopg.rows import dict_row
 from typing import List, cast
 
-from ..database import get_db_connection
+from ..connection import get_db_connection
 from .document import Document, DocumentTypedDict
 
 

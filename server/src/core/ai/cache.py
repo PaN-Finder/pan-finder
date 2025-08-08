@@ -8,7 +8,7 @@ to avoid redundant API calls and improve performance.
 import hashlib
 from typing import Optional, Dict
 from logging import Logger
-from ..setup_logging import get_logger
+from ...utils import get_logger
 
 
 class LLMResponseCache:

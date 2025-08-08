@@ -1,7 +1,8 @@
 from typing import Dict, Optional
 from threading import Lock
-from ..models.session import Session
-from ..setup_logging import get_logger
+
+from ...utils import get_logger
+from .session import Session
 
 logger = get_logger(__name__)
 

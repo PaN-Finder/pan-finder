@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Header, Path
-from ..models.document_repository import DocumentRepository
-from ..setup_logging import get_logger
+from ..db.models.document_repository import DocumentRepository
+from ..utils import get_logger
 from ..routers.session import verify_session
 
 logger = get_logger(__name__)

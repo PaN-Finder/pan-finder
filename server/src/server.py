@@ -7,12 +7,12 @@ from .routers import search
 from .routers import document
 from .routers import feedback
 from .routers import session
-from .database import (
+from .db.connection import (
     check_database_health,
     init_connection_pool,
     cleanup_connection_pool,
 )
-from .setup_logging import get_logger
+from .utils import get_logger
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -48,7 +48,7 @@ async def startup_event():
         if check_database_health():
             logger.info("Database connection established successfully")
             # Run migrations after DB is up
-            from .migrate import run_migrations
+            from .db.migrate import run_migrations
 
             run_migrations()
         else:
@@ -64,7 +64,7 @@ async def startup_event():
 
 async def session_cleanup_task():
     """Background task to clean up expired sessions every 30 minutes."""
-    from .models.session_repository import SessionRepository
+    from .core.session import SessionRepository
 
     while True:
         try:

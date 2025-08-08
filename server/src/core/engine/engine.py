@@ -6,15 +6,15 @@ from openai import AzureOpenAI
 from psycopg.rows import dict_row
 from typing import cast, Any, List, Optional, AsyncGenerator, Dict, Callable
 
-from .models.document import DocumentTypedDict
-from .models.document_repository import DocumentRepository
-from .models.search import StructuredQueryData, EnhancedSearchResult
-from .database import get_connection_pool, get_db_connection
-from .core.search_query_builder import SearchQueryBuilder, SearchResult
-from .core.prompts import AIPrompts
-from .core.llm_cache import LLMResponseCache
-from .setup_logging import get_logger
-from .config import get_settings
+from ...db.models.document import DocumentTypedDict
+from ...db.models.document_repository import DocumentRepository
+from ...db.models.search import StructuredQueryData, EnhancedSearchResult
+from ...db.connection import get_connection_pool, get_db_connection
+from ..search_query_builder import SearchQueryBuilder, SearchResult
+from ..ai.prompts import AIPrompts
+from ..ai.cache import LLMResponseCache
+from ...utils import get_logger
+from ...config import get_settings
 from .scoring import Scoring
 
 settings = get_settings()

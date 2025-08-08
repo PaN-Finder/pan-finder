@@ -1,4 +1,4 @@
-from ..database import get_db_connection
+from ..connection import get_db_connection
 from .feedback import Feedback
 import json
 
