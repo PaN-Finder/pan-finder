@@ -5,7 +5,7 @@ from functools import lru_cache
 from sentence_transformers import SentenceTransformer
 from openai import AzureOpenAI
 from psycopg.rows import dict_row
-from typing import cast, Any, List, Optional, AsyncGenerator, Dict, TypedDict
+from typing import cast, Any, List, Optional, AsyncGenerator, Dict, TypedDict, Callable
 from pydantic import BaseModel
 
 from .database import get_connection_pool, get_db_connection
@@ -82,6 +82,19 @@ class MaxScores:
             total_max_score += MaxScores.partial_match_score_max
 
         return total_max_score
+
+    @staticmethod
+    def components_enabled(query_data: StructuredQueryData) -> Dict[str, bool]:
+        """Return which individual score components are logically enabled for a query."""
+        return {
+            "similarity": bool(query_data.intention and query_data.intention.strip()),
+            "chunk_similarity": bool(
+                query_data.intention and query_data.intention.strip()
+            ),
+            "keyword": bool(query_data.keywords),
+            "full_match": bool(query_data.filters),
+            "partial_match": bool(query_data.filters),
+        }
 
 
 class EnhancedSearchResult(BaseModel):
@@ -177,7 +190,11 @@ class SearchEngine:
             self._logger.debug(f"Using cached LLM response for query: {query}")
             return self._parse_openai_response(cached_response, query)
 
-        try:
+        # Short-circuit empty / whitespace-only queries to avoid unnecessary LLM calls
+        if not query or not query.strip():
+            return StructuredQueryData(intention="", keywords=[], filters={})
+
+        def _do_call() -> Optional[str]:
             llm_response = self.openai_client.chat.completions.create(
                 model=model_name,
                 messages=[
@@ -185,30 +202,29 @@ class SearchEngine:
                         "role": "system",
                         "content": AIPrompts.get_structured_query_extraction_prompt(),
                     },
-                    {
-                        "role": "user",
-                        "content": query,
-                    },
+                    {"role": "user", "content": query},
                 ],
                 max_tokens=500,
-                temperature=0.1,  # Low temperature for consistent structured output
+                temperature=0.1,
                 response_format={"type": "json_object"},
             )
+            return llm_response.choices[0].message.content
 
-            # Extract and parse the response content
-            response_content = llm_response.choices[0].message.content
+        response_content = self._retry_openai_call(
+            _do_call, context="structured_query_extraction"
+        )
 
-            # Cache the response if it's valid
-            if response_content is not None:
-                self._llm_cache.put(model_name, query, response_content)
-
-            return self._parse_openai_response(response_content, query)
-
-        except Exception as e:
-            self._logger.error(f"OpenAI API error: {e}")
+        if response_content is None:
+            # Fallback heuristics
             return StructuredQueryData(
-                intention=query, keywords=query.split() if query else [], filters={}
+                intention=query,
+                keywords=[w for w in query.split() if w],
+                filters={},
             )
+
+        # Cache only on success
+        self._llm_cache.put(model_name, query, response_content)
+        return self._parse_openai_response(response_content, query)
 
     def _parse_openai_response(
         self, response_content: Optional[str], query: str
@@ -348,7 +364,7 @@ class SearchEngine:
         # Use parameterized query for document details
         document_query = """
         SELECT doi, title, summary
-        FROM document 
+        FROM document
         WHERE doi = ANY(%s)
         """
 
@@ -368,38 +384,64 @@ class SearchEngine:
         if not results:
             return
 
+        enabled = MaxScores.components_enabled(query_data)
+
+        def safe_div(value: float, denom: float) -> float:
+            if denom <= 0:
+                return 0.0
+            return value / denom
+
         for result in results:
             self._logger.debug(
-                f"Overall score (raw number from query): {result.overall_score}"
+                f"Raw overall score before normalization: {result.overall_score}"
             )
 
-            # Normalize individual scores to a 0-1 range
-            result.similarity_score /= MaxScores.similarity_score_max
-            result.chunk_similarity_score /= MaxScores.chunk_similarity_score_max
-            result.keyword_score /= MaxScores.keyword_score_max
-            result.full_match_score /= MaxScores.full_match_score_max
-            result.partial_match_score /= MaxScores.partial_match_score_max
-
-            # Normalize overall score based on the maximum possible score
-            overall_max = MaxScores.overall_score_max(query_data)
-            if overall_max > 0:
-                result.overall_score /= overall_max
+            if enabled["similarity"]:
+                result.similarity_score = safe_div(
+                    result.similarity_score, MaxScores.similarity_score_max
+                )
+                result.chunk_similarity_score = safe_div(
+                    result.chunk_similarity_score, MaxScores.chunk_similarity_score_max
+                )
             else:
-                result.overall_score = 0.0
+                # Ensure disabled component scores are zeroed
+                result.similarity_score = 0.0
+                result.chunk_similarity_score = 0.0
+
+            if enabled["keyword"]:
+                result.keyword_score = safe_div(
+                    result.keyword_score, MaxScores.keyword_score_max
+                )
+            else:
+                result.keyword_score = 0.0
+
+            if enabled["full_match"]:
+                result.full_match_score = safe_div(
+                    result.full_match_score, MaxScores.full_match_score_max
+                )
+                result.partial_match_score = safe_div(
+                    result.partial_match_score, MaxScores.partial_match_score_max
+                )
+            else:
+                result.full_match_score = 0.0
+                result.partial_match_score = 0.0
+
+            overall_max = MaxScores.overall_score_max(query_data)
+            result.overall_score = (
+                safe_div(result.overall_score, overall_max) if overall_max > 0 else 0.0
+            )
+
+            # Boost (log) and clamp
+            boost_factor = 4.0
+            boosted = math.log(boost_factor * result.overall_score + 1) / math.log(
+                boost_factor + 1
+            )
+            # Prevent tiny floating point drift outside [0,1]
+            result.overall_score = max(0.0, min(1.0, boosted))
 
             self._logger.debug(
-                f"Dynamically normalized score 0-1 range: {result.overall_score}"
+                f"Normalized+boosted overall score: {result.overall_score} (enabled components: {enabled})"
             )
-
-            # Boost overall score (to enhance low scores)
-            # Apply logarithmic transformation to boost low scores while keeping them under 1
-            # Formula: y = ln(b*x+1) / ln(b+1) where b controls the boost strength
-            boost_factor = 4.0  # Adjust this to control how much boost to apply
-            result.overall_score = math.log(
-                boost_factor * result.overall_score + 1
-            ) / math.log(boost_factor + 1)
-
-            self._logger.debug(f"Overall score after boosting: {result.overall_score}")
 
     def _process_search_results(
         self, raw_results: List[SearchResult], document_details: List[DocumentDetails]
@@ -492,7 +534,7 @@ class SearchEngine:
         Returns:
             Dictionary with relevant score fields based on query components
         """
-        result_dict = {
+        result_dict: Dict[str, Any] = {
             "title": result.title,
             "doi": result.doi,
             "summary": result.summary,
@@ -510,7 +552,9 @@ class SearchEngine:
 
         # Include full_match and partial_match scores only if filters are provided
         if structured_data.filters and len(structured_data.filters) > 0:
-            result_dict["full_match_score"] = result.full_match_score > 0
+            # Preserve numeric scores; *add* boolean convenience flag
+            result_dict["full_match_score"] = result.full_match_score
+            result_dict["full_match"] = result.full_match_score > 0
             result_dict["partial_match_score"] = result.partial_match_score
 
         return result_dict
@@ -582,67 +626,104 @@ class SearchEngine:
             yield cached_response
             return
 
-        try:
-            # Prepare the prompt with query and results
-            user_content = f"""
-            Original Query: "{query}"
-            
-            Search Results Summary:
-            - Total results found: {results_summary['total_results']}
-            - High relevance results: {results_summary['relevance_groups']['high']['count']}
-            - Medium relevance results: {results_summary['relevance_groups']['medium']['count']}
-            - Low relevance results: {results_summary['relevance_groups']['low']['count']}
-            
-            Results by Relevance Groups:
-            {json.dumps(results_summary['relevance_groups'], indent=2)}
-            
-            Please explain these search results in relation to the user's query, organizing your explanation by relevance groups (high, medium, low).
-            """
+        # Prepare the prompt with query and results
+        user_content = f"""
+        Original Query: "{query}"
 
-            stream = self.openai_client.chat.completions.create(
+        Search Results Summary:
+        - Total results found: {results_summary['total_results']}
+        - High relevance results: {results_summary['relevance_groups']['high']['count']}
+        - Medium relevance results: {results_summary['relevance_groups']['medium']['count']}
+        - Low relevance results: {results_summary['relevance_groups']['low']['count']}
+
+        Results by Relevance Groups:
+        {json.dumps(results_summary['relevance_groups'], indent=2)}
+
+        Please explain these search results in relation to the user's query, organizing your explanation by relevance groups (high, medium, low).
+        """
+
+        def _start_stream():
+            return self.openai_client.chat.completions.create(
                 model=model_name,
                 messages=[
                     {
                         "role": "system",
                         "content": AIPrompts.get_result_explanation_prompt(),
                     },
-                    {
-                        "role": "user",
-                        "content": user_content,
-                    },
+                    {"role": "user", "content": user_content},
                 ],
                 max_tokens=800,
-                temperature=0.3,  # Slightly higher temperature for more natural explanations
-                stream=True,  # Enable streaming
+                temperature=0.3,
+                stream=True,
             )
 
-            # Stream the response and collect for caching
-            collected_content = ""
+        stream = self._retry_openai_call(
+            _start_stream, context="result_explanation_stream"
+        )
+        if stream is None:
+            fallback_explanation = self._create_fallback_explanation(
+                query, len(search_results)
+            )
+            yield fallback_explanation
+            return
+
+        collected_content = ""
+        try:
             for chunk in stream:
                 if hasattr(chunk, "choices") and len(chunk.choices) > 0:
                     content = getattr(chunk.choices[0].delta, "content", "")
                     if content:
                         collected_content += content
                         yield content
-                    else:
-                        self._logger.warning("Received empty content chunk from OpenAI")
+                # Non-conforming chunks are silently skipped after a warning
                 else:
                     self._logger.warning(
-                        "Unexpected chunk format from OpenAI: %s", chunk
+                        "Unexpected chunk format from OpenAI during streaming: %s",
+                        chunk,
                     )
-
+        except Exception as e:  # noqa: BLE001
+            self._logger.error(
+                f"Streaming error from OpenAI (explanation). Yielding fallback. Error: {e}"
+            )
+            if not collected_content:
+                # Only fallback if we have nothing yet
+                yield self._create_fallback_explanation(query, len(search_results))
+        else:
             self._logger.debug("OpenAI streaming completed")
-
-            # Cache the complete response if it's valid
             if collected_content:
                 self._llm_cache.put(model_name, cache_key, collected_content)
 
-        except Exception as e:
-            self._logger.error(f"OpenAI API error during explanation: {e}")
-            fallback_explanation = self._create_fallback_explanation(
-                query, len(search_results)
-            )
-            yield fallback_explanation
+    def _retry_openai_call(
+        self,
+        func: Callable[[], Any],
+        attempts: int = 3,
+        base_backoff: float = 0.75,
+        context: str = "openai_call",
+    ) -> Optional[Any]:
+        """Generic retry helper for OpenAI SDK calls.
+
+        Parameters:
+            func: Zero-arg callable performing the OpenAI SDK invocation.
+            attempts: Max attempts.
+            base_backoff: Initial backoff seconds (doubles each retry).
+            context: Log context label.
+        Returns:
+            Result of func() or None if all attempts fail.
+        """
+        backoff = base_backoff
+        for attempt in range(1, attempts + 1):
+            try:
+                return func()
+            except Exception as e:
+                self._logger.warning(
+                    f"{context} attempt {attempt}/{attempts} failed: {e}"
+                )
+                if attempt == attempts:
+                    break
+                time.sleep(backoff)
+                backoff *= 2
+        self._logger.error(f"All {attempts} attempts failed for {context}.")
+        return None
 
     def _create_fallback_explanation(self, query: str, result_count: int) -> str:
         """
