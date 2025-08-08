@@ -11,9 +11,9 @@ class AIPrompts:
 - If the remaining phrase is empty, generic, or only describes an action, return `"intention": ""`.
 - Do not infer or add any information not present in the query.
 - Examples:
-  - Query: "Find papers on CuNCN"  
+  - Query: "Find papers on CuNCN"
     → `"intention": "papers on CuNCN"`
-  - Query: "Look for research where ..." or "Search for datasets where ..." (no specific subject provided)  
+  - Query: "Look for research where ..." or "Search for datasets where ..." (no specific subject provided)
     → `"intention": ""`
 
 ### 2. Extracting Keywords
@@ -48,7 +48,7 @@ class AIPrompts:
 - For "not between", use `"<"` and `">"` or `"NOT BETWEEN"` with `value: [x, z]`.
 - Group multiple conditions using `"logic": "AND"` or `"logic": "OR"` as appropriate.
 - If only one condition is present, do not use `"logic"` unnecessarily.
-  
+
 ### 4. Handling Logical Operators
 - Preserve the logical structure (AND/OR) as expressed in the query.
 - Nest conditions as needed to reflect the user's intent.
@@ -190,7 +190,7 @@ class AIPrompts:
             { "type": "array", "items": { "type": "string" } },
             { "type": "array", "items": { "type": "number" } },
             { "type": "array", "items": { "type": "integer" } }
-            { "type": "array", "items": { "type": "boolean" } }            
+            { "type": "array", "items": { "type": "boolean" } }
           ]
         },
         "unit": {
@@ -206,20 +206,20 @@ class AIPrompts:
 
 ### 7. Example Transformations
 
-- **User Query:** "Search for studies on CuNCN where the temperature is between 1.5 K and 100 K OR it is higher and the publication year is 2020."  
-  **JSON Output:**  
+- **User Query:** "Search for studies on CuNCN where the temperature is between 1.5 K and 100 K OR it is higher and the publication year is 2020."
+  **JSON Output:**
   `{ "intention": "CuNCN", "keywords": ["CuNCN"], "filters": { "logic": "OR", "conditions": [ { "logic": "AND", "conditions": [ { "name": "temperature", "operator": ">=", "value": 1.5, "unit": "K" }, { "name": "temperature", "operator": "<=", "value": 100, "unit": "K" } ] }, { "logic": "AND", "conditions": [ { "name": "temperature", "operator": ">", "value": 100, "unit": "K" }, { "name": "publication year", "operator": "=", "value": 2020 } ] } ] } }`
 
-- **User Query:** "Find research on chloroquine's crystal structure where the temperature is less than 100 K."  
-  **JSON Output:**  
+- **User Query:** "Find research on chloroquine's crystal structure where the temperature is less than 100 K."
+  **JSON Output:**
   `{ "intention": "chloroquine's crystal structure", "keywords": ["chloroquine", "crystal structure"], "filters": { "logic": "AND", "conditions": [ { "name": "temperature", "operator": "<", "value": 100, "unit": "K" } ] } }`
 
-- **User Query:** "Search for papers on graphene materials."  
-  **JSON Output:**  
+- **User Query:** "Search for papers on graphene materials."
+  **JSON Output:**
   `{ "intention": "papers on graphene materials", "keywords": ["graphene materials"], "filters": {} }`
 
 - **User Query:** "Look for documents where the publication year is 2020."
-  **JSON Output:**  
+  **JSON Output:**
   `{ "intention": "", "keywords": [], "filters": { "logic": "AND", "conditions": [ { "name": "publication year", "operator": "=", "value": 2020 } ] } }`
 
 ### 8. Error Handling & Edge Cases
@@ -230,9 +230,9 @@ class AIPrompts:
 
     @staticmethod
     def get_result_explanation_prompt() -> str:
-        return """You are a sophisticated AI assistant designed to act as an intelligent filter and explainer for a Retrieval-Augmented Generation (RAG) system. 
+        return """You are a sophisticated AI assistant designed to act as an intelligent filter and explainer for a Retrieval-Augmented Generation (RAG) system.
 Your primary goal is to translate complex, scored search results into a clear, concise, and user-friendly summary.
-You will explain WHY the provided documents are relevant to a user's query "without ever exposing the underlying scoring mechanics or internal system logic". 
+You will explain WHY the provided documents are relevant to a user's query "without ever exposing the underlying scoring mechanics or internal system logic".
 You are the bridge between the machine's quantitative analysis and the user's need for a qualitative explanation.
 
 ---

@@ -56,7 +56,6 @@ def init_connection_pool():
 
 def get_connection_pool() -> ConnectionPool:
     """Get the connection pool, initializing if necessary."""
-    global _connection_pool
     if _connection_pool is None:
         init_connection_pool()
     assert _connection_pool is not None, "Connection pool not initialized"

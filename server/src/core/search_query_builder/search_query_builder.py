@@ -437,7 +437,7 @@ class SearchQueryBuilder:
 
     def _get_empty_subquery(self) -> str:
         """Returns an SQL subquery that yields no results, matching the required columns."""
-        return f"""SELECT
+        return """SELECT
                     NULL::text AS doi,
                     0 AS similarity_rank,
                     0 AS chunk_similarity_rank,
@@ -600,7 +600,7 @@ class SearchQueryBuilder:
                                     flag_sql_to_add = f"""MAX(CASE
                                         WHEN {prefix_match_sql} THEN 2
                                         WHEN {contains_match_sql} THEN 1
-                                        ELSE 0 
+                                        ELSE 0
                                     END) AS {flag_name}"""
                                 else:  # Exact string operators !=, >, <, >=, <=
                                     sanitized_value = str(value).replace("'", "''")

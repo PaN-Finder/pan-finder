@@ -11,10 +11,10 @@ class FeedbackRepository:
         Returns the new record's SERIAL id as an int.
         """
         query = """
-			INSERT INTO feedback (statistic_id, feedback_type, metadata)
-			VALUES (%s, %s, %s)
-			RETURNING id
-		"""
+            INSERT INTO feedback (statistic_id, feedback_type, metadata)
+            VALUES (%s, %s, %s)
+            RETURNING id
+        """
         with get_db_connection() as conn:
             cur = conn.execute(
                 query,
