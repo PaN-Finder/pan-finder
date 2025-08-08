@@ -11,13 +11,8 @@ async def verify_turnstile_token(token: str, remoteip: str | None = None) -> boo
     Verify Cloudflare Turnstile token with Cloudflare API.
     Returns True if valid, else raises HTTPException.
     """
-    secret_key = getattr(settings, "turnstile_secret_key", None)
-    if not secret_key:
-        raise HTTPException(
-            status_code=500, detail="Turnstile secret key not configured."
-        )
     data = {
-        "secret": secret_key,
+        "secret": settings.turnstile_secret_key,
         "response": token,
     }
     if remoteip:

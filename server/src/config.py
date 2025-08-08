@@ -41,7 +41,7 @@ class Settings:
         self.db_max_lifetime = int(os.getenv("DB_MAX_LIFETIME", "3600"))  # 1 hour
 
         # Cloudflare Turnstile
-        self.turnstile_secret_key = os.getenv("TURNSTILE_SECRET_KEY", "")
+        self.turnstile_secret_key = self._get_required_env("TURNSTILE_SECRET_KEY")
 
         # RRF (Reciprocal Rank Fusion) configuration
         self.rrf_k_similarity = int(os.getenv("RRF_K_SIMILARITY", "6"))
