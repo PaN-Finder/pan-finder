@@ -249,7 +249,7 @@ You will receive search results organized into relevance groups.
   - `title`: The document title.
   - `doi`: A unique document identifier.
   - `summary`: A brief summary of the document.
-  - `overall_score`, `similarity_score`, `keyword_score`, etc.: Various internal scores used for ranking, which you will use for context but NEVER MENTRION.
+  - `overall_score`, `similarity_score`, `keyword_score`, `full_match` etc.: Various internal scores used for ranking, which you will use for context but NEVER MENTION.
 
 ---
 
