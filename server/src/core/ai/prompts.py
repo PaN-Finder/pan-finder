@@ -263,9 +263,10 @@ You will receive search results organized into relevance groups.
   - DO NOT use phrases like "This document has a high similarity score," or "This result matched all your filters." Instead, say "This paper directly addresses your question..."
 4. When `full_match` is present, it indicates that the document matches all the user's filters. Use this to highlight documents that are particularly relevant.
 5. When `partial_match` is present and it is not a full match, it indicates that the document matches some of the user's filters. Use this to highlight documents that are relevant but may not fully meet all criteria.
-6. IMPORTANT: Do NOT mention the words "filters", internal logic, or scoring when leveraging `full_match` / `partial_match`. Instead, signal this qualitatively:
-  * For a full match: Emphasize that the document "fully aligns with" or "directly satisfies all aspects of" the user's request.
-  * For a partial match: Emphasize that the document "addresses several key aspects" or "covers part of what you're looking for" while still being useful.  
+6. IMPORTANT: Do NOT mention the words "filters", internal logic, or scoring when leveraging `full_match` / `partial_match`. Instead, signal this qualitatively, and BOLD ONLY the short phrase that conveys the qualitative signal:
+  * For a full match: Include a bold phrase such as **fully aligns with** / **directly satisfies all aspects of** the user's request.
+  * For a partial match: Include a bold phrase such as **addresses several key aspects** / **covers part of what you're looking for** while still being useful.
+  * The bolded phrase should be embedded naturally inside the sentence, not the entire sentence.
   * Avoid phrasing that exposes mechanism (e.g., "matched every filter", "passed all constraints").
 
 ---
@@ -319,17 +320,17 @@ Example Output (when no results are found):
 ## No Relevant Results Found
 Unfortunately, we could not find any documents that match your query. Please try refining your query or using different keywords.
 
-Example Output (showing use of full_match and partial_match):
+Example Output (showing use of full_match and partial_match with bold qualitative signaling):
 ## Most Directly Related Results
-- Advanced Catalytic Pathways in CO2 Reduction' offers a focused analysis that fully aligns with every aspect of your request on CO2 electroreduction mechanisms. (DOI: [10.1000/full123](https://doi.org/10.1000/full123))
+- Advanced Catalytic Pathways in CO2 Reduction' offers a focused analysis that **fully aligns with** every aspect of your request on CO2 electroreduction mechanisms. (DOI: [10.1000/full123](https://doi.org/10.1000/full123))
 
 ## Worth Considering
-- Electrode Material Innovations for Gas Conversion' addresses several important elements of your query by discussing related catalyst behaviors, though it does not cover the complete reaction pathway in depth. (DOI: [10.1000/part456](https://doi.org/10.1000/part456))
+- Electrode Material Innovations for Gas Conversion' **addresses several important elements** of your query by discussing related catalyst behaviors, though it does not cover the complete reaction pathway in depth. (DOI: [10.1000/part456](https://doi.org/10.1000/part456))
 
-Example Output (alternative phrasing without badges):
+Example Output (alternative phrasing with different bold phrases):
 ## Most Directly Related Results
-- The study 'In Situ Spectroscopy of Lithium Interfaces' comprehensively covers all aspects you asked about, making it especially pertinent. (DOI: [10.1000/full789](https://doi.org/10.1000/full789))
+- The study 'In Situ Spectroscopy of Lithium Interfaces' **directly satisfies all aspects of** what you asked, making it especially pertinent. (DOI: [10.1000/full789](https://doi.org/10.1000/full789))
 
 ## Worth Considering
-- 'Solid Electrolyte Trends in Battery Design' explores part of your area of interest and provides useful complementary perspective even though it doesn't address everything you specified. (DOI: [10.1000/part987](https://doi.org/10.1000/part987))
+- 'Solid Electrolyte Trends in Battery Design' **covers part of what you're looking for** and provides useful complementary perspective even though it doesn't address everything you specified. (DOI: [10.1000/part987](https://doi.org/10.1000/part987))
 """

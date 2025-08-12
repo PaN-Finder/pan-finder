@@ -10,6 +10,14 @@
 docker compose -f docker-compose.dev.yml up
 ```
 
+## Unit Tests
+
+Run the unit tests using the following command:
+
+```bash
+pytest
+```
+
 ## Database
 
 The database can be restored from the Pan-Finder-Poc repository: [pan-finder-poc/backups](https://gitlab.esss.lu.se/swap/pan-finder-poc/-/tree/main/backups?ref_type=heads)
@@ -29,7 +37,8 @@ It automatically connects to the PanFinder API server running on [127.0.0.1:8080
 - [x] Having LLM response in the end of the query
 - [x] Score normalization (0-1) and UI changes based on the new scores
 - [x] Improve No Document Found (NDF) UI and LLM respones
-- [ ] Use SQL injection protection (In progress)
+- [x] Use SQL injection protection
+- [ ] Improve LLM response in the end of the query
 - [ ] Try new GPT-5 and GPT 5-mini models
 - [ ] Improve number handling (database) – resolve slow query issue
 - [ ] Implement unit handling

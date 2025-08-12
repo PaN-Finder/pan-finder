@@ -450,6 +450,9 @@ class SearchEngine:
         user_content = f"""
         Original Query: "{query}"
 
+        Structured Query Data which is used to generate the search results:
+        {json.dumps(structured_data.model_dump(), indent=2)}
+
         Search Results Summary:
         - Total results found: {results_summary['total_results']}
         - High relevance results: {results_summary['relevance_groups']['high']['count']}
