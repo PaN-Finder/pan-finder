@@ -311,8 +311,8 @@ class SearchEngine:
 
         Score ranges (0-1 scale where 1 is best):
         - High: 0.7 and above (highly relevant)
-        - Medium: 0.4 to 0.7 (moderately relevant)
-        - Low: below 0.4 (less relevant)
+        - Medium: 0.5 to 0.7 (moderately relevant)
+        - Low: below 0.5 (less relevant)
 
         Args:
             search_results: List of search results to group
@@ -325,7 +325,7 @@ class SearchEngine:
 
         # Define absolute thresholds based on 0-1 score scale
         high_threshold = 0.7  # High relevance: 70% and above
-        medium_threshold = 0.4  # Medium relevance: 40-70%
+        medium_threshold = 0.5  # Medium relevance: 50-70%
         # Low relevance: below 40%
 
         groups = {"high": [], "medium": [], "low": []}

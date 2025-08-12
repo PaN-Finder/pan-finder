@@ -3,8 +3,10 @@ from typing import Dict, List
 
 from ...db.models.search import EnhancedSearchResult, StructuredQueryData
 from ...config import get_settings
+from ...utils import get_logger
 
 settings = get_settings()
+logger = get_logger(__name__)
 
 
 class Scoring:
@@ -53,12 +55,34 @@ class Scoring:
 
         enabled = Scoring.components_enabled(query_data)
 
+        logger.debug(
+            "Normalizing scores | enabled_components=%s | similarity_max=%.6f | chunk_similarity_max=%.6f | keyword_max=%.6f | full_match_max=%.6f | partial_match_max=%.6f | overall_max=%.6f | results_count=%d",
+            enabled,
+            Scoring.similarity_score_max,
+            Scoring.chunk_similarity_score_max,
+            Scoring.keyword_score_max,
+            Scoring.full_match_score_max,
+            Scoring.partial_match_score_max,
+            Scoring.overall_score_max(query_data),
+            len(results),
+        )
+
         def safe_div(value: float, denom: float) -> float:
             if denom <= 0:
                 return 0.0
             return value / denom
 
         for result in results:
+            # Snapshot original (pre-normalization) scores for logging
+            original = {
+                "doi": result.doi,
+                "overall": result.overall_score,
+                "similarity": result.similarity_score,
+                "chunk_similarity": result.chunk_similarity_score,
+                "keyword": result.keyword_score,
+                "full_match": result.full_match_score,
+                "partial_match": result.partial_match_score,
+            }
             if enabled["similarity"]:
                 result.similarity_score = safe_div(
                     result.similarity_score, Scoring.similarity_score_max
@@ -93,8 +117,26 @@ class Scoring:
                 safe_div(result.overall_score, overall_max) if overall_max > 0 else 0.0
             )
 
-            boost_factor = 4.0
-            boosted = math.log(boost_factor * result.overall_score + 1) / math.log(
-                boost_factor + 1
+            # Disable logarithmic boost for now
+            # boost_factor = 4.0
+            # boosted = math.log(boost_factor * result.overall_score + 1) / math.log(
+            #    boost_factor + 1
+            # )
+            # result.overall_score = max(0.0, min(1.0, boosted))
+
+            logger.debug(
+                "Score normalization | doi=%s | before={overall:%.6f sim:%.6f chunk:%.6f keyword:%.6f full:%.6f partial:%.6f} | after={overall:%.6f sim:%.6f chunk:%.6f keyword:%.6f full:%.6f partial:%.6f}",
+                original["doi"],
+                original["overall"],
+                original["similarity"],
+                original["chunk_similarity"],
+                original["keyword"],
+                original["full_match"],
+                original["partial_match"],
+                result.overall_score,
+                result.similarity_score,
+                result.chunk_similarity_score,
+                result.keyword_score,
+                result.full_match_score,
+                result.partial_match_score,
             )
-            result.overall_score = max(0.0, min(1.0, boosted))
