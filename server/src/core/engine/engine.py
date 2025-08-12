@@ -4,6 +4,7 @@ from functools import lru_cache
 from sentence_transformers import SentenceTransformer
 from openai import AzureOpenAI
 from psycopg.rows import dict_row
+from psycopg.sql import Composed
 from typing import cast, Any, List, Optional, AsyncGenerator, Dict, Callable
 
 from ...db.models.document import DocumentTypedDict
@@ -80,6 +81,7 @@ class SearchEngine:
                 rrf_k_full_match=settings.rrf_k_full_match,
                 rrf_k_partial_match=settings.rrf_k_partial_match,
                 rrf_k_keyword=settings.rrf_k_keyword,
+                logger=get_logger("SearchQueryBuilder"),
             )
         return self._query_builder
 
@@ -220,7 +222,9 @@ class SearchEngine:
             self._logger.error(f"Search execution error: {e}")
             return []
 
-    def _execute_database_query(self, sql_query: str) -> List[EnhancedSearchResult]:
+    def _execute_database_query(
+        self, sql_query: Composed
+    ) -> List[EnhancedSearchResult]:
         """
         Execute the database query and process results.
 
