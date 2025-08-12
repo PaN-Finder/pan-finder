@@ -1,0 +1,138 @@
+
+        SELECT
+            searches.doi,
+            sum(
+                rrf_score(similarity_rank, 6) +
+                rrf_score(chunk_similarity_rank, 6) +
+                rrf_score(full_match_rank, 6) +
+                rrf_score(partial_match_rank, 6) +
+                rrf_score(keyword_rank, 6)
+            ) AS overall_score,
+            sum(rrf_score(similarity_rank, 6)) AS similarity_score,
+            sum(rrf_score(chunk_similarity_rank, 6)) AS chunk_similarity_score,
+            sum(rrf_score(full_match_rank, 6)) AS full_match_score,
+            sum(rrf_score(partial_match_rank, 6)) AS partial_match_score,
+            sum(rrf_score(keyword_rank, 6)) AS keyword_score
+        FROM (
+            -- Subquery 1: Document Similarity (title + summary (generated))
+            (
+                SELECT
+                    d.doi,
+                    DENSE_RANK () OVER (ORDER BY d.title_summary_vector <=> '{0.1,0.2,0.3}'::float8[]::vector ASC) AS similarity_rank,
+                    0 AS chunk_similarity_rank,
+                    0 AS full_match_rank,
+                    0 AS partial_match_rank,
+                    0 AS keyword_rank
+                FROM document d
+                WHERE
+                    d.title_summary_vector <=> '{0.1,0.2,0.3}'::float8[]::vector < 0.5
+            )
+            UNION ALL
+            -- Subquery 2: Chunk Similarity (title + text chunks)
+            (
+                WITH RankedChunks AS (
+                    SELECT
+                        d.doi,
+                        c.text_vector <=> '{0.1,0.2,0.3}'::float8[]::vector AS distance, -- Distance used for ordering (lower is better)
+                        -- Rank each chunk within its DOI by similarity
+                        ROW_NUMBER() OVER(PARTITION BY d.doi ORDER BY c.text_vector <=> '{0.1,0.2,0.3}'::float8[]::vector ASC) as rn_within_doi,
+                        -- Count how many chunks for this DOI meet the similarity threshold
+                        COUNT(*) OVER (PARTITION BY d.doi) as chunk_count_for_doi
+                    FROM
+                        chunk c
+                    JOIN
+                        document d ON c.document_id = d.id
+                    WHERE
+                        c.text_vector <=> '{0.1,0.2,0.3}'::float8[]::vector < 0.5
+                )
+                SELECT
+                    rc.doi,
+                    0 AS similarity_rank,
+                    DENSE_RANK() OVER (ORDER BY rc.distance ASC, rc.chunk_count_for_doi DESC) AS chunk_similarity_rank,
+                    -- Primary: prioritize DOIs with a more similar best chunk (lower distance)
+                    -- Secondary: break ties by number of qualifying chunks (more is better)
+                    0 AS full_match_rank,
+                    0 AS partial_match_rank,
+                    0 AS keyword_rank
+                FROM RankedChunks rc
+                WHERE
+                    rc.rn_within_doi = 1        -- Keep only the single best chunk per DOI
+                -- NO ORDER BY here, as we will use the rank to calculate the score
+                -- NO LIMIT as we want all DOIs with at least one chunk meeting the threshold
+            )
+            UNION ALL
+            -- Subquery 3: Hard Filter Matches
+            (
+                
+            WITH FilterFlags AS (
+                -- Step 1: Calculate flags for each unique base condition per document
+                SELECT
+                    f.document_id, MAX(CASE WHEN (f.key IN ('year') AND cast_to_int(f.value) > 2020) THEN 1 ELSE 0 END) AS "has_condition_1", MAX(CASE
+                        WHEN (f.key IN ('journal') AND f.value ILIKE 'Nature%') THEN 2
+                        WHEN (f.key IN ('journal') AND f.value ILIKE '%Nature%') THEN 1
+                        ELSE 0
+                    END) AS "has_condition_2"
+                FROM filter f
+                -- Pre-filter rows based on *all* keys involved in the conditions
+                WHERE f.key IN ('journal', 'year')
+                GROUP BY f.document_id
+            ),
+            FilterLogic AS (
+                -- Step 2: Apply the specific AND/OR logic and count partial matches
+                SELECT
+                    ff.document_id,
+                    CASE
+                        WHEN ("has_condition_1" > 0 AND "has_condition_2" > 0)
+                        THEN 1 -- The document satisfies the overall logic (Full Match)
+                        ELSE 0 -- The document does not satisfy the overall logic (Partial or No Match)
+                    END AS full_match_score,
+                    -- Sum of individual flags (scores can be 0, 1, or 2)
+                    ("has_condition_1" + "has_condition_2") AS partial_match_count
+                FROM FilterFlags ff
+                -- Optimization: Only process documents that matched at least one flag based on score
+                WHERE ("has_condition_1" > 0 OR "has_condition_2" > 0)
+            )
+            -- Step 3: Final SELECT, Ranking, and Join
+            SELECT
+                d.doi,
+                0 AS similarity_rank,
+                0 AS chunk_similarity_rank,
+                fl.full_match_score AS full_match_rank, -- Treated as 1 (match) or 0 (no match); downstream scoring handles this.
+                DENSE_RANK() OVER (ORDER BY fl.partial_match_count DESC) AS partial_match_rank,
+                0 AS keyword_rank
+            FROM FilterLogic fl
+            JOIN document d ON d.id = fl.document_id
+            WHERE partial_match_count > 0 -- Ensures only documents that truly matched (score > 0) are returned
+            -- NO ORDER BY here, as we will use the rank to calculate the score
+            -- NO LIMIT here, we want to get all documents that match the filter
+            
+            )
+            UNION ALL
+            -- Subquery 4: Keywords (Full-Text Search)
+            (
+                SELECT
+                    d.doi,
+                    0 AS similarity_rank,
+                    0 AS chunk_similarity_rank,
+                    0 AS full_match_rank,
+                    0 AS partial_match_rank,
+                    DENSE_RANK() OVER (ORDER BY ts_rank_cd(title_text_search_vector, to_tsquery('english', '')) DESC) AS keyword_rank
+                FROM document d
+                WHERE
+                    title_text_search_vector @@ to_tsquery('english', '')
+                    AND '' != '' -- Avoid error if keywords are empty
+                -- NO ORDER BY here, as we will use the rank to calculate the score
+                -- NO LIMIT here: we want all DOIs with at least one keyword match
+            )
+        ) searches
+        WHERE searches.doi IS NOT NULL -- Exclude potential NULL DOIs from empty subqueries
+        GROUP BY searches.doi
+        ORDER BY
+            overall_score DESC,
+            full_match_score DESC,
+            partial_match_score DESC,
+            similarity_score DESC,
+            chunk_similarity_score DESC,
+            keyword_score DESC
+        LIMIT 20;
+        

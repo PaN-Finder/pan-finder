@@ -2,6 +2,7 @@ import importlib.util
 from pathlib import Path
 import pytest
 from unittest.mock import MagicMock, patch, ANY
+from psycopg.sql import Composable
 
 # --- Dynamic Import ---
 # Assuming search_query_builder.py is in the same directory as the test file
@@ -27,46 +28,38 @@ def mock_embedding_model():
 
 @pytest.fixture
 def mock_postgres_client():
-    # 1. Create the final mock cursor
+    """Mock a psycopg_pool.ConnectionPool with .connection() CM and a connection with .cursor() CM."""
+    # Cursor and its context manager
     mock_cursor = MagicMock(name="MockCursor")
     mock_cursor.fetchall.return_value = []  # Default: no similar names found
-
-    # 2. Create the cursor context manager mock
     mock_cursor_cm = MagicMock(name="MockCursorContextManager")
-    mock_cursor_cm.__enter__.return_value = (
-        mock_cursor  # This returns the cursor when entering the 'with'
-    )
-    # Add __exit__ for completeness, although often not strictly needed if no errors/cleanup are tested
+    mock_cursor_cm.__enter__.return_value = mock_cursor
     mock_cursor_cm.__exit__ = MagicMock(return_value=None)
 
-    # 3. Create the connection mock
+    # Connection and its cursor behavior
     mock_conn = MagicMock(name="MockConnection")
-    mock_conn.cursor.return_value = (
-        mock_cursor_cm  # Calling .cursor() returns the context manager
-    )
 
-    # 4. Create the client context manager mock (for the outer 'with self.db_client as client:')
-    # This mock represents the object returned when __enter__ is called on the main client mock
-    mock_client_entered = MagicMock(name="EnteredMockClient")
-    # Configure this object to return the mock connection when its cursor method is called
-    mock_client_entered.cursor.return_value = mock_cursor_cm
+    # Ensure calling conn.cursor(row_factory=...) returns a context manager
+    def _cursor_side_effect(*args, **kwargs):
+        return mock_cursor_cm
 
-    # 5. Create the main client mock
-    mock_client = MagicMock(name="MockPostgresClient")
-    # Make the client itself act as the context manager
-    mock_client.__enter__ = MagicMock(
-        return_value=mock_client_entered
-    )  # Entering 'with db_client' returns the configured connection object
-    mock_client.__exit__ = MagicMock(return_value=None)
+    mock_conn.cursor.side_effect = _cursor_side_effect
 
-    # Return the main client mock (used by the builder) and the cursor mock (for assertions)
-    return mock_client, mock_cursor
+    # Pool.connection() returns a context manager yielding the connection
+    mock_conn_cm = MagicMock(name="MockConnectionContextManager")
+    mock_conn_cm.__enter__.return_value = mock_conn
+    mock_conn_cm.__exit__ = MagicMock(return_value=None)
+
+    mock_pool = MagicMock(name="MockConnectionPool")
+    mock_pool.connection.return_value = mock_conn_cm
+
+    return mock_pool, mock_cursor
 
 
 @pytest.fixture
 def builder(mock_embedding_model, mock_postgres_client):
-    client, _ = mock_postgres_client
-    return SearchQueryBuilder(mock_embedding_model, client)
+    pool, _ = mock_postgres_client
+    return SearchQueryBuilder(mock_embedding_model, pool)
 
 
 # --- End Mocks ---
@@ -77,10 +70,10 @@ def builder(mock_embedding_model, mock_postgres_client):
 
 def test_init(mock_embedding_model, mock_postgres_client):
     """Test if the builder initializes correctly."""
-    client, _ = mock_postgres_client
-    builder_instance = SearchQueryBuilder(mock_embedding_model, client)
+    pool, _ = mock_postgres_client
+    builder_instance = SearchQueryBuilder(mock_embedding_model, pool)
     assert builder_instance.embedding_model == mock_embedding_model
-    assert builder_instance.db_client == client
+    assert builder_instance.pool == pool
 
 
 @pytest.mark.parametrize(
@@ -94,17 +87,26 @@ def test_init(mock_embedding_model, mock_postgres_client):
         ([" leading ", " trailing "], "leading|trailing"),
         (["a", "b", ""], "a|b"),
         (["||pipe||test"], "pipe|test"),
+        # Duplicates are preserved (no dedup logic today)
+        (["dna", "dna", "rna"], "dna|dna|rna"),
+        # Dangerous / punctuation mostly stripped
+        ([";DROP", "TABLE"], "DROP|TABLE"),
+        # All sanitize away -> empty
+        (["!!!", "@@@"], ""),
     ],
 )
-def test_prepare_keywords_sql(builder, keywords, expected_sql):
+def test_build_keywords_tsquery_text(builder, keywords, expected_sql):
     """Test keyword formatting for ts_query."""
-    assert builder._prepare_keywords_sql(keywords) == expected_sql
+    assert builder._build_keywords_tsquery_text(keywords) == expected_sql
 
 
 def test_find_similar_names_found(builder, mock_postgres_client, mock_embedding_model):
     """Test finding similar names when matches exist in DB."""
     _, mock_cursor = mock_postgres_client
-    mock_cursor.fetchall.return_value = [("similar_name", 0.1), ("another_name", 0.2)]
+    mock_cursor.fetchall.return_value = [
+        {"name": "similar_name", "distance": 0.1},
+        {"name": "another_name", "distance": 0.2},
+    ]
     raw_name = "test_name"
     similar_names = builder._find_similar_names(raw_name)
 
@@ -270,9 +272,20 @@ def test_generate_filter_flags_simple(builder, snapshot):
             },  # Value ignored for IS NULL/IS NOT NULL
         ],
     }
-    flags, count = builder._generate_filter_flags(filters_obj)
+    flags, count, valid_condition_ids = builder._generate_filter_flags(filters_obj)
     assert count == 6
-    snapshot.assert_match("\n".join(flags), "generate_filter_flags_simple")
+    assert all(isinstance(f, Composable) for f in flags)
+    assert valid_condition_ids == {
+        id(filters_obj["conditions"][0]),
+        id(filters_obj["conditions"][1]),
+        id(filters_obj["conditions"][2]),
+        id(filters_obj["conditions"][3]),
+        id(filters_obj["conditions"][4]),
+        id(filters_obj["conditions"][5]),
+    }  # All conditions are valid
+    snapshot.assert_match(
+        "\n".join(f.as_string() for f in flags), "generate_filter_flags_simple"
+    )
 
 
 def test_generate_filter_flags_various_operators(builder, snapshot):
@@ -284,6 +297,7 @@ def test_generate_filter_flags_various_operators(builder, snapshot):
             {"name": ["title"], "operator": "=", "value": "Test Title"},
             {"name": ["status"], "operator": "!=", "value": "draft"},
             {"name": ["tag"], "operator": "LIKE", "value": "important"},
+            {"name": ["label"], "operator": "ILIKE", "value": "urgent"},
             {"name": ["label"], "operator": "NOT LIKE", "value": "old"},
             {"name": ["category"], "operator": "NOT ILIKE", "value": "misc"},
             # Numeric comparisons
@@ -292,8 +306,19 @@ def test_generate_filter_flags_various_operators(builder, snapshot):
             {"name": ["rating"], "operator": "<", "value": 3.5},
             {"name": ["level"], "operator": "<=", "value": 10},
             {"name": ["version"], "operator": ">=", "value": 2},
+            # String (invalid operators (should be skipped))
+            {"name": ["name"], "operator": ">", "value": "A"},
+            {"name": ["name"], "operator": ">=", "value": "B"},
+            {"name": ["name"], "operator": "<", "value": "C"},
+            {"name": ["name"], "operator": "<=", "value": "D"},
             # Boolean comparison
+            {"name": ["is_active"], "operator": "=", "value": True},
             {"name": ["is_active"], "operator": "!=", "value": False},
+            # Boolean (invalid operator (should be skipped))
+            {"name": ["is_active"], "operator": ">", "value": True},
+            {"name": ["is_active"], "operator": ">=", "value": True},
+            {"name": ["is_active"], "operator": "<", "value": False},
+            {"name": ["is_active"], "operator": "<=", "value": False},
             # NULL checks
             {"name": ["description"], "operator": "IS NULL", "value": "ignored"},
             # List operators
@@ -319,10 +344,21 @@ def test_generate_filter_flags_various_operators(builder, snapshot):
             },
         ],
     }
-    flags, count = builder._generate_filter_flags(filters_obj)
-    # Expect 17 valid flags (invalid_val is skipped)
-    assert count == 17
-    snapshot.assert_match("\n".join(flags), "generate_filter_flags_various_operators")
+    flags, count, valid_condition_ids = builder._generate_filter_flags(filters_obj)
+    # Expect 19 valid flags (indices skipped: 11,12,13,14,17,18,19,20,24,27)
+    assert count == 19
+    # Build expected id set (exclude invalid indices listed above)
+    expected_valid_ids = {
+        id(cond)
+        for i, cond in enumerate(filters_obj["conditions"])
+        if i not in {11, 12, 13, 14, 17, 18, 19, 20, 24, 27}
+    }
+    assert valid_condition_ids == expected_valid_ids
+    assert all(isinstance(f, Composable) for f in flags)
+    snapshot.assert_match(
+        "\n".join(f.as_string() for f in flags),
+        "generate_filter_flags_various_operators",
+    )
 
 
 def test_generate_filter_flags_nested(builder, snapshot):
@@ -340,9 +376,18 @@ def test_generate_filter_flags_nested(builder, snapshot):
             },
         ],
     }
-    flags, count = builder._generate_filter_flags(filters_obj)
+    flags, count, valid_condition_ids = builder._generate_filter_flags(filters_obj)
     assert count == 3  # One for category, one for price, one for in_stock
-    snapshot.assert_match("\n".join(flags), "generate_filter_flags_nested")
+    expected_ids = {
+        id(filters_obj["conditions"][0]),
+        id(filters_obj["conditions"][1]["conditions"][0]),
+        id(filters_obj["conditions"][1]["conditions"][1]),
+    }
+    assert valid_condition_ids == expected_ids
+    assert all(isinstance(f, Composable) for f in flags)
+    snapshot.assert_match(
+        "\n".join(f.as_string() for f in flags), "generate_filter_flags_nested"
+    )
 
 
 def test_generate_filter_flags_invalid_conditions(builder, snapshot):
@@ -351,6 +396,11 @@ def test_generate_filter_flags_invalid_conditions(builder, snapshot):
         "logic": "AND",
         "conditions": [
             {"name": ["category"], "operator": "=", "value": "valid"},
+            {
+                "name": ["elephant"],
+                "operator": ">",
+                "value": "giraffe",
+            },  # Invalid operator for string
             {"name": [], "operator": "=", "value": "invalid name"},  # Invalid name list
             {"operator": "=", "value": "missing name"},
             {
@@ -365,9 +415,14 @@ def test_generate_filter_flags_invalid_conditions(builder, snapshot):
             },  # Invalid value for BETWEEN
         ],
     }
-    flags, count = builder._generate_filter_flags(filters_obj)
+    flags, count, valid_condition_ids = builder._generate_filter_flags(filters_obj)
     assert count == 1  # Only the valid category condition should count
-    snapshot.assert_match("\n".join(flags), "generate_filter_flags_invalid_conditions")
+    assert valid_condition_ids == {id(filters_obj["conditions"][0])}
+    assert all(isinstance(f, Composable) for f in flags)
+    snapshot.assert_match(
+        "\n".join(f.as_string() for f in flags),
+        "generate_filter_flags_invalid_conditions",
+    )
 
 
 def test_collect_keys_recursive(builder):
@@ -410,8 +465,10 @@ def test_build_filter_logic_simple(builder):
             {"name": ["b"], "operator": "=", "value": 2},
         ],
     }
-    logic_and = builder._build_filter_logic(filters_and)
-    assert logic_and == "(has_condition_1 > 0 AND has_condition_2 > 0)"
+    valid_condition_ids = set(id(cond) for cond in filters_and["conditions"])
+
+    logic_and = builder._build_filter_logic(filters_and, valid_condition_ids)
+    assert logic_and.as_string() == '("has_condition_1" > 0 AND "has_condition_2" > 0)'
 
     filters_or = {
         "logic": "OR",
@@ -420,8 +477,10 @@ def test_build_filter_logic_simple(builder):
             {"name": ["b"], "operator": "=", "value": 2},
         ],
     }
-    logic_or = builder._build_filter_logic(filters_or)
-    assert logic_or == "(has_condition_1 > 0 OR has_condition_2 > 0)"
+    valid_condition_ids = set(id(cond) for cond in filters_or["conditions"])
+
+    logic_or = builder._build_filter_logic(filters_or, valid_condition_ids)
+    assert logic_or.as_string() == '("has_condition_1" > 0 OR "has_condition_2" > 0)'
 
 
 def test_build_filter_logic_nested(builder):
@@ -439,9 +498,16 @@ def test_build_filter_logic_nested(builder):
             },
         ],
     }
-    logic_nested = builder._build_filter_logic(filters_nested)
-    expected = "(has_condition_1 > 0 AND (has_condition_2 > 0 OR has_condition_3 > 0))"
-    assert logic_nested == expected
+    valid_condition_ids = set(id(cond) for cond in filters_nested["conditions"])
+    valid_condition_ids.update(
+        id(cond) for cond in filters_nested["conditions"][1]["conditions"]
+    )  # Include nested conditions
+
+    logic_nested = builder._build_filter_logic(filters_nested, valid_condition_ids)
+    expected = (
+        '("has_condition_1" > 0 AND ("has_condition_2" > 0 OR "has_condition_3" > 0))'
+    )
+    assert logic_nested.as_string() == expected
 
 
 def test_build_filter_logic_with_invalid(builder):
@@ -460,18 +526,31 @@ def test_build_filter_logic_with_invalid(builder):
             },
         ],
     }
-    logic_invalid = builder._build_filter_logic(filters_invalid)
+    valid_condition_ids = set(id(cond) for cond in filters_invalid["conditions"])
+    valid_condition_ids.update(
+        id(cond) for cond in filters_invalid["conditions"][2]["conditions"]
+    )  # Include nested conditions
+
+    logic_invalid = builder._build_filter_logic(filters_invalid, valid_condition_ids)
     # Expected: (flag1=1 AND (FALSE OR (flag2=1 OR FALSE))) -> (flag1>0 AND flag2>0)
-    expected = "(has_condition_1 > 0 AND has_condition_2 > 0)"
-    assert logic_invalid == expected
+    expected = '("has_condition_1" > 0 AND "has_condition_2" > 0)'
+    assert logic_invalid.as_string() == expected
 
 
 def test_build_filter_logic_empty(builder):
     """Test building logic SQL for empty/fully invalid filters."""
-    assert builder._build_filter_logic({}) == "FALSE"
-    assert builder._build_filter_logic({"logic": "AND", "conditions": []}) == "FALSE"
+    # Empty filters
+    assert builder._build_filter_logic({}, set()).as_string() == "FALSE"
     assert (
-        builder._build_filter_logic({"logic": "AND", "conditions": [{"name": []}]})
+        builder._build_filter_logic(
+            {"logic": "AND", "conditions": []}, set()
+        ).as_string()
+        == "FALSE"
+    )
+    assert (
+        builder._build_filter_logic(
+            {"logic": "AND", "conditions": [{"name": []}]}, set()
+        ).as_string()
         == "FALSE"
     )
 
@@ -479,44 +558,19 @@ def test_build_filter_logic_empty(builder):
 def test_get_empty_subquery(builder, snapshot):
     """Test the SQL generated for an empty subquery."""
     sql = builder._get_empty_subquery()
-    snapshot.assert_match(sql, "empty_subquery")
+    snapshot.assert_match(sql.as_string(), "empty_subquery")
 
 
 def test_build_filter_subquery_no_filters(builder, snapshot):
     """Test building the subquery when no filters are provided."""
-    sql = builder._build_filter_subquery(None)
+    sql = builder._build_filter_subquery(None).as_string()
     snapshot.assert_match(sql, "build_filter_subquery_no_filters")
-    sql_empty = builder._build_filter_subquery({})
+    sql_empty = builder._build_filter_subquery({}).as_string()
     assert sql == sql_empty  # Should be identical
-    sql_empty_cond = builder._build_filter_subquery({"logic": "AND", "conditions": []})
+    sql_empty_cond = builder._build_filter_subquery(
+        {"logic": "AND", "conditions": []}
+    ).as_string()
     assert sql == sql_empty_cond  # Should be identical
-
-
-def test_build_filter_subquery_with_filters(builder, snapshot):
-    """Test building the subquery with a valid filter object."""
-    # Mock the helper methods called by _build_filter_subquery
-    with patch.object(
-        builder,
-        "_generate_filter_flags",
-        return_value=(["FLAG_DEF_1", "FLAG_DEF_2"], 2),
-    ), patch.object(builder, "_collect_keys_recursive") as mock_collect, patch.object(
-        builder, "_build_filter_logic", return_value="LOGIC_SQL"
-    ):
-
-        filters_obj = {
-            "logic": "AND",
-            "conditions": [{"name": ["key1"]}, {"name": ["key2"]}],
-        }  # Dummy object
-        sql = builder._build_filter_subquery(filters_obj)
-
-        # Check that _collect_keys_recursive was called correctly
-        mock_collect.assert_called_once()
-        # The second argument to _collect_keys_recursive is the set, check its final state
-        # Note: This assertion depends on the implementation detail of passing the set directly.
-        # It might be better to assert the generated keys_sql part if possible.
-        # For now, we trust the snapshot captures the result.
-
-        snapshot.assert_match(sql, "build_filter_subquery_with_filters")
 
 
 # --- Integration Test for build_query ---
@@ -527,7 +581,7 @@ def test_build_query_intention_only(builder, snapshot):
     data = {"intention": "find science papers"}
     # Mock filter name update to do nothing for this test
     with patch.object(builder, "_update_filter_names", side_effect=lambda d: d):
-        sql = builder.build_query(data)
+        sql = builder.build_query(data).as_string()
         snapshot.assert_match(sql, "build_query_intention_only")
 
 
@@ -535,7 +589,7 @@ def test_build_query_intention_keywords(builder, snapshot):
     """Test build_query with intention and keywords."""
     data = {"intention": "find biology papers", "keywords": ["dna", "rna sequence"]}
     with patch.object(builder, "_update_filter_names", side_effect=lambda d: d):
-        sql = builder.build_query(data)
+        sql = builder.build_query(data).as_string()
         snapshot.assert_match(sql, "build_query_intention_keywords")
 
 
@@ -563,7 +617,30 @@ def test_build_query_intention_filters(builder, snapshot):
         mock_find.assert_any_call("journal")
         assert mock_find.call_count == 2
 
-    snapshot.assert_match(sql, "build_query_intention_filters")
+    snapshot.assert_match(sql.as_string(), "build_query_intention_filters")
+
+
+def test_build_query_invalid_filters(builder, snapshot):
+    """Test build_query with invalid filters."""
+    data = {
+        "intention": "test invalid filters",
+        "filters": {
+            "logic": "AND",
+            "conditions": [
+                {"name": "year", "operator": ">", "value": 2020},
+                {
+                    "name": "elephant",
+                    "operator": ">",
+                    "value": "giraffe",
+                },  # Invalid operator for string
+            ],
+        },
+    }
+    # Patch _find_similar_names to return the original name in a list
+    with patch.object(builder, "_find_similar_names", side_effect=lambda name: [name]):
+        sql = builder.build_query(data)
+
+    snapshot.assert_match(sql.as_string(), "build_query_invalid_filters")
 
 
 def test_build_query_all_parts(builder, snapshot):
@@ -609,13 +686,145 @@ def test_build_query_all_parts(builder, snapshot):
         mock_find.assert_any_call("topic")
         assert mock_find.call_count == 3
 
-    snapshot.assert_match(sql, "build_query_all_parts")
+    snapshot.assert_match(sql.as_string(), "build_query_all_parts")
 
 
 def test_build_query_invalid_input(builder):
     """Test build_query with invalid input type."""
-    with pytest.raises(ValueError, match="Input 'data' must be a dictionary."):
+    with pytest.raises(ValueError, match="Input 'params' must be a dictionary."):
         builder.build_query("not a dict")
+
+
+def test_build_query_keywords_only_no_intention(builder, snapshot):
+    """When only keywords are provided, intention embedding shouldn't be computed."""
+    data = {"keywords": ["protein", "folding mechanism"]}
+    with patch.object(
+        builder, "_update_filter_names", side_effect=lambda d: d
+    ), patch.object(builder.embedding_model, "encode") as mock_encode:
+        sql = builder.build_query(data).as_string()
+        mock_encode.assert_not_called()
+    snapshot.assert_match(sql, "build_query_keywords_only_no_intention")
+
+
+def test_build_query_filters_only_no_intention(builder, snapshot):
+    """Filters without intention should not trigger embedding encoding."""
+    data = {
+        "filters": {
+            "logic": "AND",
+            "conditions": [
+                {"name": "year", "operator": ">", "value": 2021},
+                {"name": "journal", "operator": "ILIKE", "value": "Science"},
+            ],
+        }
+    }
+    with patch.object(
+        builder, "_find_similar_names", side_effect=lambda n: [n]
+    ), patch.object(builder.embedding_model, "encode") as mock_encode:
+        sql = builder.build_query(data).as_string()
+        mock_encode.assert_not_called()
+    snapshot.assert_match(sql, "build_query_filters_only_no_intention")
+
+
+def test_build_filter_subquery_all_invalid_conditions(builder):
+    """All invalid conditions should yield the empty subquery."""
+    invalid_filters = {
+        "logic": "AND",
+        "conditions": [
+            {"name": [], "operator": "=", "value": 1},  # empty name list
+            {"operator": "=", "value": 2},  # missing name
+            {
+                "name": ["x"],
+                "operator": "IN",
+                "value": [],
+            },  # empty IN list (should skip)
+        ],
+    }
+    empty = builder._get_empty_subquery().as_string()
+    subquery = builder._build_filter_subquery(invalid_filters).as_string()
+    assert subquery == empty
+
+
+def test_generate_filter_flags_case_insensitive_operator(builder):
+    """Lowercase ilike should be accepted same as ILIKE."""
+    filt = {
+        "logic": "AND",
+        "conditions": [
+            {"name": ["journal"], "operator": "ilike", "value": "nature"},
+        ],
+    }
+    flags, count, valid_ids = builder._generate_filter_flags(filt)
+    assert count == 1
+    assert len(flags) == 1
+    assert len(valid_ids) == 1
+    sql_fragment = flags[0].as_string()
+    assert "ILIKE" in sql_fragment  # normalized
+
+
+def test_generate_filter_flags_in_empty_list_skipped(builder):
+    """IN with empty list should not create a flag."""
+    filt = {
+        "logic": "AND",
+        "conditions": [{"name": ["id"], "operator": "IN", "value": []}],
+    }
+    flags, count, valid_ids = builder._generate_filter_flags(filt)
+    assert count == 0
+    assert flags == []
+    assert valid_ids == set()
+
+
+def test_generate_filter_flags_between_boundary(builder):
+    """BETWEEN boundaries should appear verbatim (inclusive semantics)."""
+    filt = {
+        "logic": "AND",
+        "conditions": [
+            {"name": ["year"], "operator": "BETWEEN", "value": [2000, 2010]}
+        ],
+    }
+    flags, count, _ = builder._generate_filter_flags(filt)
+    assert count == 1
+    text = flags[0].as_string()
+    assert (
+        text
+        == "MAX(CASE WHEN (f.key IN ('year') AND cast_to_int(f.value) BETWEEN 2000 AND 2010) THEN 1 ELSE 0 END) AS \"has_condition_1\""
+    )
+
+
+def test_update_filter_names_filters_become_empty_sets_none(builder):
+    """If all conditions invalid after update, filters should become None."""
+    data = {
+        "filters": {
+            "logic": "AND",
+            "conditions": [
+                {"name": "", "operator": "=", "value": 1},  # invalid empty name
+                {"operator": "=", "value": 2},  # missing name
+            ],
+        }
+    }
+    updated = builder._update_filter_names(data)
+    assert updated["filters"] is None
+
+
+def test_build_query_all_invalid_filters_behaves_like_no_filters(builder):
+    """Query with all invalid filters should match SQL of a query with no filters."""
+    params_with_invalid = {
+        "intention": "explore galaxies",
+        "filters": {
+            "logic": "AND",
+            "conditions": [{"name": "", "operator": "=", "value": 1}],
+        },
+    }
+    params_no_filters = {"intention": "explore galaxies"}
+    with patch.object(builder, "_find_similar_names", side_effect=lambda n: [n]):
+        sql_invalid = builder.build_query(params_with_invalid).as_string()
+    sql_none = builder.build_query(params_no_filters).as_string()
+    assert sql_invalid == sql_none
+
+
+def test_build_keywords_tsquery_text_large_list(builder):
+    """Large keyword lists should not error and keep ordering."""
+    big_list = [f"k{i}" for i in range(50)]
+    tsq = builder._build_keywords_tsquery_text(big_list)
+    assert tsq.startswith("k0|") and tsq.count("|") == 49
 
 
 # --- End Test Cases ---

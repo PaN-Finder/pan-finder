@@ -1,0 +1,5 @@
+MAX(CASE
+                        WHEN (f.key IN ('category') AND f.value ILIKE 'valid%') THEN 2
+                        WHEN (f.key IN ('category') AND f.value ILIKE '%valid%') THEN 1
+                        ELSE 0
+                    END) AS "has_condition_1"
