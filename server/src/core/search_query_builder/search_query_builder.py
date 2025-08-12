@@ -1,17 +1,18 @@
-from typing import Any, Dict, List, Set, Tuple, Union, TypedDict
+from typing import Any, Dict, List, LiteralString, Union, TypedDict, Tuple, Set, cast
+from psycopg.sql import SQL, Composed, Identifier, Literal, Composable
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
 from sentence_transformers import SentenceTransformer
+from logging import Logger, getLogger
 
-from ...utils import get_logger
-
-NumberTypes = (int, float, complex)
+NUMBER_TYPES = (int, float, complex)
 
 
 class SearchResult(TypedDict):
     """
-    Type definition for the result returned by SearchQueryBuilder.build_query().
-    Matches the structure of the SQL query results.
+    Type definition for each row returned when executing the SQL built by
+    SearchQueryBuilder.build_query(). Matches the columns selected in the
+    final SQL.
     """
 
     doi: str
@@ -43,12 +44,14 @@ class SearchQueryBuilder:
     def __init__(
         self,
         embedding_model: SentenceTransformer,
-        pool: ConnectionPool,  # PostgreSQL
+        pool: ConnectionPool,
         rrf_k_similarity: int = _DEFAULT_RRF_K,
         rrf_k_chunk: int = _DEFAULT_RRF_K,
         rrf_k_full_match: int = _DEFAULT_RRF_K,
         rrf_k_partial_match: int = _DEFAULT_RRF_K,
         rrf_k_keyword: int = _DEFAULT_RRF_K,
+        logger: Logger | None = None,
+        capture_similar_names: bool = False,
     ):
         self.embedding_model = embedding_model
         self.pool = pool
@@ -57,14 +60,22 @@ class SearchQueryBuilder:
         self.rrf_k_full_match = rrf_k_full_match
         self.rrf_k_partial_match = rrf_k_partial_match
         self.rrf_k_keyword = rrf_k_keyword
-        self._logger = get_logger(self.__class__.__name__)
+        self._logger = logger or getLogger(__name__)
+        self._capture_similar_names = capture_similar_names
+        self._similar_names = (
+            {}
+        )  # For debugging purposes, stores similar names found during query building
 
-    # --- Attributes ---
-    # Similarity names for filters (debugging purposes)
-    similar_names = {}
+    @property
+    def similar_names(self) -> Dict[str, List[Dict[str, Any]]]:
+        """
+        Returns the dictionary of similar names found during query building.
+        Only populated if capture_similar_names was set to True in the constructor.
+        """
+        return self._similar_names
 
     # --- Public Methods ---
-    def build_query(self, data: Dict[str, Any]) -> str:
+    def build_query(self, params: Dict[str, Any]) -> Composed:
         """
         Constructs the final SQL search query based on the input data.
 
@@ -73,63 +84,67 @@ class SearchQueryBuilder:
                   'keywords', and 'filters'.
 
         Returns:
-            A string containing the full SQL query.
+            A psycopg Composed object representing the full SQL query.
         """
-        if not isinstance(data, dict):
-            raise ValueError("Input 'data' must be a dictionary.")
+        if not isinstance(params, dict):
+            raise ValueError("Input 'params' must be a dictionary.")
 
+        if self._capture_similar_names:
+            self._similar_names.clear()  # Clear previous similar names if capturing
+
+        self._logger.info(f"Building query with params: {params}")
         # 1. Preprocess: Update filter names with similar ones
-        self.similar_names = {}
-        processed_data = self._update_filter_names(data)
+        normalized_params = self._update_filter_names(params)
         self._logger.info(
-            f"Processed filter names: {processed_data.get('filters', 'N/A')}"
+            f"Processed filter names: {normalized_params.get('filters', 'N/A')}"
         )
 
         # 2. Prepare components
-        intention = processed_data.get("intention", "")
-
-        intention_vector = (
-            self.embedding_model.encode(intention).tolist() if intention != "" else None
-        )
-        similarity_subquery_sql = self._build_similarity_query(intention_vector)
-        chunk_similarity_subquery_sql = self._build_chunk_similarity_query(
-            intention_vector
+        intent_text = normalized_params.get("intention", "")
+        intent_embedding = (
+            self.embedding_model.encode(intent_text).tolist()
+            if intent_text != ""
+            else None
         )
 
-        keywords_sql = self._prepare_keywords_sql(processed_data.get("keywords", []))
-        # Pass the root filter object to _build_filter_logic to initialize counter correctly
-        filter_subquery_sql = self._build_filter_subquery(processed_data.get("filters"))
+        doc_similarity_subquery = self._build_similarity_query(intent_embedding)
+        chunk_similarity_subquery = self._build_chunk_similarity_query(intent_embedding)
+        keywords_tsquery_text = self._build_keywords_tsquery_text(
+            normalized_params.get("keywords", [])
+        )
+        filter_subquery = self._build_filter_subquery(normalized_params.get("filters"))
 
-        # 3. Assemble the final query
-        final_sql = f"""
+        # 3. Assemble the final query with composables and sanitized values
+        search_sql = SQL(
+            """
         SELECT
             searches.doi,
             sum(
-                rrf_score(similarity_rank, {self.rrf_k_similarity}) +
-                rrf_score(chunk_similarity_rank, {self.rrf_k_chunk}) +
-                rrf_score(full_match_rank, {self.rrf_k_full_match}) +
-                rrf_score(partial_match_rank, {self.rrf_k_partial_match}) +
-                rrf_score(keyword_rank, {self.rrf_k_keyword})
+                rrf_score(similarity_rank, {rrf_k_similarity}) +
+                rrf_score(chunk_similarity_rank, {rrf_k_chunk}) +
+                rrf_score(full_match_rank, {rrf_k_full_match}) +
+                rrf_score(partial_match_rank, {rrf_k_partial_match}) +
+                rrf_score(keyword_rank, {rrf_k_keyword})
             ) AS overall_score,
-            sum(rrf_score(similarity_rank, {self.rrf_k_similarity})) AS similarity_score,
-            sum(rrf_score(chunk_similarity_rank, {self.rrf_k_chunk})) AS chunk_similarity_score,
-            sum(rrf_score(full_match_rank, {self.rrf_k_full_match})) AS full_match_score,
-            sum(rrf_score(partial_match_rank, {self.rrf_k_partial_match})) AS partial_match_score,
-            sum(rrf_score(keyword_rank, {self.rrf_k_keyword})) AS keyword_score
+            sum(rrf_score(similarity_rank, {rrf_k_similarity})) AS similarity_score,
+            sum(rrf_score(chunk_similarity_rank, {rrf_k_chunk})) AS chunk_similarity_score,
+            sum(rrf_score(full_match_rank, {rrf_k_full_match})) AS full_match_score,
+            sum(rrf_score(partial_match_rank, {rrf_k_partial_match})) AS partial_match_score,
+            sum(rrf_score(keyword_rank, {rrf_k_keyword})) AS keyword_score
         FROM (
             -- Subquery 1: Document Similarity (title + summary (generated))
             (
-                {similarity_subquery_sql}
+                {doc_similarity_subquery}
             )
             UNION ALL
             -- Subquery 2: Chunk Similarity (title + text chunks)
             (
-                {chunk_similarity_subquery_sql}
+                {chunk_similarity_subquery}
             )
             UNION ALL
             -- Subquery 3: Hard Filter Matches
             (
-                {filter_subquery_sql}
+                {filter_subquery}
             )
             UNION ALL
             -- Subquery 4: Keywords (Full-Text Search)
@@ -140,13 +155,13 @@ class SearchQueryBuilder:
                     0 AS chunk_similarity_rank,
                     0 AS full_match_rank,
                     0 AS partial_match_rank,
-                    DENSE_RANK() OVER (ORDER BY ts_rank_cd(title_text_search_vector, to_tsquery('english', '{keywords_sql}')) DESC) AS keyword_rank
+                    DENSE_RANK() OVER (ORDER BY ts_rank_cd(title_text_search_vector, to_tsquery('english', {keywords_tsquery_text})) DESC) AS keyword_rank
                 FROM document d
                 WHERE
-                    title_text_search_vector @@ to_tsquery('english', '{keywords_sql}')
-                    AND '{keywords_sql}' != '' -- Avoid error if keywords are empty
+                    title_text_search_vector @@ to_tsquery('english', {keywords_tsquery_text})
+                    AND {keywords_tsquery_text} != '' -- Avoid error if keywords are empty
                 -- NO ORDER BY here, as we will use the rank to calculate the score
-                -- NO LIMIT as we want all DOIs with at least one keyword match
+                -- NO LIMIT here: we want all DOIs with at least one keyword match
             )
         ) searches
         WHERE searches.doi IS NOT NULL -- Exclude potential NULL DOIs from empty subqueries
@@ -158,62 +173,86 @@ class SearchQueryBuilder:
             similarity_score DESC,
             chunk_similarity_score DESC,
             keyword_score DESC
-        LIMIT {self._FINAL_LIMIT};
+        LIMIT {_FINAL_LIMIT};
         """
+        ).format(
+            rrf_k_similarity=self.rrf_k_similarity,
+            rrf_k_chunk=self.rrf_k_chunk,
+            rrf_k_full_match=self.rrf_k_full_match,
+            rrf_k_partial_match=self.rrf_k_partial_match,
+            rrf_k_keyword=self.rrf_k_keyword,
+            doc_similarity_subquery=doc_similarity_subquery,
+            chunk_similarity_subquery=chunk_similarity_subquery,
+            filter_subquery=filter_subquery,
+            keywords_tsquery_text=keywords_tsquery_text,
+            _FINAL_LIMIT=self._FINAL_LIMIT,
+        )
 
-        return final_sql
+        return search_sql
 
-    def _build_similarity_query(self, intention_vector: List | None) -> str:
+    def _build_similarity_query(self, intention_vector: List | None) -> Composed | SQL:
         if intention_vector is None:
             return self._get_empty_subquery()
 
-        return f"""SELECT
+        return SQL(
+            """SELECT
                     d.doi,
-                    DENSE_RANK () OVER (ORDER BY d.title_summary_vector <=> '{intention_vector}'::vector ASC) AS similarity_rank,
+                    DENSE_RANK () OVER (ORDER BY d.title_summary_vector <=> {intention_vector}::vector ASC) AS similarity_rank,
                     0 AS chunk_similarity_rank,
                     0 AS full_match_rank,
                     0 AS partial_match_rank,
                     0 AS keyword_rank
                 FROM document d
                 WHERE
-                    d.title_summary_vector <=> '{intention_vector}'::vector < {self._SIMILARITY_THRESHOLD_DOCS}"""
+                    d.title_summary_vector <=> {intention_vector}::vector < {_SIMILARITY_THRESHOLD_DOCS}"""
+        ).format(
+            intention_vector=intention_vector,
+            _SIMILARITY_THRESHOLD_DOCS=self._SIMILARITY_THRESHOLD_DOCS,
+        )
 
-    def _build_chunk_similarity_query(self, intention_vector: List | None) -> str:
+    def _build_chunk_similarity_query(
+        self, intention_vector: List | None
+    ) -> Composed | SQL:
         if intention_vector is None:
             return self._get_empty_subquery()
 
-        return f"""WITH RankedChunks AS (
+        return SQL(
+            """WITH RankedChunks AS (
                     SELECT
                         d.doi,
-                        c.text_vector <=> '{intention_vector}'::vector AS distance, -- Calculate distance for ordering
-                        -- Assign a rank to each chunk within its document based on similarity
-                        ROW_NUMBER() OVER(PARTITION BY d.doi ORDER BY c.text_vector <=> '{intention_vector}'::vector ASC) as rn_within_doi,
-                        -- Count how many chunks *total* for this DOI met the similarity threshold
+                        c.text_vector <=> {intention_vector}::vector AS distance, -- Distance used for ordering (lower is better)
+                        -- Rank each chunk within its DOI by similarity
+                        ROW_NUMBER() OVER(PARTITION BY d.doi ORDER BY c.text_vector <=> {intention_vector}::vector ASC) as rn_within_doi,
+                        -- Count how many chunks for this DOI meet the similarity threshold
                         COUNT(*) OVER (PARTITION BY d.doi) as chunk_count_for_doi
                     FROM
                         chunk c
                     JOIN
                         document d ON c.document_id = d.id
                     WHERE
-                        c.text_vector <=> '{intention_vector}'::vector < {self._SIMILARITY_THRESHOLD_CHUNKS} -- Pre-filter chunks by similarity threshold
+                        c.text_vector <=> {intention_vector}::vector < {_SIMILARITY_THRESHOLD_CHUNKS}
                 )
                 SELECT
                     rc.doi,
                     0 AS similarity_rank,
                     DENSE_RANK() OVER (ORDER BY rc.distance ASC, rc.chunk_count_for_doi DESC) AS chunk_similarity_rank,
-                    -- Primary Sort: Prioritize DOIs whose *best* chunk is most similar (lowest distance)
-                    -- Secondary Sort: For DOIs with the *same* best chunk distance, rank those with more qualifying chunks higher
+                    -- Primary: prioritize DOIs with a more similar best chunk (lower distance)
+                    -- Secondary: break ties by number of qualifying chunks (more is better)
                     0 AS full_match_rank,
                     0 AS partial_match_rank,
                     0 AS keyword_rank
                 FROM RankedChunks rc
                 WHERE
-                    rc.rn_within_doi = 1        -- Select only the single best chunk for each DOI
+                    rc.rn_within_doi = 1        -- Keep only the single best chunk per DOI
                 -- NO ORDER BY here, as we will use the rank to calculate the score
                 -- NO LIMIT as we want all DOIs with at least one chunk meeting the threshold"""
+        ).format(
+            intention_vector=intention_vector,
+            _SIMILARITY_THRESHOLD_CHUNKS=self._SIMILARITY_THRESHOLD_CHUNKS,
+        )
 
     # --- Private Helper Methods ---
-    def _prepare_keywords_sql(self, keywords: List[str]) -> str:
+    def _build_keywords_tsquery_text(self, keywords: List[str]) -> str:
         """Formats keywords for PostgreSQL full-text search ts_query (OR logic)."""
         if not keywords:
             return ""
@@ -277,19 +316,19 @@ class SearchQueryBuilder:
             self._logger.info(
                 f"Finding similar names for '{raw_name}'. Found: {[row['name'] for row in result[:5]]}"
             )
-
-            self.similar_names[raw_name] = result
+            if self._capture_similar_names:
+                self._similar_names[raw_name] = result
 
             if len(result) == 0:
                 return [raw_name]
 
             return [row["name"] for row in result]
 
-    def _update_filter_names_recursive(self, filt: Dict) -> Union[Dict, None]:
+    def _update_filter_names_recursive(self, filter_node: Dict) -> Union[Dict, None]:
         """Recursively finds and replaces 'name' in filter conditions."""
-        if "conditions" in filt and "logic" in filt:
+        if "conditions" in filter_node and "logic" in filter_node:
             updated_conditions = []
-            for i, cond in enumerate(filt.get("conditions", [])):
+            for i, cond in enumerate(filter_node.get("conditions", [])):
                 if isinstance(cond, dict):
                     updated_cond = self._update_filter_names_recursive(cond)
                     if updated_cond:  # Keep condition only if it's valid after update
@@ -299,37 +338,43 @@ class SearchQueryBuilder:
                         f"Skipping invalid condition at index {i}: {cond}"
                     )
             # Return None if a logic block has no valid conditions left
-            filt["conditions"] = updated_conditions
-            return filt if updated_conditions else None
+            filter_node["conditions"] = updated_conditions
+            return filter_node if updated_conditions else None
 
-        elif "name" in filt and "operator" in filt and "value" in filt:
-            raw_name = filt.get("name")
+        elif (
+            "name" in filter_node
+            and "operator" in filter_node
+            and "value" in filter_node
+        ):
+            raw_name = filter_node.get("name")
             if isinstance(raw_name, str) and raw_name:
-                similar_names = self._find_similar_names(raw_name)
-                filt["name"] = (
-                    similar_names if similar_names else [raw_name]
+                matched_names = self._find_similar_names(raw_name)
+                filter_node["name"] = (
+                    matched_names if matched_names else [raw_name]
                 )  # Ensure name is always a list
-                return filt
+                return filter_node
             else:
                 self._logger.info(
-                    f"Skipping condition with invalid or missing name: {filt}"
+                    f"Skipping condition with invalid or missing name: {filter_node}"
                 )
                 return None  # Invalid condition structure
         else:
-            self._logger.info(f"Skipping condition with unexpected structure: {filt}")
+            self._logger.info(
+                f"Skipping condition with unexpected structure: {filter_node}"
+            )
             return None  # Invalid condition structure
 
     def _update_filter_names(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Updates the 'filters' part of the data by replacing names with similar ones."""
-        filters_obj = data.get("filters")
-        if not isinstance(filters_obj, dict) or not filters_obj.get("conditions"):
+        filters = data.get("filters")
+        if not isinstance(filters, dict) or not filters.get("conditions"):
             self._logger.info(
                 "No valid filters found or filters are not a dict, skipping name update."
             )
             return data  # Return original data if no filters or invalid format
 
         updated_filters = self._update_filter_names_recursive(
-            filters_obj.copy()
+            filters.copy()
         )  # Work on a copy
 
         # Only update data['filters'] if the recursive update returned a valid structure
@@ -343,9 +388,9 @@ class SearchQueryBuilder:
         return data
 
     # --- Filter Subquery Construction ---
-    def _build_filter_subquery(self, filters_obj: Union[Dict, None]) -> str:
+    def _build_filter_subquery(self, filters: Union[Dict, None]) -> Composed | SQL:
         """Builds the SQL subquery for filtering documents based on the filter object."""
-        if not filters_obj or not filters_obj.get("conditions"):
+        if not filters or not filters.get("conditions"):
             self._logger.info(
                 "No valid filters provided, creating empty filter subquery."
             )
@@ -353,53 +398,63 @@ class SearchQueryBuilder:
 
         try:
             # 1. Generate flag definitions (MAX(CASE...) AS has_condition_N)
-            flag_definitions, condition_count = self._generate_filter_flags(filters_obj)
+            # Also capture which base condition dicts produced a valid flag so logic indexing stays aligned.
+            flag_definitions, flag_count, valid_condition_ids = (
+                self._generate_filter_flags(filters)
+            )
             if not flag_definitions:
                 self._logger.info(
                     "Could not generate any filter flags from the provided structure."
                 )
                 return self._get_empty_subquery()
-            flags_sql = ",\n            ".join(flag_definitions)
+
+            flag_select_list = SQL(", ").join(flag_definitions)
 
             # 2. Collect unique keys
-            unique_keys = set()
-            self._collect_keys_recursive(filters_obj, unique_keys)
-            if not unique_keys:
+            filter_key_names: Set[str] = set()
+            self._collect_keys_recursive(filters, filter_key_names)
+            if not filter_key_names:
                 self._logger.info("No filter keys found in the provided structure.")
                 return self._get_empty_subquery()
 
             # Sort keys for deterministic SQL generation
-            sorted_keys = sorted(list(unique_keys))
-            keys_sql = ", ".join(f"'{k}'" for k in sorted_keys)
+            sorted_filter_keys = sorted(list(filter_key_names))
+            filter_keys_list = SQL(", ").join(Literal(k) for k in sorted_filter_keys)
 
             # 3. Build the logic expression (e.g., (has_condition_1 > 0 AND has_condition_2 > 0) OR has_condition_3 > 0)
-            filter_logic_sql = self._build_filter_logic(filters_obj)
-            if not filter_logic_sql or filter_logic_sql == "FALSE":
-                self._logger.info(
-                    "Filter logic resulted in an empty or FALSE condition."
-                )
-                return self._get_empty_subquery()
+            # Only consume flag indices for conditions that actually generated flags (valid_condition_ids)
+            filter_logic_expr = self._build_filter_logic(filters, valid_condition_ids)
+            # Note: filter_logic_expr is a Composable; even if it represents a FALSE literal, downstream CASE WHEN will handle it.
 
             # 4. Construct the filter subquery using CTEs
             # Generate parts for partial match counting and WHERE clause optimization
-            partial_match_sum_sql = " + ".join(
-                [f"has_condition_{i+1}" for i in range(condition_count)]
+            partial_match_sum_expr = SQL(" + ").join(
+                [Identifier(f"has_condition_{i+1}") for i in range(flag_count)]
             )
 
             # Only include documents that have at least one condition met
-            where_optimization_sql = " OR ".join(
-                [f"has_condition_{i+1} > 0" for i in range(condition_count)]
+            any_flag_match_expr = SQL(" OR ").join(
+                [
+                    SQL("{col} > 0").format(col=Identifier(f"has_condition_{i+1}"))
+                    for i in range(flag_count)
+                ]
             )
 
-            return f"""
+            return Composed(
+                [
+                    SQL(
+                        """
             WITH FilterFlags AS (
                 -- Step 1: Calculate flags for each unique base condition per document
                 SELECT
-                    f.document_id,
-                    {flags_sql}
+                    f.document_id, """
+                    ),
+                    flag_select_list,
+                    SQL(
+                        """
                 FROM filter f
                 -- Pre-filter rows based on *all* keys involved in the conditions
-                WHERE f.key IN ({keys_sql})
+                WHERE f.key IN ({filter_keys_list})
                 GROUP BY f.document_id
             ),
             FilterLogic AS (
@@ -407,22 +462,28 @@ class SearchQueryBuilder:
                 SELECT
                     ff.document_id,
                     CASE
-                        WHEN {filter_logic_sql}
+                        WHEN """
+                    ).format(
+                        filter_keys_list=filter_keys_list,
+                    ),
+                    filter_logic_expr,
+                    SQL(
+                        """
                         THEN 1 -- The document satisfies the overall logic (Full Match)
                         ELSE 0 -- The document does not satisfy the overall logic (Partial or No Match)
                     END AS full_match_score,
                     -- Sum of individual flags (scores can be 0, 1, or 2)
-                    ({partial_match_sum_sql}) AS partial_match_count
+                    ({partial_match_sum_expr}) AS partial_match_count
                 FROM FilterFlags ff
                 -- Optimization: Only process documents that matched at least one flag based on score
-                WHERE ({where_optimization_sql})
+                WHERE ({any_flag_match_expr})
             )
             -- Step 3: Final SELECT, Ranking, and Join
             SELECT
                 d.doi,
                 0 AS similarity_rank,
                 0 AS chunk_similarity_rank,
-                fl.full_match_score AS full_match_rank, -- 1: true, 0: false. rrf_score fn will handle this.
+                fl.full_match_score AS full_match_rank, -- Treated as 1 (match) or 0 (no match); downstream scoring handles this.
                 DENSE_RANK() OVER (ORDER BY fl.partial_match_count DESC) AS partial_match_rank,
                 0 AS keyword_rank
             FROM FilterLogic fl
@@ -430,14 +491,21 @@ class SearchQueryBuilder:
             WHERE partial_match_count > 0 -- Ensures only documents that truly matched (score > 0) are returned
             -- NO ORDER BY here, as we will use the rank to calculate the score
             -- NO LIMIT here, we want to get all documents that match the filter
-            """
+            """,
+                    ).format(
+                        partial_match_sum_expr=partial_match_sum_expr,
+                        any_flag_match_expr=any_flag_match_expr,
+                    ),
+                ]
+            )
         except Exception as e:
             self._logger.info(f"Unexpected error building filter subquery: {e}")
             raise
 
-    def _get_empty_subquery(self) -> str:
+    def _get_empty_subquery(self) -> SQL:
         """Returns an SQL subquery that yields no results, matching the required columns."""
-        return """SELECT
+        return SQL(
+            """SELECT
                     NULL::text AS doi,
                     0 AS similarity_rank,
                     0 AS chunk_similarity_rank,
@@ -446,217 +514,250 @@ class SearchQueryBuilder:
                     0 AS keyword_rank
                 WHERE FALSE -- Ensure this returns no rows
                 LIMIT 0"""
+        )
 
     # --- Filter Flags Generation ---
-
     def _build_flags_recursive(
-        self, condition: dict, flag_counter: List[int], all_flags: List[str]
+        self,
+        condition: dict,
+        flag_counter: List[int],
+        all_flags: List[Composable],
+        valid_condition_ids: Set[int],
     ) -> None:
-        """Recursively builds individual flag CASE statements."""
+        """Populate all_flags with CASE flag expressions and record valid base conditions."""
         if "logic" in condition and "conditions" in condition:
-            nested_conditions = condition.get("conditions", [])
-            for sub_condition in nested_conditions:
-                if isinstance(sub_condition, dict):
-                    self._build_flags_recursive(sub_condition, flag_counter, all_flags)
-                else:
-                    self._logger.info(
-                        f"Skipping non-dict item in nested conditions: {sub_condition}"
+            for sub in condition.get("conditions", []):
+                if isinstance(sub, dict):
+                    self._build_flags_recursive(
+                        sub, flag_counter, all_flags, valid_condition_ids
+                    )
+            return
+
+        if not (
+            "name" in condition and "operator" in condition and "value" in condition
+        ):
+            return
+
+        # Prepare base fields
+        name_list = condition.get("name")
+        operator_raw = str(condition.get("operator", "")).upper()
+        value = condition.get("value")
+        if not isinstance(name_list, list) or not name_list:
+            return
+
+        flag_counter[0] += 1
+        flag_name = f"has_condition_{flag_counter[0]}"
+
+        key_values_sql = SQL(", ").join([Literal(v) for v in name_list])
+        key_in_clause: Composed = Composed(
+            [SQL("f.key IN ("), key_values_sql, SQL(")")]
+        )
+        flag_sql_to_add: Composable | None = None
+        comparison_clause: Composable | None = None
+        op_sql = SQL(cast(LiteralString, operator_raw))
+
+        try:
+            if operator_raw in ("BETWEEN", "NOT BETWEEN"):
+                if isinstance(value, list) and len(value) == 2:
+                    v1, v2 = value[0], value[1]
+                    is_v1_num = isinstance(v1, NUMBER_TYPES) and not isinstance(
+                        v1, complex
+                    )
+                    is_v2_num = isinstance(v2, NUMBER_TYPES) and not isinstance(
+                        v2, complex
                     )
 
-        elif "name" in condition and "operator" in condition and "value" in condition:
-            flag_counter[0] += 1  # Increment upfront, decrement if flag is skipped
-            current_flag_index = flag_counter[0]
-            flag_name = f"has_condition_{current_flag_index}"
+                    if is_v1_num and is_v2_num:
+                        # Choose int or float casting depending on inputs
+                        if isinstance(v1, float) or isinstance(v2, float):
+                            v1f: float = float(cast(float | int, v1))
+                            v2f: float = float(cast(float | int, v2))
+                            comparison_clause = Composed(
+                                [
+                                    SQL("cast_to_float(f.value) "),
+                                    op_sql,
+                                    SQL(" "),
+                                    Literal(v1f),
+                                    SQL(" AND "),
+                                    Literal(v2f),
+                                ]
+                            )
+                        else:
+                            v1i: int = int(cast(int, v1))
+                            v2i: int = int(cast(int, v2))
+                            comparison_clause = Composed(
+                                [
+                                    SQL("cast_to_int(f.value) "),
+                                    op_sql,
+                                    SQL(" "),
+                                    Literal(v1i),
+                                    SQL(" AND "),
+                                    Literal(v2i),
+                                ]
+                            )
+                    else:
+                        # String comparisons
+                        comparison_clause = Composed(
+                            [
+                                SQL("f.value "),
+                                op_sql,
+                                SQL(" "),
+                                Literal(v1),
+                                SQL(" AND "),
+                                Literal(v2),
+                            ]
+                        )
+                else:
+                    flag_counter[0] -= 1
+                    return
 
-            name_list = condition["name"]
-            operator = str(condition["operator"]).upper()
-            value = condition["value"]
+            elif operator_raw in ("IN", "NOT IN"):
+                if isinstance(value, list) and value:
+                    if any(isinstance(v, float) for v in value):
+                        values_sql = SQL(", ").join([Literal(float(v)) for v in value])
+                        comparison_clause = Composed(
+                            [
+                                SQL("cast_to_float(f.value) "),
+                                op_sql,
+                                SQL(" ("),
+                                values_sql,
+                                SQL(")"),
+                            ]
+                        )
+                    elif all(isinstance(v, int) for v in value):
+                        values_sql = SQL(", ").join([Literal(int(v)) for v in value])
+                        comparison_clause = Composed(
+                            [
+                                SQL("cast_to_int(f.value) "),
+                                op_sql,
+                                SQL(" ("),
+                                values_sql,
+                                SQL(")"),
+                            ]
+                        )
+                    else:
+                        values_sql = SQL(", ").join([Literal(v) for v in value])
+                        comparison_clause = Composed(
+                            [SQL("f.value "), op_sql, SQL(" ("), values_sql, SQL(")")]
+                        )
+                else:
+                    flag_counter[0] -= 1
+                    return
+            elif operator_raw == "IS NOT NULL":
+                comparison_clause = SQL("f.value IS NOT NULL")
+            elif operator_raw == "IS NULL":
+                comparison_clause = SQL("f.value IS NULL")
 
-            if not isinstance(name_list, list) or not name_list:
-                self._logger.info(
-                    f"Skipping flag {flag_name} due to invalid 'name': {name_list} in condition: {condition}"
+            # LIKE family with prioritized scoring
+            elif operator_raw in ("ILIKE", "LIKE") or (
+                operator_raw == "=" and isinstance(value, str)
+            ):
+                prefix_match_sql = SQL(
+                    "({key_in_clause} AND f.value ILIKE {v})"
+                ).format(
+                    key_in_clause=key_in_clause,
+                    v=Literal(str(value) + "%"),
                 )
+                contains_match_sql = SQL(
+                    "({key_in_clause} AND f.value ILIKE {v})"
+                ).format(
+                    key_in_clause=key_in_clause,
+                    v=Literal("%" + str(value) + "%"),
+                )
+                flag_sql_to_add = SQL(
+                    """MAX(CASE
+                        WHEN {prefix_match_sql} THEN 2
+                        WHEN {contains_match_sql} THEN 1
+                        ELSE 0
+                    END) AS {flag_name}"""
+                ).format(
+                    prefix_match_sql=prefix_match_sql,
+                    contains_match_sql=contains_match_sql,
+                    flag_name=Identifier(flag_name),
+                )
+
+            elif operator_raw in ("NOT ILIKE", "NOT LIKE") or (
+                operator_raw == "!=" and isinstance(value, str)
+            ):
+                comparison_clause = SQL("f.value NOT ILIKE {v}").format(
+                    op=op_sql,
+                    v=Literal(
+                        "%" + str(value) + "%"
+                    ),  # NOT ILIKE matches anything not containing the value (less strict)
+                )
+
+            # Comparison operators
+            elif operator_raw in ("=", "!=", ">", "<", ">=", "<="):
+                if isinstance(value, list):
+                    flag_counter[0] -= 1
+                    return
+                if isinstance(value, bool):
+                    if operator_raw not in ("=", "!="):
+                        flag_counter[0] -= 1
+                        return
+
+                    comparison_clause = SQL("cast_to_bool(f.value) {op} {v}").format(
+                        op=op_sql,
+                        v=Literal(bool(value)),
+                    )
+                elif isinstance(value, int):
+                    comparison_clause = SQL("cast_to_int(f.value) {op} {v}").format(
+                        op=op_sql,
+                        v=Literal(int(value)),
+                    )
+                elif isinstance(value, float):
+                    comparison_clause = SQL("cast_to_float(f.value) {op} {v}").format(
+                        op=op_sql,
+                        v=Literal(float(value)),
+                    )
+                else:
+                    flag_counter[0] -= 1
+                    return
+            else:
                 flag_counter[0] -= 1
                 return
 
-            safe_names = ["'{}'".format(str(n).replace("'", "''")) for n in name_list]
-            key_in_clause = f"f.key IN ({', '.join(safe_names)})"
-
-            flag_sql_to_add = None
-            comparison_clause = ""
-
-            try:
-                match operator:
-                    case "BETWEEN" | "NOT BETWEEN":
-                        if isinstance(value, list) and len(value) == 2:
-                            v1, v2 = value[0], value[1]
-                            is_v1_num = isinstance(v1, NumberTypes)
-                            is_v2_num = isinstance(v2, NumberTypes)
-                            if is_v1_num and is_v2_num:
-                                if isinstance(v1, complex) or isinstance(v2, complex):
-                                    raise ValueError(
-                                        "Complex numbers are not supported for BETWEEN."
-                                    )
-                                if isinstance(v1, float) or isinstance(v2, float):
-                                    comparison_clause = f"cast_to_float(f.value) {operator} {float(v1)} AND {float(v2)}"
-                                else:
-                                    comparison_clause = f"cast_to_int(f.value) {operator} {int(v1)} AND {int(v2)}"
-                            else:  # String comparison
-                                safe_v1 = str(v1).replace("'", "''")
-                                safe_v2 = str(v2).replace("'", "''")
-                                comparison_clause = (
-                                    f"f.value {operator} '{safe_v1}' AND '{safe_v2}'"
-                                )
-                        else:
-                            self._logger.info(
-                                f"Invalid value for {operator} on {flag_name}: {value}. Condition will be FALSE."
-                            )
-                            comparison_clause = "FALSE"
-
-                    case "IN" | "NOT IN":
-                        if isinstance(value, list) and value:
-                            if any(isinstance(v, float) for v in value):
-                                safe_values = [str(float(v)) for v in value]
-                                comparison_clause = f"cast_to_float(f.value) {operator} ({', '.join(safe_values)})"
-                            elif all(isinstance(v, int) for v in value):
-                                safe_values = [str(int(v)) for v in value]
-                                comparison_clause = f"cast_to_int(f.value) {operator} ({', '.join(safe_values)})"
-                            else:  # Treat all as strings
-                                safe_values = [
-                                    "'{}'".format(str(v).replace("'", "''"))
-                                    for v in value
-                                ]
-                                comparison_clause = (
-                                    f"f.value {operator} ({', '.join(safe_values)})"
-                                )
-                        else:
-                            self._logger.info(
-                                f"Invalid value for {operator} on {flag_name}: {value}. Condition will be FALSE."
-                            )
-                            comparison_clause = "FALSE"
-
-                    case "IS NOT NULL":
-                        comparison_clause = "f.value IS NOT NULL"
-                    case "IS NULL":
-                        comparison_clause = "f.value IS NULL"
-
-                    case "ILIKE" | "LIKE":  # Prioritized scoring
-                        sanitized_core_value = (
-                            str(value)
-                            .replace("'", "''")
-                            .replace("%", "")
-                            .replace("_", "\\_")
-                        )
-
-                        prefix_match_sql = f"({key_in_clause} AND f.value {operator} '{sanitized_core_value}%' ESCAPE '\\')"
-                        contains_match_sql = f"({key_in_clause} AND f.value {operator} '%{sanitized_core_value}%' ESCAPE '\\')"
-                        flag_sql_to_add = f"""MAX(CASE
-                            WHEN {prefix_match_sql} THEN 2
-                            WHEN {contains_match_sql} THEN 1
-                            ELSE 0
-                        END) AS {flag_name}"""
-
-                    case "NOT ILIKE" | "NOT LIKE":
-                        # Input 'value' sanitized to core term. Check if core term is NOT contained.
-                        sanitized_core_value = (
-                            str(value)
-                            .replace("'", "''")
-                            .replace("%", "")
-                            .replace("_", "\\_")
-                        )
-                        comparison_clause = (
-                            f"f.value {operator} '%{sanitized_core_value}%' ESCAPE '\\'"
-                        )
-
-                    case "=" | "!=" | ">" | "<" | ">=" | "<=":
-                        if isinstance(value, list):
-                            self._logger.info(
-                                f"List value for {operator} on {flag_name}: {value}. Condition will be FALSE."
-                            )
-                            comparison_clause = "FALSE"
-                        else:
-                            if isinstance(value, bool):
-                                comparison_clause = (
-                                    f"cast_to_bool(f.value) {operator} {bool(value)}"
-                                )
-                            elif isinstance(value, int):
-                                comparison_clause = (
-                                    f"cast_to_int(f.value) {operator} {int(value)}"
-                                )
-                            elif isinstance(value, float):
-                                comparison_clause = (
-                                    f"cast_to_float(f.value) {operator} {float(value)}"
-                                )
-                            else:  # String comparison
-                                if operator == "=":
-                                    sanitized_value = (
-                                        str(value)
-                                        .replace("'", "''")
-                                        .replace("%", "")
-                                        .replace("_", "\\_")
-                                    )
-                                    prefix_match_sql = f"({key_in_clause} AND f.value ILIKE '{sanitized_value}%' ESCAPE '\\')"
-                                    contains_match_sql = f"({key_in_clause} AND f.value ILIKE '%{sanitized_value}%' ESCAPE '\\')"
-                                    flag_sql_to_add = f"""MAX(CASE
-                                        WHEN {prefix_match_sql} THEN 2
-                                        WHEN {contains_match_sql} THEN 1
-                                        ELSE 0
-                                    END) AS {flag_name}"""
-                                else:  # Exact string operators !=, >, <, >=, <=
-                                    sanitized_value = str(value).replace("'", "''")
-                                    comparison_clause = (
-                                        f"f.value {operator} '{sanitized_value}'"
-                                    )
-                    case _:
-                        self._logger.info(
-                            f"Unsupported operator '{operator}' for {flag_name}. Condition will be FALSE."
-                        )
-                        comparison_clause = "FALSE"
-
-                if flag_sql_to_add:
-                    # Specific ILIKE sql for prefix/contains match
-                    all_flags.append(flag_sql_to_add)
-                elif (
-                    comparison_clause and comparison_clause != "FALSE"
-                ):  # Generic flag for score 1
-                    sql_condition = f"({key_in_clause} AND {comparison_clause})"
-                    generic_flag_sql = f"MAX(CASE WHEN {sql_condition} THEN 1 ELSE 0 END) AS {flag_name}"
-                    all_flags.append(generic_flag_sql)
-                else:  # No specific SQL and comparison_clause is FALSE or empty
-                    self._logger.info(
-                        f"Skipping flag {flag_name} due to FALSE or empty comparison clause."
-                    )
-                    flag_counter[0] -= 1  # Decrement as no flag was actually added
-
-            except Exception as e:  # Catch errors from type casting or value processing
-                self._logger.info(
-                    f"Error processing value for condition {flag_name} ({condition}): {e}. Skipping flag."
+            if flag_sql_to_add is not None:
+                all_flags.append(flag_sql_to_add)
+                valid_condition_ids.add(id(condition))
+            elif comparison_clause is not None:
+                sql_condition = Composed(
+                    [SQL("("), key_in_clause, SQL(" AND "), comparison_clause, SQL(")")]
                 )
-                # Decrement counter as no flag was actually added due to error
+                all_flags.append(
+                    SQL("MAX(CASE WHEN {cond} THEN 1 ELSE 0 END) AS {name}").format(
+                        cond=sql_condition, name=Identifier(flag_name)
+                    )
+                )
+                valid_condition_ids.add(id(condition))
+            else:
                 flag_counter[0] -= 1
-        else:
-            self._logger.info(
-                f"Skipping flag generation for invalid/incomplete condition structure: {condition}"
-            )
+        except Exception:
+            flag_counter[0] -= 1
 
-    def _generate_filter_flags(self, filt: dict) -> Tuple[List[str], int]:
+    def _generate_filter_flags(
+        self, filt: dict
+    ) -> Tuple[List[Composable], int, Set[int]]:
         flag_counter = [0]
-        all_flags = []
+        all_flags: List[Composable] = []
+        valid_condition_ids: Set[int] = set()
         try:
-            self._build_flags_recursive(filt, flag_counter, all_flags)
+            self._build_flags_recursive(
+                filt, flag_counter, all_flags, valid_condition_ids
+            )
         except Exception as e:
             self._logger.info(f"Unexpected error during recursive flag building: {e}")
-            return [], 0
-        return all_flags, flag_counter[0]
+            return [], 0, set()
+        return all_flags, flag_counter[0], valid_condition_ids
 
     # --- Filter Logic Combination ---
-    def _build_filter_logic(self, filters_obj: Dict) -> str:
-        """
-        Wrapper to initialize the flag counter for _build_logic_recursive.
-        The flag counter here is independent and used to consume flags sequentially.
-        """
-        logic_flag_counter = [0]  # Counter for referencing has_condition_X flags
-        return self._build_logic_recursive(filters_obj, logic_flag_counter)
+    def _build_filter_logic(
+        self, filters: Dict, valid_condition_ids: Set[int]
+    ) -> SQL | Composed:
+        logic_flag_counter = [0]
+        return self._build_logic_recursive(
+            filters, logic_flag_counter, valid_condition_ids
+        )
 
     def _collect_keys_recursive(self, condition: dict, all_keys: Set[str]) -> None:
         if "logic" in condition and "conditions" in condition:
@@ -671,11 +772,15 @@ class SearchQueryBuilder:
                 )
 
     def _build_logic_recursive(
-        self, condition: dict, flag_idx_counter: List[int]
-    ) -> str:
+        self,
+        condition: dict,
+        flag_idx_counter: List[int],
+        valid_condition_ids: Set[int],
+    ) -> SQL | Composed:
         """
         Recursively builds the SQL logic expression (e.g., (has_condition_1 > 0 AND has_condition_2 > 0)).
         Uses a separate flag_idx_counter to refer to flags sequentially.
+        Returns a psycopg Composable object (SQL/Composed).
         """
         if "logic" in condition and "conditions" in condition:
             nested_conditions = condition.get("conditions", [])
@@ -683,51 +788,69 @@ class SearchQueryBuilder:
                 self._logger.info(
                     f"Empty nested conditions for logic '{condition['logic']}'. Returning FALSE."
                 )
-                return "FALSE"
+                return SQL("FALSE")
 
-            logic_parts = []
+            logic_parts: List[Composable] = []
             for sub_condition in nested_conditions:
                 if isinstance(sub_condition, dict):
-                    part = self._build_logic_recursive(sub_condition, flag_idx_counter)
-                    if part and part != "FALSE":
+                    part = self._build_logic_recursive(
+                        sub_condition, flag_idx_counter, valid_condition_ids
+                    )
+                    if (
+                        isinstance(part, (SQL, Composed))
+                        and part.as_string() != "FALSE"
+                    ):
                         logic_parts.append(part)
                 else:
                     self._logger.info(
                         f"Skipping non-dict item in logic conditions: {sub_condition}"
                     )
 
-            if not logic_parts:  # All sub-conditions were invalid or resulted in FALSE
+            if not logic_parts:  # All sub-conditions were invalid
                 self._logger.info(
                     f"No valid logic parts for logic '{condition['logic']}'. Returning FALSE."
                 )
-                return "FALSE"
+                return SQL("FALSE")
 
-            if (
-                len(logic_parts) == 1
-            ):  # Single valid condition, no need for parentheses or AND/OR
-                return logic_parts[0]
+            if len(logic_parts) == 1:
+                # Ensure concrete type is SQL | Composed for type checkers
+                part = logic_parts[0]
+                if isinstance(part, Composed):
+                    return part
+                else:
+                    # Wrap SQL into Composed to satisfy return type union
+                    return Composed([part])
 
-            sql_logic_operator = f" {condition['logic'].upper()} "
-            return f"({sql_logic_operator.join(logic_parts)})"
+            op = condition.get("logic", "AND").upper()
+            # Interleave parts with the operator and wrap in parentheses
+            interleaved: List[Composable] = []
+            for idx, part in enumerate(logic_parts):
+                if idx > 0:
+                    interleaved.append(SQL(cast(LiteralString, f" {op} ")))
+                interleaved.append(part)
+            return Composed([SQL("("), *interleaved, SQL(")")])
 
         elif (
             "name" in condition and "operator" in condition and "value" in condition
-        ):  # ഇത് ഒരു അടിസ്ഥാന വ്യവസ്ഥയാണ്
-            # This is a base condition, corresponding to a flag generated by _build_flags_recursive.
+        ):  # Base condition
+            # This corresponds to a flag generated by _build_flags_recursive.
             # We need to ensure this base condition is valid before consuming a flag index.
             name_list = condition.get("name")
             if not isinstance(name_list, list) or not name_list:
                 self._logger.info(
                     f"Skipping logic part for condition with invalid 'name': {condition}. Returning FALSE."
                 )
-                return "FALSE"  # This effectively makes this branch of logic false
+                return SQL("FALSE")  # This effectively makes this branch of logic false
 
-            flag_idx_counter[0] += 1  # Consume the next flag index
-            # Check for > 0 as flags can now have scores 0, 1, or 2
-            return f"has_condition_{flag_idx_counter[0]} > 0"
+            if id(condition) not in valid_condition_ids:
+                return SQL("FALSE")
+            flag_idx_counter[0] += 1
+            return SQL("{flag_idx} > 0").format(
+                flag_idx=Identifier(f"has_condition_{flag_idx_counter[0]}")
+            )
         else:
             # This path might be hit if the filter structure is malformed at this level
             self._logger.info(
                 f"Invalid condition structure for logic building (not a logic block or base condition): {condition}. Returning FALSE."
             )
-            return "FALSE"  # Treat malformed parts as FALSE
+            return SQL("FALSE")  # Treat malformed parts as FALSE
