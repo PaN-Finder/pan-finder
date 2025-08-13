@@ -289,6 +289,7 @@ class SearchEngine:
                     EnhancedSearchResult(
                         doi=doi,
                         title=doc.get("title", ""),
+                        facility_name=doc.get("facility_name") or "",
                         summary=doc.get("summary") or "",
                         overall_score=float(result.get("overall_score", 0)),
                         similarity_score=float(result.get("similarity_score", 0)),

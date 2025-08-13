@@ -32,6 +32,7 @@ class EnhancedSearchResult(BaseModel):
 
     doi: str
     title: str
+    facility_name: str
     summary: str
     overall_score: float
     similarity_score: float

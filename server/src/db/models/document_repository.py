@@ -35,8 +35,9 @@ class DocumentRepository:
             return []
 
         query = """
-            SELECT d.doi, d.title, d.summary
+            SELECT d.doi, d.title, d.summary, f.name AS facility_name
             FROM document d
+            LEFT JOIN facility f ON d.facility_id = f.id
             WHERE d.doi = ANY(%s)
         """
         with get_db_connection() as conn:

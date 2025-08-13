@@ -36,6 +36,8 @@ class SearchQueryBuilder:
     _SIMILARITY_THRESHOLD_DOCS: float = 0.5
     # Similarity threshold for document chunks vs intention
     _SIMILARITY_THRESHOLD_CHUNKS: float = 0.5
+    # Minimum number of results to return when finding similar names
+    _SIMILARITY_MINIMUM_RESULTS: int = 3
     # Final result limit
     _FINAL_LIMIT: int = 20
     # Default RRF K value (can be used as a common default)
@@ -298,7 +300,7 @@ class SearchQueryBuilder:
                     (
                         SELECT * FROM fallback_matches
                         ORDER BY distance
-                        LIMIT GREATEST(0, 5 - (SELECT COUNT(*) FROM top_matches))
+                        LIMIT GREATEST(0, %s - (SELECT COUNT(*) FROM top_matches))
                     )
                 )
                 ORDER BY distance;
@@ -310,6 +312,7 @@ class SearchQueryBuilder:
                     query_vector,
                     query_vector,
                     self._SIMILARITY_THRESHOLD_NAMES,
+                    self._SIMILARITY_MINIMUM_RESULTS,  # Ensure we always return at least this many results
                 ),
             )
             result = cursor.fetchall()
