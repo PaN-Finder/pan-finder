@@ -85,8 +85,8 @@
                     DENSE_RANK() OVER (ORDER BY ts_rank_cd(title_text_search_vector, to_tsquery('english', '')) DESC) AS keyword_rank
                 FROM document d
                 WHERE
-                    title_text_search_vector @@ to_tsquery('english', '')
-                    AND '' != '' -- Avoid error if keywords are empty
+                    '' != '' -- Avoid error if keywords are empty
+                    AND title_text_search_vector @@ to_tsquery('english', '')                    
                 -- NO ORDER BY here, as we will use the rank to calculate the score
                 -- NO LIMIT here: we want all DOIs with at least one keyword match
             )

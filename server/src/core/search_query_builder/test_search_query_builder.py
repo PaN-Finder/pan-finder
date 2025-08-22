@@ -120,6 +120,7 @@ def test_find_similar_names_found(builder, mock_postgres_client, mock_embedding_
             [0.1, 0.2, 0.3],
             [0.1, 0.2, 0.3],
             builder._SIMILARITY_THRESHOLD_NAMES,
+            builder._SIMILARITY_MINIMUM_RESULTS,
         ),  # Params
     )
     assert similar_names == ["similar_name", "another_name"]
@@ -288,76 +289,223 @@ def test_generate_filter_flags_simple(builder, snapshot):
     )
 
 
-def test_generate_filter_flags_various_operators(builder, snapshot):
-    """Test generating flags for various operators and value types."""
+def test_generate_filter_flags_string_operators(builder, snapshot):
+    """String operators (=, !=, LIKE variants) produce flags; invalid relational ops on strings are skipped."""
     filters_obj = {
         "logic": "OR",
         "conditions": [
-            # String comparisons
             {"name": ["title"], "operator": "=", "value": "Test Title"},
             {"name": ["status"], "operator": "!=", "value": "draft"},
             {"name": ["tag"], "operator": "LIKE", "value": "important"},
             {"name": ["label"], "operator": "ILIKE", "value": "urgent"},
             {"name": ["label"], "operator": "NOT LIKE", "value": "old"},
             {"name": ["category"], "operator": "NOT ILIKE", "value": "misc"},
-            # Numeric comparisons
+            # Invalid for strings (should be skipped)
+            {"name": ["name"], "operator": ">", "value": "A"},
+            {"name": ["name"], "operator": ">=", "value": "B"},
+            {"name": ["name"], "operator": "<", "value": "C"},
+            {"name": ["name"], "operator": "<=", "value": "D"},
+        ],
+    }
+    flags, count, valid_condition_ids = builder._generate_filter_flags(filters_obj)
+    assert count == 6
+    assert len(flags) == 6
+    assert all(isinstance(f, Composable) for f in flags)
+    snapshot.assert_match(
+        "\n".join(f.as_string() for f in flags),
+        "generate_filter_flags_string_operators",
+    )
+
+
+def test_generate_filter_flags_numeric_operators(builder, snapshot):
+    """Numeric comparisons should all be accepted."""
+    filters_obj = {
+        "logic": "OR",
+        "conditions": [
             {"name": ["count"], "operator": "=", "value": 5},
             {"name": ["score"], "operator": "!=", "value": 0.9},
             {"name": ["rating"], "operator": "<", "value": 3.5},
             {"name": ["level"], "operator": "<=", "value": 10},
             {"name": ["version"], "operator": ">=", "value": 2},
-            # String (invalid operators (should be skipped))
-            {"name": ["name"], "operator": ">", "value": "A"},
-            {"name": ["name"], "operator": ">=", "value": "B"},
-            {"name": ["name"], "operator": "<", "value": "C"},
-            {"name": ["name"], "operator": "<=", "value": "D"},
-            # Boolean comparison
+        ],
+    }
+    flags, count, _ = builder._generate_filter_flags(filters_obj)
+    assert count == 5
+    assert len(flags) == 5
+    assert all(isinstance(f, Composable) for f in flags)
+    snapshot.assert_match(
+        "\n".join(f.as_string() for f in flags),
+        "generate_filter_flags_numeric_operators",
+    )
+
+
+def test_generate_filter_flags_boolean_operators(builder, snapshot):
+    """Booleans accept only = and !=; relational ops are skipped."""
+    filters_obj = {
+        "logic": "OR",
+        "conditions": [
             {"name": ["is_active"], "operator": "=", "value": True},
             {"name": ["is_active"], "operator": "!=", "value": False},
-            # Boolean (invalid operator (should be skipped))
             {"name": ["is_active"], "operator": ">", "value": True},
             {"name": ["is_active"], "operator": ">=", "value": True},
             {"name": ["is_active"], "operator": "<", "value": False},
             {"name": ["is_active"], "operator": "<=", "value": False},
-            # NULL checks
-            {"name": ["description"], "operator": "IS NULL", "value": "ignored"},
-            # List operators
-            {
-                "name": ["range"],
-                "operator": "NOT BETWEEN",
-                "value": [100.5, 200.0],
-            },
-            {"name": ["ids"], "operator": "NOT IN", "value": [1, 2, 3]},
-            # Mixed type IN  with string (should be skipped)
-            {"name": ["mixed_in"], "operator": "IN", "value": [1, "test", 3.14]},
-            # Mixed type IN (should treat as float)
-            {"name": ["mixed_in"], "operator": "IN", "value": [1, 3.14]},
-            # Mixed type BETWEEN (should treat as float)
-            {"name": ["mixed_between"], "operator": "BETWEEN", "value": [5, 15.5]},
-            # Invalid value for operator (should be skipped)
-            {"name": ["invalid_val"], "operator": "=", "value": [1, 2]},
-            # Multiple names
-            {
-                "name": ["alias1", "alias2"],
-                "operator": "=",
-                "value": "shared",
-            },
         ],
     }
-    flags, count, valid_condition_ids = builder._generate_filter_flags(filters_obj)
-    # Expect 19 valid flags (indices skipped: 11,12,13,14,17,18,19,20,24,27)
-    assert count == 19
-    # Build expected id set (exclude invalid indices listed above)
-    expected_valid_ids = {
-        id(cond)
-        for i, cond in enumerate(filters_obj["conditions"])
-        if i not in {11, 12, 13, 14, 17, 18, 19, 20, 24, 27}
-    }
-    assert valid_condition_ids == expected_valid_ids
+    flags, count, _ = builder._generate_filter_flags(filters_obj)
+    assert count == 2
+    assert len(flags) == 2
     assert all(isinstance(f, Composable) for f in flags)
     snapshot.assert_match(
         "\n".join(f.as_string() for f in flags),
-        "generate_filter_flags_various_operators",
+        "generate_filter_flags_boolean_operators",
+    )
+
+
+def test_generate_filter_flags_timestamp_operators(builder, snapshot):
+    """Timestamp-like fields accept comparison and BETWEEN variants."""
+    filters_obj = {
+        "logic": "OR",
+        "conditions": [
+            {"name": ["created_at"], "operator": "=", "value": "2023-01-01"},
+            {"name": ["created_at"], "operator": "!=", "value": "2023-01-02"},
+            {"name": ["created_at"], "operator": "<", "value": "2023-01-03"},
+            {"name": ["created_at"], "operator": "<=", "value": "2023-01-04"},
+            {"name": ["created_at"], "operator": ">", "value": "2023-01-05"},
+            {"name": ["created_at"], "operator": ">=", "value": "2023-01-06"},
+            {
+                "name": ["created_at"],
+                "operator": "BETWEEN",
+                "value": ["2023-01-01", "2023-01-02"],
+            },
+            {
+                "name": ["created_at"],
+                "operator": "NOT BETWEEN",
+                "value": ["2023-01-03", "2023-01-04"],
+            },
+            # With hours/minutes/seconds
+            {"name": ["created_at"], "operator": "=", "value": "2023-01-01 12:11:10"},
+            {"name": ["created_at"], "operator": "!=", "value": "2023-01-01 12:11:10"},
+            {"name": ["created_at"], "operator": "<", "value": "2023-01-01 12:11:10"},
+            {"name": ["created_at"], "operator": "<=", "value": "2023-01-01 12:11:10"},
+            {"name": ["created_at"], "operator": ">", "value": "2023-01-01 12:11:10"},
+            {"name": ["created_at"], "operator": ">=", "value": "2023-01-01 12:11:10"},
+            {
+                "name": ["created_at"],
+                "operator": "BETWEEN",
+                "value": ["2023-01-01 12:11:10", "2023-01-02 12:11:10"],
+            },
+            {
+                "name": ["created_at"],
+                "operator": "NOT BETWEEN",
+                "value": ["2023-01-03 12:11:10", "2023-01-04 12:11:10"],
+            },
+        ],
+    }
+    flags, count, _ = builder._generate_filter_flags(filters_obj)
+    assert count == 16
+    assert len(flags) == 16
+    assert all(isinstance(f, Composable) for f in flags)
+    snapshot.assert_match(
+        "\n".join(f.as_string() for f in flags),
+        "generate_filter_flags_timestamp_operators",
+    )
+
+
+def test_generate_filter_flags_null_checks(builder, snapshot):
+    """IS NULL/IS NOT NULL checks should generate a flag and ignore value."""
+    filters_obj = {
+        "logic": "OR",
+        "conditions": [
+            {"name": ["description"], "operator": "IS NULL", "value": "ignored"},
+        ],
+    }
+    flags, count, _ = builder._generate_filter_flags(filters_obj)
+    assert count == 1
+    assert len(flags) == 1
+    assert all(isinstance(f, Composable) for f in flags)
+    snapshot.assert_match(
+        "\n".join(f.as_string() for f in flags),
+        "generate_filter_flags_null_checks",
+    )
+
+
+def test_generate_filter_flags_range_and_in(builder, snapshot):
+    """Range (NOT BETWEEN) and list (NOT IN) operators should work for numerics."""
+    filters_obj = {
+        "logic": "OR",
+        "conditions": [
+            {"name": ["range"], "operator": "NOT BETWEEN", "value": [100.5, 200.0]},
+            {"name": ["ids"], "operator": "NOT IN", "value": [1, 2, 3]},
+        ],
+    }
+    flags, count, _ = builder._generate_filter_flags(filters_obj)
+    assert count == 2
+    assert len(flags) == 2
+    assert all(isinstance(f, Composable) for f in flags)
+    snapshot.assert_match(
+        "\n".join(f.as_string() for f in flags),
+        "generate_filter_flags_range_and_in",
+    )
+
+
+def test_generate_filter_flags_mixed_types(builder, snapshot):
+    """Mixed numeric list with a string should be skipped; numeric-only lists are accepted."""
+    filters_obj = {
+        "logic": "OR",
+        "conditions": [
+            {
+                "name": ["mixed_in"],
+                "operator": "IN",
+                "value": [1, "test", 3.14],
+            },  # skip
+            {"name": ["mixed_in"], "operator": "IN", "value": [1, 3.14]},  # ok
+            {
+                "name": ["mixed_between"],
+                "operator": "BETWEEN",
+                "value": [5, 15.5],
+            },  # ok
+        ],
+    }
+    flags, count, _ = builder._generate_filter_flags(filters_obj)
+    assert count == 2
+    assert len(flags) == 2
+    assert all(isinstance(f, Composable) for f in flags)
+    snapshot.assert_match(
+        "\n".join(f.as_string() for f in flags),
+        "generate_filter_flags_mixed_types",
+    )
+
+
+def test_generate_filter_flags_invalid_value_skipped(builder):
+    """Invalid value type for '=' (list) should be skipped entirely."""
+    filters_obj = {
+        "logic": "OR",
+        "conditions": [
+            {"name": ["invalid_val"], "operator": "=", "value": [1, 2]},
+        ],
+    }
+    flags, count, valid_ids = builder._generate_filter_flags(filters_obj)
+    assert count == 0
+    assert flags == []
+    assert valid_ids == set()
+
+
+def test_generate_filter_flags_multiple_names(builder, snapshot):
+    """Multiple name aliases should still generate a single flag for the condition."""
+    filters_obj = {
+        "logic": "OR",
+        "conditions": [
+            {"name": ["alias1", "alias2"], "operator": "=", "value": "shared"},
+        ],
+    }
+    flags, count, _ = builder._generate_filter_flags(filters_obj)
+    assert count == 1
+    assert len(flags) == 1
+    assert all(isinstance(f, Composable) for f in flags)
+    snapshot.assert_match(
+        "\n".join(f.as_string() for f in flags),
+        "generate_filter_flags_multiple_names",
     )
 
 
@@ -573,9 +721,6 @@ def test_build_filter_subquery_no_filters(builder, snapshot):
     assert sql == sql_empty_cond  # Should be identical
 
 
-# --- Integration Test for build_query ---
-
-
 def test_build_query_intention_only(builder, snapshot):
     """Test build_query with only intention."""
     data = {"intention": "find science papers"}
@@ -785,7 +930,7 @@ def test_generate_filter_flags_between_boundary(builder):
     text = flags[0].as_string()
     assert (
         text
-        == "MAX(CASE WHEN (f.key IN ('year') AND cast_to_int(f.value) BETWEEN 2000 AND 2010) THEN 1 ELSE 0 END) AS \"has_condition_1\""
+        == "MAX(CASE WHEN f.key IN ('year') AND f.value_bigint BETWEEN 2000 AND 2010 THEN 1 ELSE 0 END) AS \"has_condition_1\""
     )
 
 

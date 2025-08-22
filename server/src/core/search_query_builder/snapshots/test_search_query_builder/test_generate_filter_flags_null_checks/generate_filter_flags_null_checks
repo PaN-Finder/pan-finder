@@ -1,0 +1,1 @@
+MAX(CASE WHEN f.key IN ('description') AND f.value IS NULL THEN 1 ELSE 0 END) AS "has_condition_1"

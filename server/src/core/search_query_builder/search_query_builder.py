@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, LiteralString, Union, TypedDict, Tuple, Set, cast
+from datetime import datetime
 from psycopg.sql import SQL, Composed, Identifier, Literal, Composable
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
@@ -32,12 +33,12 @@ class SearchQueryBuilder:
     # --- Constants ---
     # Similarity threshold for finding similar filter names
     _SIMILARITY_THRESHOLD_NAMES: float = 0.5
+    # Minimum number of results to return when finding similar names
+    _SIMILARITY_MINIMUM_RESULTS: int = 4
     # Similarity threshold for document title/summary vs intention
     _SIMILARITY_THRESHOLD_DOCS: float = 0.5
     # Similarity threshold for document chunks vs intention
     _SIMILARITY_THRESHOLD_CHUNKS: float = 0.5
-    # Minimum number of results to return when finding similar names
-    _SIMILARITY_MINIMUM_RESULTS: int = 3
     # Final result limit
     _FINAL_LIMIT: int = 20
     # Default RRF K value (can be used as a common default)
@@ -160,8 +161,8 @@ class SearchQueryBuilder:
                     DENSE_RANK() OVER (ORDER BY ts_rank_cd(title_text_search_vector, to_tsquery('english', {keywords_tsquery_text})) DESC) AS keyword_rank
                 FROM document d
                 WHERE
-                    title_text_search_vector @@ to_tsquery('english', {keywords_tsquery_text})
-                    AND {keywords_tsquery_text} != '' -- Avoid error if keywords are empty
+                    {keywords_tsquery_text} != '' -- Avoid error if keywords are empty
+                    AND title_text_search_vector @@ to_tsquery('english', {keywords_tsquery_text})                    
                 -- NO ORDER BY here, as we will use the rank to calculate the score
                 -- NO LIMIT here: we want all DOIs with at least one keyword match
             )
@@ -254,6 +255,36 @@ class SearchQueryBuilder:
         )
 
     # --- Private Helper Methods ---
+    def _parse_datetime_strict(self, value: Any) -> datetime | None:
+        """Attempts to parse a datetime strictly.
+        Date: YYYY-MM-DD, YYYY/MM/DD, YYYY.MM.DD
+        DateTime: YYYY-MM-DD hh:mm:ss, YYYY/MM/DD hh:mm:ss, YYYY.MM.DD hh:mm:ss
+        """
+        # Accept only exact formats listed above. Any deviation returns None.
+        if not isinstance(value, str):
+            return None
+
+        s = value.strip()
+        if not s:
+            return None
+
+        formats = [
+            "%Y-%m-%d %H:%M:%S",
+            "%Y/%m/%d %H:%M:%S",
+            "%Y.%m.%d %H:%M:%S",
+            "%Y-%m-%d",
+            "%Y/%m/%d",
+            "%Y.%m.%d",
+        ]
+
+        for fmt in formats:
+            try:
+                return datetime.strptime(s, fmt)
+            except ValueError:
+                continue
+
+        return None
+
     def _build_keywords_tsquery_text(self, keywords: List[str]) -> str:
         """Formats keywords for PostgreSQL full-text search ts_query (OR logic)."""
         if not keywords:
@@ -400,7 +431,7 @@ class SearchQueryBuilder:
             return self._get_empty_subquery()
 
         try:
-            # 1. Generate flag definitions (MAX(CASE...) AS has_condition_N)
+            # 1. Generate flag definitions using MAX(CASE WHEN ...) AS has_condition_N
             # Also capture which base condition dicts produced a valid flag so logic indexing stays aligned.
             flag_definitions, flag_count, valid_condition_ids = (
                 self._generate_filter_flags(filters)
@@ -411,7 +442,9 @@ class SearchQueryBuilder:
                 )
                 return self._get_empty_subquery()
 
-            flag_select_list = SQL(", ").join(flag_definitions)
+            # Join flags with newline and indentation so the generated SQL places
+            # each flag definition on its own aligned line for readability.
+            flag_select_list = SQL(",\n                    ").join(flag_definitions)
 
             # 2. Collect unique keys
             filter_key_names: Set[str] = set()
@@ -443,20 +476,15 @@ class SearchQueryBuilder:
                 ]
             )
 
-            return Composed(
-                [
-                    SQL(
-                        """
+            return SQL(
+                """
             WITH FilterFlags AS (
-                -- Step 1: Calculate flags for each unique base condition per document
+                -- Step 1: Calculate flags for each unique base condition per document using MAX(CASE WHEN ...)
                 SELECT
-                    f.document_id, """
-                    ),
-                    flag_select_list,
-                    SQL(
-                        """
+                    f.document_id,
+                    {flag_select_list}
                 FROM filter f
-                -- Pre-filter rows based on *all* keys involved in the conditions
+                -- Pre-filter rows based on all keys involved in the conditions
                 WHERE f.key IN ({filter_keys_list})
                 GROUP BY f.document_id
             ),
@@ -465,13 +493,7 @@ class SearchQueryBuilder:
                 SELECT
                     ff.document_id,
                     CASE
-                        WHEN """
-                    ).format(
-                        filter_keys_list=filter_keys_list,
-                    ),
-                    filter_logic_expr,
-                    SQL(
-                        """
+                        WHEN {filter_logic_expr}
                         THEN 1 -- The document satisfies the overall logic (Full Match)
                         ELSE 0 -- The document does not satisfy the overall logic (Partial or No Match)
                     END AS full_match_score,
@@ -494,12 +516,13 @@ class SearchQueryBuilder:
             WHERE partial_match_count > 0 -- Ensures only documents that truly matched (score > 0) are returned
             -- NO ORDER BY here, as we will use the rank to calculate the score
             -- NO LIMIT here, we want to get all documents that match the filter
-            """,
-                    ).format(
-                        partial_match_sum_expr=partial_match_sum_expr,
-                        any_flag_match_expr=any_flag_match_expr,
-                    ),
-                ]
+            """
+            ).format(
+                flag_select_list=flag_select_list,
+                filter_keys_list=filter_keys_list,
+                filter_logic_expr=filter_logic_expr,
+                partial_match_sum_expr=partial_match_sum_expr,
+                any_flag_match_expr=any_flag_match_expr,
             )
         except Exception as e:
             self._logger.info(f"Unexpected error building filter subquery: {e}")
@@ -527,7 +550,7 @@ class SearchQueryBuilder:
         all_flags: List[Composable],
         valid_condition_ids: Set[int],
     ) -> None:
-        """Populate all_flags with CASE flag expressions and record valid base conditions."""
+        """Populate all_flags with aggregated MAX(CASE WHEN ...) flag expressions and record valid base conditions."""
         if "logic" in condition and "conditions" in condition:
             for sub in condition.get("conditions", []):
                 if isinstance(sub, dict):
@@ -571,13 +594,13 @@ class SearchQueryBuilder:
                     )
 
                     if is_v1_num and is_v2_num:
-                        # Choose int or float casting depending on inputs
+                        # Choose int or float column depending on inputs
                         if isinstance(v1, float) or isinstance(v2, float):
                             v1f: float = float(cast(float | int, v1))
                             v2f: float = float(cast(float | int, v2))
                             comparison_clause = Composed(
                                 [
-                                    SQL("cast_to_float(f.value) "),
+                                    SQL("f.value_float "),
                                     op_sql,
                                     SQL(" "),
                                     Literal(v1f),
@@ -590,7 +613,7 @@ class SearchQueryBuilder:
                             v2i: int = int(cast(int, v2))
                             comparison_clause = Composed(
                                 [
-                                    SQL("cast_to_int(f.value) "),
+                                    SQL("f.value_bigint "),
                                     op_sql,
                                     SQL(" "),
                                     Literal(v1i),
@@ -598,6 +621,29 @@ class SearchQueryBuilder:
                                     Literal(v2i),
                                 ]
                             )
+                    # If both values are strict timestamps
+                    elif (v1t := self._parse_datetime_strict(v1)) and (
+                        v2t := self._parse_datetime_strict(v2)
+                    ):
+                        # Less strict alternative: also compare by DATE component
+                        comparison_clause = Composed(
+                            [
+                                SQL("("),
+                                SQL("f.value_timestamp "),
+                                op_sql,
+                                SQL(" "),
+                                Literal(v1t),
+                                SQL(" AND "),
+                                Literal(v2t),
+                                SQL(" OR f.value_timestamp::date "),
+                                op_sql,
+                                SQL(" "),
+                                Composed([Literal(v1t), SQL("::date")]),
+                                SQL(" AND "),
+                                Composed([Literal(v2t), SQL("::date")]),
+                                SQL(")"),
+                            ]
+                        )
                     else:
                         # String comparisons
                         comparison_clause = Composed(
@@ -620,7 +666,7 @@ class SearchQueryBuilder:
                         values_sql = SQL(", ").join([Literal(float(v)) for v in value])
                         comparison_clause = Composed(
                             [
-                                SQL("cast_to_float(f.value) "),
+                                SQL("f.value_float "),
                                 op_sql,
                                 SQL(" ("),
                                 values_sql,
@@ -631,7 +677,7 @@ class SearchQueryBuilder:
                         values_sql = SQL(", ").join([Literal(int(v)) for v in value])
                         comparison_clause = Composed(
                             [
-                                SQL("cast_to_int(f.value) "),
+                                SQL("f.value_bigint "),
                                 op_sql,
                                 SQL(" ("),
                                 values_sql,
@@ -650,43 +696,36 @@ class SearchQueryBuilder:
                 comparison_clause = SQL("f.value IS NOT NULL")
             elif operator_raw == "IS NULL":
                 comparison_clause = SQL("f.value IS NULL")
-
             # LIKE family with prioritized scoring
-            elif operator_raw in ("ILIKE", "LIKE") or (
-                operator_raw == "=" and isinstance(value, str)
-            ):
-                prefix_match_sql = SQL(
-                    "({key_in_clause} AND f.value ILIKE {v})"
-                ).format(
-                    key_in_clause=key_in_clause,
-                    v=Literal(str(value) + "%"),
-                )
-                contains_match_sql = SQL(
-                    "({key_in_clause} AND f.value ILIKE {v})"
-                ).format(
-                    key_in_clause=key_in_clause,
-                    v=Literal("%" + str(value) + "%"),
-                )
+            elif (
+                operator_raw in ("ILIKE", "LIKE")
+                or (operator_raw == "=" and isinstance(value, str))
+            ) and self._parse_datetime_strict(
+                value
+            ) is None:  # Ensure we don't treat timestamps as strings
+                # Aggregated priority: 2 if any value has prefix match, else 1 if any value contains, else 0
                 flag_sql_to_add = SQL(
-                    """MAX(CASE
-                        WHEN {prefix_match_sql} THEN 2
-                        WHEN {contains_match_sql} THEN 1
+                    """MAX(CASE 
+                        WHEN {key_in_clause} AND f.value ILIKE {prefix} THEN 2
+                        WHEN {key_in_clause} AND f.value ILIKE {contains} THEN 1
                         ELSE 0
                     END) AS {flag_name}"""
                 ).format(
-                    prefix_match_sql=prefix_match_sql,
-                    contains_match_sql=contains_match_sql,
+                    key_in_clause=key_in_clause,
+                    prefix=Literal(str(value) + "%"),
+                    contains=Literal("%" + str(value) + "%"),
                     flag_name=Identifier(flag_name),
                 )
 
-            elif operator_raw in ("NOT ILIKE", "NOT LIKE") or (
-                operator_raw == "!=" and isinstance(value, str)
-            ):
+            elif (
+                operator_raw in ("NOT ILIKE", "NOT LIKE")
+                or (operator_raw == "!=" and isinstance(value, str))
+            ) and self._parse_datetime_strict(
+                value
+            ) is None:  # Ensure we don't treat timestamps as strings
                 comparison_clause = SQL("f.value NOT ILIKE {v}").format(
                     op=op_sql,
-                    v=Literal(
-                        "%" + str(value) + "%"
-                    ),  # NOT ILIKE matches anything not containing the value (less strict)
+                    v=Literal("%" + str(value) + "%"),
                 )
 
             # Comparison operators
@@ -694,22 +733,40 @@ class SearchQueryBuilder:
                 if isinstance(value, list):
                     flag_counter[0] -= 1
                     return
-                if isinstance(value, bool):
+                # Handle timestamps strictly
+                ts_val = self._parse_datetime_strict(value)
+                if ts_val is not None:
+                    # Less strict alternative: also compare by DATE component
+                    comparison_clause = Composed(
+                        [
+                            SQL("("),
+                            SQL("f.value_timestamp "),
+                            op_sql,
+                            SQL(" "),
+                            Literal(ts_val),
+                            SQL(" OR f.value_timestamp::date "),
+                            op_sql,
+                            SQL(" "),
+                            Composed([Literal(ts_val), SQL("::date")]),
+                            SQL(")"),
+                        ]
+                    )
+                elif isinstance(value, bool):
                     if operator_raw not in ("=", "!="):
                         flag_counter[0] -= 1
                         return
 
-                    comparison_clause = SQL("cast_to_bool(f.value) {op} {v}").format(
+                    comparison_clause = SQL("f.value_boolean {op} {v}").format(
                         op=op_sql,
                         v=Literal(bool(value)),
                     )
                 elif isinstance(value, int):
-                    comparison_clause = SQL("cast_to_int(f.value) {op} {v}").format(
+                    comparison_clause = SQL("f.value_bigint {op} {v}").format(
                         op=op_sql,
                         v=Literal(int(value)),
                     )
                 elif isinstance(value, float):
-                    comparison_clause = SQL("cast_to_float(f.value) {op} {v}").format(
+                    comparison_clause = SQL("f.value_float {op} {v}").format(
                         op=op_sql,
                         v=Literal(float(value)),
                     )
@@ -724,12 +781,14 @@ class SearchQueryBuilder:
                 all_flags.append(flag_sql_to_add)
                 valid_condition_ids.add(id(condition))
             elif comparison_clause is not None:
-                sql_condition = Composed(
-                    [SQL("("), key_in_clause, SQL(" AND "), comparison_clause, SQL(")")]
-                )
+                # Aggregated boolean: 1 if any row for this document matches the comparison, else 0
                 all_flags.append(
-                    SQL("MAX(CASE WHEN {cond} THEN 1 ELSE 0 END) AS {name}").format(
-                        cond=sql_condition, name=Identifier(flag_name)
+                    SQL(
+                        "MAX(CASE WHEN {key_in_clause} AND {cmp} THEN 1 ELSE 0 END) AS {name}"
+                    ).format(
+                        key_in_clause=key_in_clause,
+                        cmp=comparison_clause,
+                        name=Identifier(flag_name),
                     )
                 )
                 valid_condition_ids.add(id(condition))

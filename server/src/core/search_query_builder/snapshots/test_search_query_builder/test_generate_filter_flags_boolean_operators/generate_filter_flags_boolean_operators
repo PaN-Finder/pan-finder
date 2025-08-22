@@ -1,0 +1,2 @@
+MAX(CASE WHEN f.key IN ('is_active') AND f.value_boolean = true THEN 1 ELSE 0 END) AS "has_condition_1"
+MAX(CASE WHEN f.key IN ('is_active') AND f.value_boolean != false THEN 1 ELSE 0 END) AS "has_condition_2"

@@ -65,15 +65,18 @@
             (
                 
             WITH FilterFlags AS (
-                -- Step 1: Calculate flags for each unique base condition per document
+                -- Step 1: Calculate flags for each unique base condition per document using MAX(CASE WHEN ...)
                 SELECT
-                    f.document_id, MAX(CASE WHEN (f.key IN ('publication_year') AND cast_to_int(f.value) >= 2022) THEN 1 ELSE 0 END) AS "has_condition_1", MAX(CASE
-                        WHEN (f.key IN ('authors', 'creator') AND f.value ILIKE 'vaswani%') THEN 2
-                        WHEN (f.key IN ('authors', 'creator') AND f.value ILIKE '%vaswani%') THEN 1
+                    f.document_id,
+                    MAX(CASE WHEN f.key IN ('publication_year') AND f.value_bigint >= 2022 THEN 1 ELSE 0 END) AS "has_condition_1",
+                    MAX(CASE 
+                        WHEN f.key IN ('authors', 'creator') AND f.value ILIKE 'vaswani%' THEN 2
+                        WHEN f.key IN ('authors', 'creator') AND f.value ILIKE '%vaswani%' THEN 1
                         ELSE 0
-                    END) AS "has_condition_2", MAX(CASE WHEN (f.key IN ('subject', 'field') AND f.value IN ('NLP', 'AI')) THEN 1 ELSE 0 END) AS "has_condition_3"
+                    END) AS "has_condition_2",
+                    MAX(CASE WHEN f.key IN ('subject', 'field') AND f.value IN ('NLP', 'AI') THEN 1 ELSE 0 END) AS "has_condition_3"
                 FROM filter f
-                -- Pre-filter rows based on *all* keys involved in the conditions
+                -- Pre-filter rows based on all keys involved in the conditions
                 WHERE f.key IN ('authors', 'creator', 'field', 'publication_year', 'subject')
                 GROUP BY f.document_id
             ),
@@ -119,8 +122,8 @@
                     DENSE_RANK() OVER (ORDER BY ts_rank_cd(title_text_search_vector, to_tsquery('english', 'transformer|attention|mechanism')) DESC) AS keyword_rank
                 FROM document d
                 WHERE
-                    title_text_search_vector @@ to_tsquery('english', 'transformer|attention|mechanism')
-                    AND 'transformer|attention|mechanism' != '' -- Avoid error if keywords are empty
+                    'transformer|attention|mechanism' != '' -- Avoid error if keywords are empty
+                    AND title_text_search_vector @@ to_tsquery('english', 'transformer|attention|mechanism')                    
                 -- NO ORDER BY here, as we will use the rank to calculate the score
                 -- NO LIMIT here: we want all DOIs with at least one keyword match
             )
