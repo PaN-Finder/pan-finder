@@ -27,7 +27,16 @@ class SearchResult(TypedDict):
 
 class SearchQueryBuilder:
     """
-    Builds a complex SQL query for searching documents.
+    Builds a complex SQL query for searching documents based on user input.
+
+    This class combines multiple search strategies:
+    - Vector similarity search for user's 'intention' against document titles/summaries and text chunks.
+    - Full-text search for 'keywords'.
+    - Structured metadata filtering based on 'filters' with complex AND/OR logic.
+    - Finds similar filter names to correct for user typos or variations.
+
+    The final query uses a Reciprocal Rank Fusion (RRF) approach to combine scores
+    from each strategy into a single, relevant 'overall_score' for ranking.
     """
 
     # --- Constants ---
@@ -194,6 +203,19 @@ class SearchQueryBuilder:
         return search_sql
 
     def _build_similarity_query(self, intention_vector: List | None) -> Composed | SQL:
+        """
+        Builds the subquery for document similarity search.
+
+        This subquery finds documents where the combined title and summary vector
+        is similar to the user's intention vector.
+
+        Args:
+            intention_vector: The embedding vector of the user's search intention.
+
+        Returns:
+            A Composed or SQL object for the subquery, or an empty subquery if
+            no intention vector is provided.
+        """
         if intention_vector is None:
             return self._get_empty_subquery()
 
@@ -216,6 +238,20 @@ class SearchQueryBuilder:
     def _build_chunk_similarity_query(
         self, intention_vector: List | None
     ) -> Composed | SQL:
+        """
+        Builds the subquery for chunk-based similarity search.
+
+        This subquery identifies the most relevant text chunk for each document
+        based on similarity to the user's intention vector. It ranks documents
+        based on the similarity of their best chunk.
+
+        Args:
+            intention_vector: The embedding vector of the user's search intention.
+
+        Returns:
+            A Composed or SQL object for the subquery, or an empty subquery if
+            no intention vector is provided.
+        """
         if intention_vector is None:
             return self._get_empty_subquery()
 
@@ -286,7 +322,15 @@ class SearchQueryBuilder:
         return None
 
     def _build_keywords_tsquery_text(self, keywords: List[str]) -> str:
-        """Formats keywords for PostgreSQL full-text search ts_query (OR logic)."""
+        """
+        Formats keywords for PostgreSQL full-text search ts_query (OR logic).
+
+        Args:
+            keywords: A list of keyword strings.
+
+        Returns:
+            A single string formatted for to_tsquery, with keywords joined by '|'.
+        """
         if not keywords:
             return ""
         # Basic sanitization: remove non-alphanumeric, keep '|', replace spaces with '|'
@@ -300,7 +344,17 @@ class SearchQueryBuilder:
 
     # --- Filter Name Similarity ---
     def _find_similar_names(self, raw_name: str) -> list[str]:
-        """Finds similar filter names in the database using vector embeddings."""
+        """
+        Finds similar filter names in the database using vector embeddings.
+
+        This helps correct for typos or variations in user-provided filter names.
+
+        Args:
+            raw_name: The user-provided filter name.
+
+        Returns:
+            A list of similar names found in the database, ordered by similarity.
+        """
         if not raw_name:
             return []
 
@@ -359,7 +413,15 @@ class SearchQueryBuilder:
             return [row["name"] for row in result]
 
     def _update_filter_names_recursive(self, filter_node: Dict) -> Union[Dict, None]:
-        """Recursively finds and replaces 'name' in filter conditions."""
+        """
+        Recursively finds and replaces 'name' in filter conditions with similar names.
+
+        Args:
+            filter_node: The current node in the filter structure.
+
+        Returns:
+            The updated filter node, or None if the node becomes invalid.
+        """
         if "conditions" in filter_node and "logic" in filter_node:
             updated_conditions = []
             for i, cond in enumerate(filter_node.get("conditions", [])):
@@ -399,7 +461,15 @@ class SearchQueryBuilder:
             return None  # Invalid condition structure
 
     def _update_filter_names(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Updates the 'filters' part of the data by replacing names with similar ones."""
+        """
+        Updates the 'filters' part of the data by replacing names with similar ones.
+
+        Args:
+            data: The input search parameters dictionary.
+
+        Returns:
+            The data dictionary with filter names updated.
+        """
         filters = data.get("filters")
         if not isinstance(filters, dict) or not filters.get("conditions"):
             self._logger.info(
@@ -423,7 +493,18 @@ class SearchQueryBuilder:
 
     # --- Filter Subquery Construction ---
     def _build_filter_subquery(self, filters: Union[Dict, None]) -> Composed | SQL:
-        """Builds the SQL subquery for filtering documents based on the filter object."""
+        """
+        Builds the SQL subquery for filtering documents based on the filter object.
+
+        This method orchestrates the generation of filter flags, the collection of
+        filter keys, and the construction of the final logic expression.
+
+        Args:
+            filters: The dictionary representing the filter structure.
+
+        Returns:
+            A Composed or SQL object for the filter subquery.
+        """
         if not filters or not filters.get("conditions"):
             self._logger.info(
                 "No valid filters provided, creating empty filter subquery."
@@ -529,7 +610,12 @@ class SearchQueryBuilder:
             raise
 
     def _get_empty_subquery(self) -> SQL:
-        """Returns an SQL subquery that yields no results, matching the required columns."""
+        """
+        Returns an SQL subquery that yields no results, matching the required columns.
+
+        This is used as a placeholder when a particular search component (e.g., similarity)
+        is not applicable.
+        """
         return SQL(
             """SELECT
                     NULL::text AS doi,
@@ -550,7 +636,18 @@ class SearchQueryBuilder:
         all_flags: List[Composable],
         valid_condition_ids: Set[int],
     ) -> None:
-        """Populate all_flags with aggregated MAX(CASE WHEN ...) flag expressions and record valid base conditions."""
+        """
+        Recursively traverses the filter structure to generate SQL 'flag' expressions.
+
+        Each base condition is converted into a `MAX(CASE WHEN ...)` expression that
+        acts as a flag, indicating if a document meets that condition.
+
+        Args:
+            condition: The current node in the filter structure.
+            flag_counter: A list containing a single integer to track the flag number.
+            all_flags: A list to accumulate the generated SQL flag expressions.
+            valid_condition_ids: A set to store the IDs of valid base conditions.
+        """
         if "logic" in condition and "conditions" in condition:
             for sub in condition.get("conditions", []):
                 if isinstance(sub, dict):
@@ -800,6 +897,16 @@ class SearchQueryBuilder:
     def _generate_filter_flags(
         self, filt: dict
     ) -> Tuple[List[Composable], int, Set[int]]:
+        """
+        Generates all filter flag expressions for a given filter structure.
+
+        Args:
+            filt: The filter dictionary.
+
+        Returns:
+            A tuple containing the list of flag expressions, the total count of flags,
+            and the set of IDs for valid conditions.
+        """
         flag_counter = [0]
         all_flags: List[Composable] = []
         valid_condition_ids: Set[int] = set()
@@ -816,12 +923,32 @@ class SearchQueryBuilder:
     def _build_filter_logic(
         self, filters: Dict, valid_condition_ids: Set[int]
     ) -> SQL | Composed:
+        """
+        Builds the final boolean logic expression from the filter structure.
+
+        This orchestrates the recursive construction of the logic based on the
+        generated flags.
+
+        Args:
+            filters: The filter dictionary.
+            valid_condition_ids: A set of IDs for conditions that are valid.
+
+        Returns:
+            A Composed or SQL object representing the boolean logic.
+        """
         logic_flag_counter = [0]
         return self._build_logic_recursive(
             filters, logic_flag_counter, valid_condition_ids
         )
 
     def _collect_keys_recursive(self, condition: dict, all_keys: Set[str]) -> None:
+        """
+        Recursively collects all unique filter key names from the filter structure.
+
+        Args:
+            condition: The current node in the filter structure.
+            all_keys: A set to accumulate the unique key names.
+        """
         if "logic" in condition and "conditions" in condition:
             for sub_condition in condition.get("conditions", []):
                 if isinstance(sub_condition, dict):
