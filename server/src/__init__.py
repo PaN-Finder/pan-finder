@@ -1,1 +1,1 @@
-# Pan Finder API Package
+# Pan-Finder API Package

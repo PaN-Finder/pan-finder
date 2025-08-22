@@ -1,5 +1,5 @@
 """
-Logging configuration for the Pan Finder API application.
+Logging configuration for the Pan-Finder API application.
 """
 
 import logging

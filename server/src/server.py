@@ -94,7 +94,7 @@ async def health_check():
     """Comprehensive health check including database connectivity."""
     health_status = {
         "status": "healthy",
-        "message": "Pan Finder API is running",
+        "message": "Pan-Finder API is running",
         "database": "unknown",
     }
 
@@ -127,7 +127,7 @@ async def health_check():
 # Root endpoint
 @app.get("/")
 async def root():
-    return {"message": "Welcome to Pan Finder API"}
+    return {"message": "Welcome to Pan-Finder API"}
 
 
 if __name__ == "__main__":
