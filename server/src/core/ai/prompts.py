@@ -226,7 +226,13 @@ class AIPrompts:
 - If no filters are provided, return `"filters": {}`.
 - If the query is ambiguous or lacks extractable intent/keywords, return empty strings or arrays as appropriate.
 - Do not infer or add information not present in the query.
-- Always preserve the original logical structure and parameter names."""
+- Always preserve the original logical structure and parameter names.
+
+### 9. Date and Timestamp Formatting
+- When a filter value represents a calendar date or datetime, output it as a string using these exact formats:
+  - Date (no time): `%Y-%m-%d` (e.g., `2025-08-22`)
+  - Timestamp (date and time): `%Y-%m-%d %H:%M:%S` (e.g., `2025-08-22 14:05:00`)
+- Apply these formats consistently across all filters; do not change parameter names, only the value formatting."""
 
     @staticmethod
     def get_result_explanation_prompt() -> str:
