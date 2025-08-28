@@ -74,10 +74,10 @@ Dockerfile: `database/Dockerfile.postgresql`
 
 Build:
 ```bash
-docker build -f database/Dockerfile.postgresql . -t registry.esss.lu.se/swap/pan-finder:postgres  --platform linux/amd64
+docker build -f database/Dockerfile.postgresql . -t registry.esss.lu.se/swap/pan-finder:postgresql --platform linux/amd64
 ```
 
 Push:
 ```bash
-docker push registry.esss.lu.se/swap/pan-finder:postgres
+docker push registry.esss.lu.se/swap/pan-finder:postgresql
 ```
