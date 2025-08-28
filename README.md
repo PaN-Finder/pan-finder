@@ -67,3 +67,17 @@ Push Frontend:
 ```bash
 docker push registry.esss.lu.se/swap/pan-finder:frontend
 ```
+
+## Custom Postgresql image with pgvector and postresql-unit extension
+
+Dockerfile: `database/Dockerfile.postgresql`
+
+Build:
+```bash
+docker build -f database/Dockerfile.postgresql . -t registry.esss.lu.se/swap/pan-finder:postgres  --platform linux/amd64
+```
+
+Push:
+```bash
+docker push registry.esss.lu.se/swap/pan-finder:postgres
+```
