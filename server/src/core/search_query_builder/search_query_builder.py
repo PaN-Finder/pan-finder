@@ -6,7 +6,7 @@ from psycopg_pool import ConnectionPool
 from sentence_transformers import SentenceTransformer
 from logging import Logger, getLogger
 
-NUMBER_TYPES = (int, float, complex)
+NUMBER_TYPES = (int, float)
 
 
 class SearchResult(TypedDict):
@@ -665,6 +665,9 @@ class SearchQueryBuilder:
         name_list = condition.get("name")
         operator_raw = str(condition.get("operator", "")).upper()
         value = condition.get("value")
+        unit_text = condition.get(
+            "unit"
+        )  # Optional unit string to enable unit-aware comparisons
         if not isinstance(name_list, list) or not name_list:
             return
 
@@ -683,39 +686,47 @@ class SearchQueryBuilder:
             if operator_raw in ("BETWEEN", "NOT BETWEEN"):
                 if isinstance(value, list) and len(value) == 2:
                     v1, v2 = value[0], value[1]
-                    is_v1_num = isinstance(v1, NUMBER_TYPES) and not isinstance(
-                        v1, complex
-                    )
-                    is_v2_num = isinstance(v2, NUMBER_TYPES) and not isinstance(
-                        v2, complex
-                    )
+                    is_v1_num = isinstance(v1, NUMBER_TYPES)
+                    is_v2_num = isinstance(v2, NUMBER_TYPES)
 
                     if is_v1_num and is_v2_num:
-                        # Choose int or float column depending on inputs
-                        if isinstance(v1, float) or isinstance(v2, float):
-                            v1f: float = float(cast(float | int, v1))
-                            v2f: float = float(cast(float | int, v2))
+                        # If a unit is specified, compare using value_si; fallback to value_numeric when value_si is NULL
+                        if isinstance(unit_text, str) and unit_text.strip():
                             comparison_clause = Composed(
                                 [
-                                    SQL("f.value_float "),
+                                    SQL("("),
+                                    SQL("("),
+                                    SQL("f.value_si "),
                                     op_sql,
                                     SQL(" "),
-                                    Literal(v1f),
+                                    SQL("to_unit({v}, {u})").format(
+                                        v=Literal(v1), u=Literal(unit_text.strip())
+                                    ),
                                     SQL(" AND "),
-                                    Literal(v2f),
+                                    SQL("to_unit({v}, {u})").format(
+                                        v=Literal(v2), u=Literal(unit_text.strip())
+                                    ),
+                                    SQL(")"),
+                                    SQL(" OR (f.value_si IS NULL AND f.value_numeric "),
+                                    op_sql,
+                                    SQL(" "),
+                                    Literal(v1),
+                                    SQL(" AND "),
+                                    Literal(v2),
+                                    SQL(")"),
+                                    SQL(")"),
                                 ]
                             )
                         else:
-                            v1i: int = int(cast(int, v1))
-                            v2i: int = int(cast(int, v2))
+                            # Use unified numeric column for range comparisons
                             comparison_clause = Composed(
                                 [
-                                    SQL("f.value_bigint "),
+                                    SQL("f.value_numeric "),
                                     op_sql,
                                     SQL(" "),
-                                    Literal(v1i),
+                                    Literal(v1),
                                     SQL(" AND "),
-                                    Literal(v2i),
+                                    Literal(v2),
                                 ]
                             )
                     # If both values are strict timestamps
@@ -759,33 +770,54 @@ class SearchQueryBuilder:
 
             elif operator_raw in ("IN", "NOT IN"):
                 if isinstance(value, list) and value:
-                    if any(isinstance(v, float) for v in value):
-                        values_sql = SQL(", ").join([Literal(float(v)) for v in value])
-                        comparison_clause = Composed(
-                            [
-                                SQL("f.value_float "),
-                                op_sql,
-                                SQL(" ("),
-                                values_sql,
-                                SQL(")"),
-                            ]
-                        )
-                    elif all(isinstance(v, int) for v in value):
-                        values_sql = SQL(", ").join([Literal(int(v)) for v in value])
-                        comparison_clause = Composed(
-                            [
-                                SQL("f.value_bigint "),
-                                op_sql,
-                                SQL(" ("),
-                                values_sql,
-                                SQL(")"),
-                            ]
-                        )
-                    else:
+                    if all(isinstance(v, NUMBER_TYPES) for v in value):
+                        # If a unit is specified, compare using value_si; fallback to value_numeric when value_si is NULL
+                        if isinstance(unit_text, str) and unit_text.strip():
+                            values_sql_units = SQL(", ").join(
+                                [
+                                    SQL("to_unit({v}, {u})").format(
+                                        v=Literal(v), u=Literal(unit_text.strip())
+                                    )
+                                    for v in value
+                                ]
+                            )
+                            values_sql_raw = SQL(", ").join([Literal(v) for v in value])
+                            comparison_clause = Composed(
+                                [
+                                    SQL("("),
+                                    SQL("f.value_si "),
+                                    op_sql,
+                                    SQL(" ("),
+                                    values_sql_units,
+                                    SQL(")"),
+                                    SQL(" OR (f.value_si IS NULL AND f.value_numeric "),
+                                    op_sql,
+                                    SQL(" ("),
+                                    values_sql_raw,
+                                    SQL("))"),
+                                    SQL(")"),
+                                ]
+                            )
+                        else:
+                            # Unified numeric IN/NOT IN using numeric column
+                            values_sql = SQL(", ").join([Literal(v) for v in value])
+                            comparison_clause = Composed(
+                                [
+                                    SQL("f.value_numeric "),
+                                    op_sql,
+                                    SQL(" ("),
+                                    values_sql,
+                                    SQL(")"),
+                                ]
+                            )
+                    elif all(isinstance(v, str) for v in value):
                         values_sql = SQL(", ").join([Literal(v) for v in value])
                         comparison_clause = Composed(
                             [SQL("f.value "), op_sql, SQL(" ("), values_sql, SQL(")")]
                         )
+                    else:
+                        flag_counter[0] -= 1
+                        return
                 else:
                     flag_counter[0] -= 1
                     return
@@ -857,16 +889,51 @@ class SearchQueryBuilder:
                         op=op_sql,
                         v=Literal(bool(value)),
                     )
-                elif isinstance(value, int):
-                    comparison_clause = SQL("f.value_bigint {op} {v}").format(
-                        op=op_sql,
-                        v=Literal(int(value)),
-                    )
-                elif isinstance(value, float):
-                    comparison_clause = SQL("f.value_float {op} {v}").format(
-                        op=op_sql,
-                        v=Literal(float(value)),
-                    )
+                elif isinstance(value, NUMBER_TYPES):
+                    # If a unit is specified, compare against value_si using to_unit; fallback to value_numeric when value_si is NULL
+                    if isinstance(unit_text, str) and unit_text.strip():
+                        # For equality/inequality, cast both sides to text to avoid rounding issues
+                        if operator_raw in ("=", "!="):
+                            comparison_clause = Composed(
+                                [
+                                    SQL("("),
+                                    SQL("f.value_si::text "),
+                                    op_sql,
+                                    SQL(" "),
+                                    SQL("to_unit({v}, {u})::text").format(
+                                        v=Literal(value), u=Literal(unit_text.strip())
+                                    ),
+                                    SQL(" OR (f.value_si IS NULL AND f.value_numeric "),
+                                    op_sql,
+                                    SQL(" "),
+                                    Literal(value),
+                                    SQL(")"),
+                                    SQL(")"),
+                                ]
+                            )
+                        else:
+                            comparison_clause = Composed(
+                                [
+                                    SQL("("),
+                                    SQL("f.value_si "),
+                                    op_sql,
+                                    SQL(" "),
+                                    SQL("to_unit({v}, {u})").format(
+                                        v=Literal(value), u=Literal(unit_text.strip())
+                                    ),
+                                    SQL(" OR (f.value_si IS NULL AND f.value_numeric "),
+                                    op_sql,
+                                    SQL(" "),
+                                    Literal(value),
+                                    SQL(")"),
+                                    SQL(")"),
+                                ]
+                            )
+                    else:
+                        comparison_clause = SQL("f.value_numeric {op} {v}").format(
+                            op=op_sql,
+                            v=Literal(value),
+                        )
                 else:
                     flag_counter[0] -= 1
                     return

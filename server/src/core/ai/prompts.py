@@ -7,19 +7,20 @@ class AIPrompts:
 
 ### 1. Intent Recognition
 - Extract the core subject or goal of the query as a concise phrase, using the user's own wording for the specific topic.
-- Remove leading action verbs or generic phrases (e.g., "find", "search for", "show me").
+- Remove leading action verbs or generic phrases (e.g., “find”, “search for”, “show me”). Also remove generic resource nouns that only describe the type of material (e.g., "documents", "datasets", "papers", "studies", "research", "publications", "articles"). These words should not appear in the intention.
 - If the remaining phrase is empty, generic, or only describes an action, return `"intention": ""`.
 - Do not infer or add any information not present in the query.
 - Examples:
-  - Query: "Find papers on CuNCN"
-    → `"intention": "papers on CuNCN"`
-  - Query: "Look for research where ..." or "Search for datasets where ..." (no specific subject provided)
+  - Query: “Find papers on CuNCN”  
+    → `"intention": "CuNCN"`
+  - Query: “Look for research where ...” or "Search for datasets where ..." (no specific subject provided beyond resource-type words)  
     → `"intention": ""`
 
 ### 2. Extracting Keywords
 - Identify key terms that describe the subject of the search. These are used for full-text search or filtering.
-- Exclude stopwords and generic words like "find," "search for," "show," etc.
-- Exclude common phrases like "papers on," "studies about", "document", "title", "abstract", "author" etc...
+- Exclude stopwords and generic words like “find,” “search for,” “show,” etc.
+- Exclude common phrases like "papers on," "studies about", and generic resource/type words such as "document", "documents", "dataset", "datasets", "research", "papers", "studies", "publications", "articles", as well as field labels like "title", "abstract", "author".
+- If removing these terms leaves no meaningful subject terms, return an empty list: `"keywords": []`.
 - Remove punctuation from keywords.
 - Use singular or plural as in the query; do not normalize.
 - Do not merge synonyms unless the query does.
@@ -48,6 +49,7 @@ class AIPrompts:
 - For "not between", use `"<"` and `">"` or `"NOT BETWEEN"` with `value: [x, z]`.
 - Group multiple conditions using `"logic": "AND"` or `"logic": "OR"` as appropriate.
 - If only one condition is present, do not use `"logic"` unnecessarily.
+- Approximate numeric values: If a filter uses words like "about", "around", "approximately" or symbols like "~" or "≈" with a number N, interpret it as ±1% around N. Represent this either as `"operator": "BETWEEN"` with `"value": [0.99*N, 1.01*N]`, or as two filters using `">="` and `"<="` with 0.99*N and 1.01*N. Always preserve any provided unit.
 
 ### 4. Handling Logical Operators
 - Preserve the logical structure (AND/OR) as expressed in the query.
@@ -102,7 +104,7 @@ class AIPrompts:
   ```
 
 ### 5. Units Handling
-- Include units (e.g., K, °C", eV, A, mm, m etc.) where explicitly specified in the query.
+- Include units (e.g., K, °C, eV, A, mm, m, etc.) where explicitly specified in the query.
 - If there is no space between the number and the unit (e.g., "100K"), treat it as a unit: `"unit": "K"`.
 - If no unit is specified, omit the `"unit"` field.
 
@@ -189,8 +191,8 @@ class AIPrompts:
             { "type": "string" },
             { "type": "array", "items": { "type": "string" } },
             { "type": "array", "items": { "type": "number" } },
-            { "type": "array", "items": { "type": "integer" } }
-            { "type": "array", "items": { "type": "boolean" } }
+            { "type": "array", "items": { "type": "integer" } },
+            { "type": "array", "items": { "type": "boolean" } }            
           ]
         },
         "unit": {
@@ -206,21 +208,25 @@ class AIPrompts:
 
 ### 7. Example Transformations
 
-- **User Query:** "Search for studies on CuNCN where the temperature is between 1.5 K and 100 K OR it is higher and the publication year is 2020."
-  **JSON Output:**
+- **User Query:** "Search for studies on CuNCN where the temperature is between 1.5 K and 100 K OR it is higher and the publication year is 2020."  
+  **JSON Output:**  
   `{ "intention": "CuNCN", "keywords": ["CuNCN"], "filters": { "logic": "OR", "conditions": [ { "logic": "AND", "conditions": [ { "name": "temperature", "operator": ">=", "value": 1.5, "unit": "K" }, { "name": "temperature", "operator": "<=", "value": 100, "unit": "K" } ] }, { "logic": "AND", "conditions": [ { "name": "temperature", "operator": ">", "value": 100, "unit": "K" }, { "name": "publication year", "operator": "=", "value": 2020 } ] } ] } }`
 
-- **User Query:** "Find research on chloroquine's crystal structure where the temperature is less than 100 K."
-  **JSON Output:**
-  `{ "intention": "chloroquine's crystal structure", "keywords": ["chloroquine", "crystal structure"], "filters": { "logic": "AND", "conditions": [ { "name": "temperature", "operator": "<", "value": 100, "unit": "K" } ] } }`
+- **User Query:** "Find research on chloroquine’s crystal structure where the temperature is less than 100 K."  
+  **JSON Output:**  
+  `{ "intention": "chloroquine’s crystal structure", "keywords": ["chloroquine", "crystal structure"], "filters": { "logic": "AND", "conditions": [ { "name": "temperature", "operator": "<", "value": 100, "unit": "K" } ] } }`
 
-- **User Query:** "Search for papers on graphene materials."
-  **JSON Output:**
-  `{ "intention": "papers on graphene materials", "keywords": ["graphene materials"], "filters": {} }`
+- **User Query:** "Search for papers on graphene materials."  
+  **JSON Output:**  
+  `{ "intention": "graphene materials", "keywords": ["graphene materials"], "filters": {} }`
 
 - **User Query:** "Look for documents where the publication year is 2020."
-  **JSON Output:**
+  **JSON Output:**  
   `{ "intention": "", "keywords": [], "filters": { "logic": "AND", "conditions": [ { "name": "publication year", "operator": "=", "value": 2020 } ] } }`
+
+- **User Query:** "Find datasets where the temperature is about 100 K."
+  **JSON Output:**  
+  `{ "intention": "", "keywords": [], "filters": { "logic": "AND", "conditions": [ { "name": "temperature", "operator": "BETWEEN", "value": [99, 101], "unit": "K" } ] } }`
 
 ### 8. Error Handling & Edge Cases
 - If no filters are provided, return `"filters": {}`.

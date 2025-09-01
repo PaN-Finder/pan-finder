@@ -477,6 +477,94 @@ def test_generate_filter_flags_mixed_types(builder, snapshot):
     )
 
 
+def test_generate_filter_flags_numeric_operator_with_unit_and_fallback(builder):
+    """Numeric comparison with unit should compare value_si against to_unit and fallback to value_numeric when value_si is NULL."""
+    filt = {
+        "logic": "AND",
+        "conditions": [
+            {"name": ["energy"], "operator": ">=", "value": 5, "unit": "meV"}
+        ],
+    }
+    flags, count, _ = builder._generate_filter_flags(filt)
+    assert count == 1 and len(flags) == 1
+    sql_text = flags[0].as_string()
+    # Check both the SI comparison and the fallback numeric comparison appear
+    assert "f.value_si >= to_unit(5, 'meV')" in sql_text
+    assert "OR (f.value_si IS NULL AND f.value_numeric >= 5)" in sql_text
+
+
+def test_generate_filter_flags_between_with_unit_and_fallback(builder):
+    """BETWEEN with unit should compare using SI and fallback to numeric when SI is NULL."""
+    filt = {
+        "logic": "AND",
+        "conditions": [
+            {"name": ["dose"], "operator": "BETWEEN", "value": [1, 10], "unit": "Gy"}
+        ],
+    }
+    flags, count, _ = builder._generate_filter_flags(filt)
+    assert count == 1 and len(flags) == 1
+    sql_text = flags[0].as_string()
+    assert "f.value_si BETWEEN to_unit(1, 'Gy') AND to_unit(10, 'Gy')" in sql_text
+    assert "OR (f.value_si IS NULL AND f.value_numeric BETWEEN 1 AND 10)" in sql_text
+
+
+def test_generate_filter_flags_in_with_unit_and_fallback(builder):
+    """IN with unit should compare using SI and fallback to numeric when SI is NULL."""
+    filt = {
+        "logic": "AND",
+        "conditions": [
+            {
+                "name": ["dose_rate"],
+                "operator": "IN",
+                "value": [1, 2, 5],
+                "unit": "Gy/s",
+            }
+        ],
+    }
+    flags, count, _ = builder._generate_filter_flags(filt)
+    assert count == 1 and len(flags) == 1
+    sql_text = flags[0].as_string()
+    assert (
+        "f.value_si IN (to_unit(1, 'Gy/s'), to_unit(2, 'Gy/s'), to_unit(5, 'Gy/s'))"
+        in sql_text
+    )
+    assert "OR (f.value_si IS NULL AND f.value_numeric IN (1, 2, 5))" in sql_text
+
+
+def test_generate_filter_flags_equality_with_unit_casts_to_text(builder):
+    """For '=' with unit, value_si and to_unit must be cast to text to avoid rounding issues."""
+    filt = {
+        "logic": "AND",
+        "conditions": [
+            {"name": ["energy"], "operator": "=", "value": 5, "unit": "meV"}
+        ],
+    }
+    flags, count, _ = builder._generate_filter_flags(filt)
+    assert count == 1 and len(flags) == 1
+    sql_text = flags[0].as_string()
+    # Ensure text casts present on both sides
+    assert "f.value_si::text = to_unit(5, 'meV')::text" in sql_text
+    # Fallback should remain numeric without text cast
+    assert "OR (f.value_si IS NULL AND f.value_numeric = 5)" in sql_text
+
+
+def test_generate_filter_flags_inequality_with_unit_casts_to_text(builder):
+    """For '!=' with unit, value_si and to_unit must be cast to text to avoid rounding issues."""
+    filt = {
+        "logic": "AND",
+        "conditions": [
+            {"name": ["energy"], "operator": "!=", "value": 7.5, "unit": "meV"}
+        ],
+    }
+    flags, count, _ = builder._generate_filter_flags(filt)
+    assert count == 1 and len(flags) == 1
+    sql_text = flags[0].as_string()
+    # Ensure text casts present on both sides
+    assert "f.value_si::text != to_unit(7.5, 'meV')::text" in sql_text
+    # Fallback should remain numeric without text cast
+    assert "OR (f.value_si IS NULL AND f.value_numeric != 7.5)" in sql_text
+
+
 def test_generate_filter_flags_invalid_value_skipped(builder):
     """Invalid value type for '=' (list) should be skipped entirely."""
     filters_obj = {
@@ -815,6 +903,7 @@ def test_build_query_all_parts(builder, snapshot):
                     "conditions": [
                         {"name": "author", "operator": "ILIKE", "value": "vaswani"},
                         {"name": "topic", "operator": "IN", "value": ["NLP", "AI"]},
+                        {"name": "energy", "operator": ">=", "value": 5, "unit": "meV"},
                     ],
                 },
             ],
@@ -829,7 +918,8 @@ def test_build_query_all_parts(builder, snapshot):
         mock_find.assert_any_call("year")
         mock_find.assert_any_call("author")
         mock_find.assert_any_call("topic")
-        assert mock_find.call_count == 3
+        mock_find.assert_any_call("energy")
+        assert mock_find.call_count == 4
 
     snapshot.assert_match(sql.as_string(), "build_query_all_parts")
 
@@ -930,7 +1020,7 @@ def test_generate_filter_flags_between_boundary(builder):
     text = flags[0].as_string()
     assert (
         text
-        == "MAX(CASE WHEN f.key IN ('year') AND f.value_bigint BETWEEN 2000 AND 2010 THEN 1 ELSE 0 END) AS \"has_condition_1\""
+        == "MAX(CASE WHEN f.key IN ('year') AND f.value_numeric BETWEEN 2000 AND 2010 THEN 1 ELSE 0 END) AS \"has_condition_1\""
     )
 
 
