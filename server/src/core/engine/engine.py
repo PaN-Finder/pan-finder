@@ -5,7 +5,7 @@ from sentence_transformers import SentenceTransformer
 from openai import AzureOpenAI
 from psycopg.rows import dict_row
 from psycopg.sql import Composed
-from typing import cast, Any, List, Optional, AsyncGenerator, Dict, Callable
+from typing import Tuple, cast, Any, List, Optional, AsyncGenerator, Dict, Callable
 
 from ...db.models.document import DocumentTypedDict
 from ...db.models.document_repository import DocumentRepository
@@ -186,7 +186,7 @@ class SearchEngine:
 
     async def execute_search(
         self, search_data: StructuredQueryData
-    ) -> List[EnhancedSearchResult]:
+    ) -> Tuple[List[EnhancedSearchResult], Composed]:
         """
         Execute the search using the structured query data.
 
@@ -216,11 +216,11 @@ class SearchEngine:
             # Normalize scores to a 0-1 range
             Scoring.normalize_scores(results, search_data)
 
-            return results
+            return (results, sql_query)
 
         except Exception as e:
             self._logger.error(f"Search execution error: {e}")
-            return []
+            return [], sql_query
 
     def _execute_database_query(
         self, sql_query: Composed

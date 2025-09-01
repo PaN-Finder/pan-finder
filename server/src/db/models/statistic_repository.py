@@ -35,8 +35,8 @@ class StatisticRepository:
         Returns the new record's UUID as a string.
         """
         query = """
-            INSERT INTO statistic (search_query, structured_data, results, execution_time_ms, modified_query_id)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO statistic (search_query, sql_query, structured_data, results, execution_time_ms, modified_query_id)
+            VALUES (%s, %s, %s, %s, %s, %s)
             RETURNING id
         """
         with get_db_connection() as conn:
@@ -44,6 +44,7 @@ class StatisticRepository:
                 query,
                 [
                     stat.search_query,
+                    stat.sql_query,
                     json.dumps(stat.structured_data),
                     json.dumps(stat.results),
                     stat.execution_time_ms,

@@ -11,6 +11,7 @@ class Statistic:
         self,
         id: Optional[str] = None,  # UUID as string
         search_query: str = "",
+        sql_query: str = "",  # The actual SQL query executed against the database
         structured_data: Any = None,
         results: Any = None,
         execution_time_ms: int = 0,
@@ -19,6 +20,7 @@ class Statistic:
     ):
         self.id = id
         self.search_query = search_query
+        self.sql_query = sql_query
         self.structured_data = structured_data
         self.results = results
         self.execution_time_ms = execution_time_ms
@@ -33,6 +35,7 @@ class Statistic:
         return cls(
             id=str(row.get("id")),
             search_query=row["search_query"],
+            sql_query=row.get("sql_query", ""),
             structured_data=row["structured_data"],
             results=row["results"],
             execution_time_ms=row["execution_time_ms"],
@@ -47,6 +50,7 @@ class Statistic:
         return {
             "id": self.id,
             "search_query": self.search_query,
+            "sql_query": self.sql_query,
             "structured_data": self.structured_data,
             "results": self.results,
             "execution_time_ms": self.execution_time_ms,

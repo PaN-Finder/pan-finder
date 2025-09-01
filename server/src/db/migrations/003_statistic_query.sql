@@ -1,0 +1,1 @@
+ALTER TABLE statistic ADD COLUMN IF NOT EXISTS sql_query TEXT DEFAULT NULL; -- The actual SQL query executed against the database

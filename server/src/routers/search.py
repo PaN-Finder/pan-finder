@@ -81,13 +81,14 @@ async def search_with_ai_stream(
                 yield event
 
             # Step 4: Execute search and stream final results
-            search_results = await engine.execute_search(search_data)
+            search_results, sql_query = await engine.execute_search(search_data)
 
             # Store statistics
             stat_id = None
             try:
                 stat = Statistic(
                     search_query=raw_query,
+                    sql_query=sql_query.as_string(),
                     structured_data=raw_structured_data,
                     results=[result.model_dump() for result in search_results],
                     execution_time_ms=0,  # Optionally measure and store real execution time
@@ -206,12 +207,13 @@ async def search_with_structured_data(
             )
 
             # Step 3: Execute search directly with structured data
-            search_results = await engine.execute_search(structured_data)
+            search_results, sql_query = await engine.execute_search(structured_data)
 
             stat_id = None
             try:
                 stat = Statistic(
                     search_query=original.search_query,
+                    sql_query=sql_query.as_string(),
                     structured_data=request.structured_data,
                     results=[result.model_dump() for result in search_results],
                     execution_time_ms=0,
