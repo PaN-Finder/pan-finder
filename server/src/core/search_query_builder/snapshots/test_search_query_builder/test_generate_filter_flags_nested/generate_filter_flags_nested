@@ -3,5 +3,5 @@ MAX(CASE
                         WHEN f.key IN ('category') AND f.value ILIKE '%electronics%' THEN 1
                         ELSE 0
                     END) AS "has_condition_1"
-MAX(CASE WHEN f.key IN ('price') AND f.value_bigint < 100 THEN 1 ELSE 0 END) AS "has_condition_2"
+MAX(CASE WHEN f.key IN ('price') AND f.value_numeric < 100 THEN 1 ELSE 0 END) AS "has_condition_2"
 MAX(CASE WHEN f.key IN ('in_stock') AND f.value_boolean = true THEN 1 ELSE 0 END) AS "has_condition_3"

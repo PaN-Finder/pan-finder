@@ -68,16 +68,17 @@
                 -- Step 1: Calculate flags for each unique base condition per document using MAX(CASE WHEN ...)
                 SELECT
                     f.document_id,
-                    MAX(CASE WHEN f.key IN ('publication_year') AND f.value_bigint >= 2022 THEN 1 ELSE 0 END) AS "has_condition_1",
+                    MAX(CASE WHEN f.key IN ('publication_year') AND f.value_numeric >= 2022 THEN 1 ELSE 0 END) AS "has_condition_1",
                     MAX(CASE 
                         WHEN f.key IN ('authors', 'creator') AND f.value ILIKE 'vaswani%' THEN 2
                         WHEN f.key IN ('authors', 'creator') AND f.value ILIKE '%vaswani%' THEN 1
                         ELSE 0
                     END) AS "has_condition_2",
-                    MAX(CASE WHEN f.key IN ('subject', 'field') AND f.value IN ('NLP', 'AI') THEN 1 ELSE 0 END) AS "has_condition_3"
+                    MAX(CASE WHEN f.key IN ('subject', 'field') AND f.value IN ('NLP', 'AI') THEN 1 ELSE 0 END) AS "has_condition_3",
+                    MAX(CASE WHEN f.key IN ('energy') AND (f.value_si >= to_unit(5, 'meV') OR (f.value_si IS NULL AND f.value_numeric >= 5)) THEN 1 ELSE 0 END) AS "has_condition_4"
                 FROM filter f
                 -- Pre-filter rows based on all keys involved in the conditions
-                WHERE f.key IN ('authors', 'creator', 'field', 'publication_year', 'subject')
+                WHERE f.key IN ('authors', 'creator', 'energy', 'field', 'publication_year', 'subject')
                 GROUP BY f.document_id
             ),
             FilterLogic AS (
@@ -85,15 +86,15 @@
                 SELECT
                     ff.document_id,
                     CASE
-                        WHEN ("has_condition_1" > 0 OR ("has_condition_2" > 0 AND "has_condition_3" > 0))
+                        WHEN ("has_condition_1" > 0 OR ("has_condition_2" > 0 AND "has_condition_3" > 0 AND "has_condition_4" > 0))
                         THEN 1 -- The document satisfies the overall logic (Full Match)
                         ELSE 0 -- The document does not satisfy the overall logic (Partial or No Match)
                     END AS full_match_score,
                     -- Sum of individual flags (scores can be 0, 1, or 2)
-                    ("has_condition_1" + "has_condition_2" + "has_condition_3") AS partial_match_count
+                    ("has_condition_1" + "has_condition_2" + "has_condition_3" + "has_condition_4") AS partial_match_count
                 FROM FilterFlags ff
                 -- Optimization: Only process documents that matched at least one flag based on score
-                WHERE ("has_condition_1" > 0 OR "has_condition_2" > 0 OR "has_condition_3" > 0)
+                WHERE ("has_condition_1" > 0 OR "has_condition_2" > 0 OR "has_condition_3" > 0 OR "has_condition_4" > 0)
             )
             -- Step 3: Final SELECT, Ranking, and Join
             SELECT

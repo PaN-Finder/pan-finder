@@ -1,2 +1,2 @@
-MAX(CASE WHEN f.key IN ('range') AND f.value_float NOT BETWEEN 100.5 AND 200.0 THEN 1 ELSE 0 END) AS "has_condition_1"
-MAX(CASE WHEN f.key IN ('ids') AND f.value_bigint NOT IN (1, 2, 3) THEN 1 ELSE 0 END) AS "has_condition_2"
+MAX(CASE WHEN f.key IN ('range') AND f.value_numeric NOT BETWEEN 100.5 AND 200.0 THEN 1 ELSE 0 END) AS "has_condition_1"
+MAX(CASE WHEN f.key IN ('ids') AND f.value_numeric NOT IN (1, 2, 3) THEN 1 ELSE 0 END) AS "has_condition_2"

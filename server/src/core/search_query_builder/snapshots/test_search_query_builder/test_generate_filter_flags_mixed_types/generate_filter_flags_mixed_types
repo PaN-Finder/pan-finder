@@ -1,2 +1,2 @@
-MAX(CASE WHEN f.key IN ('mixed_in') AND f.value_float IN (1.0, 3.14) THEN 1 ELSE 0 END) AS "has_condition_1"
-MAX(CASE WHEN f.key IN ('mixed_between') AND f.value_float BETWEEN 5.0 AND 15.5 THEN 1 ELSE 0 END) AS "has_condition_2"
+MAX(CASE WHEN f.key IN ('mixed_in') AND f.value_numeric IN (1, 3.14) THEN 1 ELSE 0 END) AS "has_condition_1"
+MAX(CASE WHEN f.key IN ('mixed_between') AND f.value_numeric BETWEEN 5 AND 15.5 THEN 1 ELSE 0 END) AS "has_condition_2"

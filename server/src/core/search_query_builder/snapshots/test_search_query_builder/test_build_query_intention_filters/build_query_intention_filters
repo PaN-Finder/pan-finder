@@ -68,7 +68,7 @@
                 -- Step 1: Calculate flags for each unique base condition per document using MAX(CASE WHEN ...)
                 SELECT
                     f.document_id,
-                    MAX(CASE WHEN f.key IN ('year') AND f.value_bigint > 2020 THEN 1 ELSE 0 END) AS "has_condition_1",
+                    MAX(CASE WHEN f.key IN ('year') AND f.value_numeric > 2020 THEN 1 ELSE 0 END) AS "has_condition_1",
                     MAX(CASE 
                         WHEN f.key IN ('journal') AND f.value ILIKE 'Nature%' THEN 2
                         WHEN f.key IN ('journal') AND f.value ILIKE '%Nature%' THEN 1
