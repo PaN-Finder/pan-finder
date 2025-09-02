@@ -1,0 +1,17 @@
+namespace: pan-finder
+
+resources:
+  - ../../base
+  - frontend-deployment.yaml
+  - frontend-service.yaml
+  - pv.yaml
+
+patches:  
+  - path: ingress-patch.yaml
+  - path: configmap-patch.yaml
+  - path: pgvector-deployment-patch.yaml
+  - path: pvc-patch.yaml
+
+labels:
+  - pairs:
+      environment: dev

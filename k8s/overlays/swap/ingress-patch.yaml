@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pan-finder-ingress
+spec:
+  tls:
+  - hosts:
+    - pan-finder.panosc.ess.eu
+    - pan-finder-api.panosc.ess.eu
+    secretName: pan-finder-tls
+  rules:
+  - host: pan-finder.panosc.ess.eu
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: pan-finder-frontend-service
+            port:
+              number: 80
+  - host: pan-finder-api.panosc.ess.eu
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: pan-finder-server-service
+            port:
+              number: 8080
