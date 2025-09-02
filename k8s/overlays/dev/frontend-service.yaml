@@ -7,12 +7,13 @@ metadata:
     app.kubernetes.io/component: frontend
     app.kubernetes.io/part-of: pan-finder
 spec:
-  type: ClusterIP
+  type: NodePort
   ports:
   - port: 80
     targetPort: 80
     protocol: TCP
     name: http
+    nodePort: 30080
   selector:
     app.kubernetes.io/name: pan-finder-frontend
     app.kubernetes.io/component: frontend
