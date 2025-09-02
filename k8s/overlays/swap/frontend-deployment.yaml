@@ -23,7 +23,7 @@ spec:
       - name: ess-gitlab-registry-credentials
       containers:
       - name: frontend
-        image: registry.esss.lu.se/swap/pan-finder:frontend
+        image: registry.esss.lu.se/swap/pan-finder:frontend-swap
         imagePullPolicy: Always
         ports:
         - containerPort: 80
