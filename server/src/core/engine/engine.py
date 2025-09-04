@@ -32,7 +32,7 @@ class SearchEngine:
     def __init__(
         self,
         openai_client: Optional[AzureOpenAI] = None,
-        embedding_model: Optional[SentenceTransformer] = None,
+        sentence_transformer: Optional[SentenceTransformer] = None,
         query_builder: Optional[SearchQueryBuilder] = None,
     ):
         """
@@ -40,11 +40,11 @@ class SearchEngine:
 
         Args:
             openai_client: Azure OpenAI client for query processing
-            embedding_model: SentenceTransformer model for embeddings
+            sentence_transformer: SentenceTransformer model for embeddings
             query_builder: SearchQueryBuilder for generating SQL queries
         """
         self._openai_client = openai_client
-        self._embedding_model = embedding_model
+        self._sentence_transformer = sentence_transformer
         self._query_builder = query_builder
         self._logger = get_logger(self.__class__.__name__)
         self._llm_cache = LLMResponseCache(logger=self._logger)
@@ -61,13 +61,13 @@ class SearchEngine:
         return self._openai_client
 
     @property
-    def embedding_model(self) -> SentenceTransformer:
-        """Lazy-loaded embedding model."""
-        if self._embedding_model is None:
-            self._embedding_model = SentenceTransformer(
+    def sentence_transformer(self) -> SentenceTransformer:
+        """Lazy-loaded sentence transformer model."""
+        if self._sentence_transformer is None:
+            self._sentence_transformer = SentenceTransformer(
                 settings.embedding_model_path, device="cpu"
             )
-        return self._embedding_model
+        return self._sentence_transformer
 
     @property
     def query_builder(self) -> SearchQueryBuilder:
@@ -75,7 +75,7 @@ class SearchEngine:
         if self._query_builder is None:
             self._query_builder = SearchQueryBuilder(
                 pool=get_connection_pool(),
-                embedding_model=self.embedding_model,
+                sentence_transformer=self.sentence_transformer,
                 rrf_k_similarity=settings.rrf_k_similarity,
                 rrf_k_chunk=settings.rrf_k_chunk,
                 rrf_k_full_match=settings.rrf_k_full_match,

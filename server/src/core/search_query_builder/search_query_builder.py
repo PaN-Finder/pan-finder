@@ -55,7 +55,7 @@ class SearchQueryBuilder:
 
     def __init__(
         self,
-        embedding_model: SentenceTransformer,
+        sentence_transformer: SentenceTransformer,
         pool: ConnectionPool,
         rrf_k_similarity: int = _DEFAULT_RRF_K,
         rrf_k_chunk: int = _DEFAULT_RRF_K,
@@ -65,7 +65,7 @@ class SearchQueryBuilder:
         logger: Logger | None = None,
         capture_similar_names: bool = False,
     ):
-        self.embedding_model = embedding_model
+        self.sentence_transformer = sentence_transformer
         self.pool = pool
         self.rrf_k_similarity = rrf_k_similarity
         self.rrf_k_chunk = rrf_k_chunk
@@ -114,7 +114,7 @@ class SearchQueryBuilder:
         # 2. Prepare components
         intent_text = normalized_params.get("intention", "")
         intent_embedding = (
-            self.embedding_model.encode(intent_text).tolist()
+            self.sentence_transformer.encode(intent_text).tolist()
             if intent_text != ""
             else None
         )
@@ -358,7 +358,7 @@ class SearchQueryBuilder:
         if not raw_name:
             return []
 
-        query_vector = self.embedding_model.encode(raw_name).tolist()
+        query_vector = self.sentence_transformer.encode(raw_name).tolist()
         with (
             self.pool.connection() as conn,
             conn.cursor(row_factory=dict_row) as cursor,

@@ -1,4 +1,3 @@
-import math
 from typing import Dict, List
 
 from ...db.models.search import EnhancedSearchResult, StructuredQueryData

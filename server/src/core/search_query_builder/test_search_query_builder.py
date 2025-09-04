@@ -20,7 +20,7 @@ SearchQueryBuilder = search_query_builder.SearchQueryBuilder
 
 # --- Mocks ---
 @pytest.fixture
-def mock_embedding_model():
+def mock_sentence_transformer():
     mock = MagicMock()
     mock.encode.return_value = MagicMock(tolist=lambda: [0.1, 0.2, 0.3])
     return mock
@@ -57,9 +57,9 @@ def mock_postgres_client():
 
 
 @pytest.fixture
-def builder(mock_embedding_model, mock_postgres_client):
+def builder(mock_sentence_transformer, mock_postgres_client):
     pool, _ = mock_postgres_client
-    return SearchQueryBuilder(mock_embedding_model, pool)
+    return SearchQueryBuilder(mock_sentence_transformer, pool)
 
 
 # --- End Mocks ---
@@ -68,11 +68,11 @@ def builder(mock_embedding_model, mock_postgres_client):
 # --- Test Cases ---
 
 
-def test_init(mock_embedding_model, mock_postgres_client):
+def test_init(mock_sentence_transformer, mock_postgres_client):
     """Test if the builder initializes correctly."""
     pool, _ = mock_postgres_client
-    builder_instance = SearchQueryBuilder(mock_embedding_model, pool)
-    assert builder_instance.embedding_model == mock_embedding_model
+    builder_instance = SearchQueryBuilder(mock_sentence_transformer, pool)
+    assert builder_instance.sentence_transformer == mock_sentence_transformer
     assert builder_instance.pool == pool
 
 
@@ -100,7 +100,9 @@ def test_build_keywords_tsquery_text(builder, keywords, expected_sql):
     assert builder._build_keywords_tsquery_text(keywords) == expected_sql
 
 
-def test_find_similar_names_found(builder, mock_postgres_client, mock_embedding_model):
+def test_find_similar_names_found(
+    builder, mock_postgres_client, mock_sentence_transformer
+):
     """Test finding similar names when matches exist in DB."""
     _, mock_cursor = mock_postgres_client
     mock_cursor.fetchall.return_value = [
@@ -110,7 +112,7 @@ def test_find_similar_names_found(builder, mock_postgres_client, mock_embedding_
     raw_name = "test_name"
     similar_names = builder._find_similar_names(raw_name)
 
-    mock_embedding_model.encode.assert_called_once_with(raw_name)
+    mock_sentence_transformer.encode.assert_called_once_with(raw_name)
     mock_cursor.execute.assert_called_once_with(
         ANY,  # SQL query string
         (
@@ -127,7 +129,7 @@ def test_find_similar_names_found(builder, mock_postgres_client, mock_embedding_
 
 
 def test_find_similar_names_not_found(
-    builder, mock_postgres_client, mock_embedding_model
+    builder, mock_postgres_client, mock_sentence_transformer
 ):
     """Test finding similar names when no matches exist."""
     _, mock_cursor = mock_postgres_client
@@ -135,19 +137,19 @@ def test_find_similar_names_not_found(
     raw_name = "unique_name"
     similar_names = builder._find_similar_names(raw_name)
 
-    mock_embedding_model.encode.assert_called_once_with(raw_name)
+    mock_sentence_transformer.encode.assert_called_once_with(raw_name)
     mock_cursor.execute.assert_called_once()
     # If nothing is found, it should return the original name in a list
     assert similar_names == [raw_name]
 
 
 def test_find_similar_names_empty_input(
-    builder, mock_postgres_client, mock_embedding_model
+    builder, mock_postgres_client, mock_sentence_transformer
 ):
     """Test finding similar names with empty input."""
     _, mock_cursor = mock_postgres_client
     similar_names = builder._find_similar_names("")
-    mock_embedding_model.encode.assert_not_called()
+    mock_sentence_transformer.encode.assert_not_called()
     mock_cursor.execute.assert_not_called()
     assert similar_names == []
 
@@ -935,7 +937,7 @@ def test_build_query_keywords_only_no_intention(builder, snapshot):
     data = {"keywords": ["protein", "folding mechanism"]}
     with patch.object(
         builder, "_update_filter_names", side_effect=lambda d: d
-    ), patch.object(builder.embedding_model, "encode") as mock_encode:
+    ), patch.object(builder.sentence_transformer, "encode") as mock_encode:
         sql = builder.build_query(data).as_string()
         mock_encode.assert_not_called()
     snapshot.assert_match(sql, "build_query_keywords_only_no_intention")
@@ -954,7 +956,7 @@ def test_build_query_filters_only_no_intention(builder, snapshot):
     }
     with patch.object(
         builder, "_find_similar_names", side_effect=lambda n: [n]
-    ), patch.object(builder.embedding_model, "encode") as mock_encode:
+    ), patch.object(builder.sentence_transformer, "encode") as mock_encode:
         sql = builder.build_query(data).as_string()
         mock_encode.assert_not_called()
     snapshot.assert_match(sql, "build_query_filters_only_no_intention")
