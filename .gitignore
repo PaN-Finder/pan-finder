@@ -35,6 +35,7 @@ models/*
 # Kubernetes secrets with actual values
 k8s/**/secret.yaml
 !k8s/**/secret.yaml.template
+!k8s/overlays/prod/secret.yaml
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

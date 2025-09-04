@@ -1,0 +1,15 @@
+namespace: pan-finder
+
+resources:
+  - ../../base
+  - secret.yaml
+
+patches:  
+  - path: ingress-patch.yaml
+  - path: configmap-patch.yaml
+  - path: pgvector-deployment-patch.yaml
+  - path: pvc-patch.yaml
+
+labels:
+  - pairs:
+      environment: prod
