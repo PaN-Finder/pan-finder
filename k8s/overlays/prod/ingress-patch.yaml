@@ -3,6 +3,7 @@ kind: Ingress
 metadata:
   name: pan-finder-ingress
 spec:
+  ingressClassName: traefik-proxy-prod
   tls:
   - hosts:    
     - pan-finder.ess.eu
