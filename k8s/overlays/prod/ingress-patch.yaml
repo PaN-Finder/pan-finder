@@ -1,13 +1,9 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: pan-finder-ingress
+  name: pan-finder-ingress  
 spec:
   ingressClassName: traefik-proxy-prod
-  tls:
-  - hosts:    
-    - pan-finder.ess.eu
-    secretName: pan-finder-tls
   rules:
   - host: pan-finder.ess.eu
     http:
@@ -18,4 +14,4 @@ spec:
           service:
             name: pan-finder-server-service
             port:
-              number: 8080
+              name: http
