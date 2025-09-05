@@ -1,0 +1,173 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-1112348748",
+    "queries": [
+      {
+        "query": "Find datasets related to the polarimetry study of FePS3 conducted at ESRF where the study includes a total of 746 acquisition files and is scheduled for release on March 31, 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1305995879",
+    "queries": [
+      {
+        "query": "Look for research on G protein-coupled receptors where the project aims to understand activation mechanisms using photoswitchable ligands and the publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1312809761",
+    "queries": [
+      {
+        "query": "Look for research on CsPbI3-based perovskites where the publication year is 2026 and the study involves radiation-induced phase stabilization.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1919146096",
+    "queries": [
+      {
+        "query": "Look for research on Pt-Pd/CeO2 catalysts for CH4 oxidation where the study is scheduled to run in 2024 and the publication year is 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-439940778",
+    "queries": [
+      {
+        "query": "Look for datasets about resonant inelastic X-ray scattering (RIXS) of cobalt where the sample name is cobalt and the experiment was conducted in 2021.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-649776694",
+    "queries": [
+      {
+        "query": "Search for studies on Wire Arc Additive Manufacturing where the publication year is 2025 and the focus is on residual stress distribution in Ti-6Al-4V parts.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-735816212",
+    "queries": [
+      {
+        "query": "Look for studies on membrane proteins and biosynthetic enzymes where the project duration is from March 1, 2022, to March 1, 2025 and the findings will be released on March 1, 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-754579666",
+    "queries": [
+      {
+        "query": "Look for studies on the transfer of titanium oxide nanoparticles (TiO2-NPs) in alfalfa plants where the publication year is 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-787695481",
+    "queries": [
+      {
+        "query": "Look for studies on the growth of graphene using liquid Cu-Sn alloys where the melting point is less than 506 K and the publication year is set for 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-866679299",
+    "queries": [
+      {
+        "query": "Look for studies on beam damage in hybrid lead halide perovskite thin layers measured with a nano beam, with publication findings expected by June 30, 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/MG0021",
+    "queries": [
+      {
+        "query": "Find datasets related to multigrid detector tests where the creation time is after September 4, 2018, and the sample chemical formula is V.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.1-02-148",
+    "queries": [
+      {
+        "query": "Find studies on the measurement of residual stress fields in Aluminium alloy 7075 where the experiment energy is greater than 1.6A and the publication year is 2014.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.3-17-36",
+    "queries": [
+      {
+        "query": "Look for studies on the low-spin spectroscopy of 64Ni where the measurement is based on thermal neutron capture and the publication year is 2019.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.4-05-706",
+    "queries": [
+      {
+        "query": "Look for studies on the spin dynamics of Ba3LaCuReWO12 where the temperature is less than 301 K and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-12-363",
+    "queries": [
+      {
+        "query": "Search for studies on targeted nanoparticles for cancer therapy that utilize PLGA and BSA, published in 2014.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.DIR-131",
+    "queries": [
+      {
+        "query": "Find studies on the characterization of interfaces with delamination problems using the D17 reflectometer where the sample is a polycrystalline silicon wafer and the environment temperature is ambient.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.TEST-2530",
+    "queries": [
+      {
+        "query": "Find studies on the 4D resolution measurement of germanium single crystals where the environment temperature is 0.2°C and the sample mass is 6000.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.TEST-2587",
+    "queries": [
+      {
+        "query": "Look for research on magnetic diffuse scattering in CuMnO2 where the temperature is between 1.5 K and 300 K and the sample mass is 10,000.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.TEST-2909",
+    "queries": [
+      {
+        "query": "Find research on the C-axis dependence of paramagnetic fluctuations in h-YMnO3 conducted using the IN3 3-axis spectrometer during cycle 20182 in 2018.",
+        "min_position": 0
+      }
+    ]
+  }
+]

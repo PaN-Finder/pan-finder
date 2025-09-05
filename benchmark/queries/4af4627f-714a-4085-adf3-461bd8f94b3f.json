@@ -1,0 +1,182 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-1033571082",
+    "queries": [
+      {
+        "query": "Look for research on high-entropy nitrides formed from platinum group metals where the study involves Ir-based alloys and is scheduled for release in 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1119859607",
+    "queries": [
+      {
+        "query": "Look for research initiatives related to ligand screening and membrane protein characterization that are scheduled for release in 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1339980289",
+    "queries": [
+      {
+        "query": "Look for studies on macromolecular dynamics of polyactide using X-ray Photon Correlation Spectroscopy where the results are expected to be released after September 30, 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1817679856",
+    "queries": [
+      {
+        "query": "Look for studies on Mn-based molecular magnets where the evaluation of beam damage will be conducted using X-ray spectroscopy techniques, scheduled from July 24 to July 27, 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1933833300",
+    "queries": [
+      {
+        "query": "Look for datasets on geometric frustration in protein crystals where the project runs from November 30, 2024, to December 3, 2024, and the publication year is 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-421464602",
+    "queries": [
+      {
+        "query": "Look for datasets related to the Next-generation DFXM project where the instrument used is ID06-HXM and the publication year is 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-449124708",
+    "queries": [
+      {
+        "query": "Look for studies on self-healing aluminum alloys produced by selective laser melting where the microstructure includes Mg2Si precipitates and the publication year is 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-659390756",
+    "queries": [
+      {
+        "query": "Look for research on the structural behavior of potassium under pressure where the pressure is less than 500 GPa and the publication year is 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-748604414",
+    "queries": [
+      {
+        "query": "Look for studies on glass fibre reinforced polyamide laminates where the publication year is 2025 and the material type includes PA66-GF60.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-925650087",
+    "queries": [
+      {
+        "query": "Find research projects in macromolecular crystallography focused on infectiology where the publication year is greater than 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-925654408",
+    "queries": [
+      {
+        "query": "Find research on drug development that utilizes structural information and is set to be released in 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-965439428",
+    "queries": [
+      {
+        "query": "Look for studies on the charge density of TCNQ radical anions where the publication year is expected to be 2025 and the analysis involves X-ray charge density techniques.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.16907/78d0bc13-b376-485e-8664-4e4cab6d897d",
+    "queries": [
+      {
+        "query": "Look for datasets related to the SciFi sub-detector of the Mu3e experiment published in 2023 with a size greater than 20 GB.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/MG0003",
+    "queries": [
+      {
+        "query": "Find datasets related to detectors that are associated with the BrightnESS project and were created after 2016.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/V200025",
+    "queries": [
+      {
+        "query": "Find datasets related to detector test data collected under the BrightnESS project where the publication year is 2018 and the data size is less than 15000000 bytes.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.3-17-9",
+    "queries": [
+      {
+        "query": "Look for studies on neutron capture reactions in isotopes 116, 118, and 120Sn where the publication year is 2018 and the instruments used include FIPPS.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-21-1076",
+    "queries": [
+      {
+        "query": "Find research on LixVOPO4 electrodes for Li batteries where the mass of the sample is 300 mg and the publication year is 2013.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.8-03-894",
+    "queries": [
+      {
+        "query": "Look for studies on integral membrane proteins reconstituted in stealth carrier nanodiscs where the publication year is 2017 and the experimental parameters include the use of deuterated lipids.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-13-636",
+    "queries": [
+      {
+        "query": "Search for studies on negatively charged lipid membranes where the publication year is 2018 and the experimental environment is at a specific temperature.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.TEST-2612",
+    "queries": [
+      {
+        "query": "Find studies on high-performance ceramics tested using the SALSA instrument where the publication year is 2016.",
+        "min_position": 0
+      }
+    ]
+  }
+]

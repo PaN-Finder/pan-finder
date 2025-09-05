@@ -1,0 +1,173 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-102576891",
+    "queries": [
+      {
+        "query": "Look for datasets related to macromolecular crystallography collected using the ID23-1 instrument where the number of images is 4 and the exposure time is 0.1 seconds.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1118673203",
+    "queries": [
+      {
+        "query": "Find research on macromolecules related to human health where the publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1164008828",
+    "queries": [
+      {
+        "query": "Find research on osteocyte-lacuna-canalicular networks in different species where the study focuses on BRTL mice with osteogenesis imperfecta and Sprague Dawley rats treated with anabolic drugs, and where results are expected to be publicly available by May 1, 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1299720119",
+    "queries": [
+      {
+        "query": "Look for research on multiply twinned nanoparticles where the study begins after September 1, 2023, and the publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1345036332",
+    "queries": [
+      {
+        "query": "Look for studies on magnetite nanoparticles where the temperature is less than 121 K and the publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1432053649",
+    "queries": [
+      {
+        "query": "Look for datasets related to coherent diffraction imaging of nanostructures during chemical reactions scheduled for January 30 to February 4, 2024, with a release date in 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1550904430",
+    "queries": [
+      {
+        "query": "Look for studies on Y-doped BaZrO3 proton-conducting oxide electrolytes where the effective acceptor concentration is less than what is typically expected for 20 mol% doping.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1713482444",
+    "queries": [
+      {
+        "query": "Find studies on high-power GaN-on-Si devices where the project is set to start after July 4, 2024, and results are expected to be released in 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1829559341",
+    "queries": [
+      {
+        "query": "Search for studies on protein structure-function relationships relevant to human health and biotechnology scheduled between September 11 and September 12, 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-2004207942",
+    "queries": [
+      {
+        "query": "Find studies on the extrusion of liquid crystal polymers where the temperature is 70°C and the publication year is 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-421386909",
+    "queries": [
+      {
+        "query": "Look for datasets on the impact of Covid-19 on lung vasculature where the number of samples is 6 and the publication year is 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-749030668",
+    "queries": [
+      {
+        "query": "Look for datasets related to the HIV-1 glycoprotein ectodomain where the study involves monoclonal antibodies LNO2 and PGT145, conducted in 2022.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-912128149",
+    "queries": [
+      {
+        "query": "Find datasets related to in-house research conducted at the European Synchrotron Radiation Facility where the project spans from August 30 to August 31, 2022, and is scheduled for release on August 31, 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-92202780",
+    "queries": [
+      {
+        "query": "Find datasets from the IBS BAG experiment conducted at ESRF where the number of datasets is greater than 1,000 and the publication year is 2021.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.16907/b6f34693-6c72-4227-9d30-7c960a902633",
+    "queries": [
+      {
+        "query": "Look for studies on the absorption spectroscopy of LiYF4:Tb where the sample composition includes Tb:LiYF and the publication year is 2021.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.4-02-519",
+    "queries": [
+      {
+        "query": "Look for studies on the unconventional superconductor CeCoIn5 where the experimental parameters include an environment temperature of mK and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-31-2618",
+    "queries": [
+      {
+        "query": "Look for studies on Ti-doped Ca3Ru2O7 where the doping level is 0.02 or 0.06 and the experimental temperature is 300 K.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-31-2671",
+    "queries": [
+      {
+        "query": "Find studies on Ag2RuO4 where the experimental temperature is between 6 K and 300 K and the publication year is 2019.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-42-489",
+    "queries": [
+      {
+        "query": "Look for research on skyrmion lattices in Ni doped Cu2OSeO3 where the environment temperature is 70 K and the publication year is 2019.",
+        "min_position": 0
+      }
+    ]
+  }
+]

@@ -1,0 +1,182 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-1118703180",
+    "queries": [
+      {
+        "query": "Look for research on the atomic mechanisms of action of membrane proteins where the findings are set to be released after July 9, 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1308544099",
+    "queries": [
+      {
+        "query": "Look for research on osteocyte lacunae in type 2 diabetes where the study focuses on patients with microvascular disease and the publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1315705898",
+    "queries": [
+      {
+        "query": "Find studies on hybrid luminescent materials where the research focuses on metal-organic frameworks and the publication year is expected to be 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1360187233",
+    "queries": [
+      {
+        "query": "Look for studies on the structural evolution of monoatomic glassy Ta films where the experiment is scheduled between November 30, 2023, and December 1, 2023, and the publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1428104786",
+    "queries": [
+      {
+        "query": "Look for studies on automated protein-to-structure pipelines that will be accessible through competitive application and peer-review by December 2023.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1438316906",
+    "queries": [
+      {
+        "query": "Look for studies on mammal reproductive life histories where the research involves long bone histology and analyzes fossil specimens from the Late Triassic to Late Cretaceous.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1445110027",
+    "queries": [
+      {
+        "query": "Look for research on the stabilization of natural quick clay using calcined clay where the experiment is conducted at ID16B and results are expected in 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1901554069",
+    "queries": [
+      {
+        "query": "Search for studies on enoyl-CoA carboxylase/reductase where the publication year is greater than 2026 and the research aims to explore CO2-fixation mechanisms.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1915450510",
+    "queries": [
+      {
+        "query": "Look for studies on graphene oxide assembly at the air-liquid interface where the publication year is 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-466122839",
+    "queries": [
+      {
+        "query": "Look for studies on cellulose fibers synthesized with varying lignin amounts where the experiment was conducted at the ID13 instrument and results are expected to be released after June 13, 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-514138740",
+    "queries": [
+      {
+        "query": "Look for studies on the phase diagram of calcium carbonate (CaCO3) where the pressure is greater than 10 GPa and the temperature is 1400 °C.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-750932592",
+    "queries": [
+      {
+        "query": "Look for research on Hierarchical Phase-Contrast Tomography where the resolution is less than 25 microns and the sample is a kidney from the body donor program.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-774880543",
+    "queries": [
+      {
+        "query": "Find research on cryo-electron microscopy where the project involves Krios time and the publication year is 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/165f8a52-c15d-4c96-ad7d-fb0cbe969f66",
+    "queries": [
+      {
+        "query": "Search for datasets related to neutron data where the sample temperature is less than 2 K and the total number of events is greater than 5,000,000.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/MG0010",
+    "queries": [
+      {
+        "query": "Find datasets related to detector test data from the BrightnESS project where the creation time is after July 22, 2016, and the sample chemical formula is V.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/V200159",
+    "queries": [
+      {
+        "query": "Search for datasets related to detector test data from the BrightnESS project where the publication year is 2018 and the dataset size is greater than 9 GB.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-42-427",
+    "queries": [
+      {
+        "query": "Look for research on the loop-current phases in Sr2IrO4 where the environment temperature is less than K and the publication year is 2016.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.8-02-646",
+    "queries": [
+      {
+        "query": "Look for studies on the mechanical properties of lipid membranes where the publication year is 2012 and the environment temperature is relevant to the experiments.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.INTER-323",
+    "queries": [
+      {
+        "query": "Find research on powder samples including NaLnCoWO6 and Cu2ZnSnS4 where the total mass is 2g and the publication year is 2015.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.TEST-2964",
+    "queries": [
+      {
+        "query": "Find research on oppositely charged polyelectrolyte coacervation using the D22 diffractometer where the proposal ID is 80582 and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  }
+]

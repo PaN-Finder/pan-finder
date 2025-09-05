@@ -1,0 +1,137 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-1310465158",
+    "queries": [
+      {
+        "query": "Look for studies where the subject is MD-1370 publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1317814821",
+    "queries": [
+      {
+        "query": "Look for research where the description includes both viral and synthetic protein and the publisher is European Synchrotron and the instrument is ID30A-3.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-145450145",
+    "queries": [
+      {
+        "query": "Datasets where experiment conducted at the ID23-1 instrument and the total elapsed time is 4500 seconds and the publication year is 2021.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1838040359",
+    "queries": [
+      {
+        "query": "Datasets where the total acquisition volume is 273373166749",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1893933337",
+    "queries": [
+      {
+        "query": "Studies where the publication year is 2027 and the title is about Norway bag.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-21481600",
+    "queries": [
+      {
+        "query": "Datasets where the instrument is ID30B and the number of images is greater than 150 and the publication year is 2021 and doi contains 21481600.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-509945417",
+    "queries": [
+      {
+        "query": "Studies where the EM sampling rate is less than 0.54 and the publication year is 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-510968852",
+    "queries": [
+      {
+        "query": "Look for research where the publication year is 2024 and the description is about 'X-ray reflectivity'.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-654230635",
+    "queries": [
+      {
+        "query": "Look for studies where one of the creator was Bendes.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-814171051",
+    "queries": [
+      {
+        "query": "Look for studies where the description includes the term 'X-ray scattering' and the publication year is 2025 and the instrument is ID02.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-31-2608",
+    "queries": [
+      {
+        "query": "Look for studies where the license is 'CC-BY' and it is published in 2018 and the sample formula is GaV4S6Se2.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-11-1906",
+    "queries": [
+      {
+        "query": "Look for studies where the the publication year is 2019 and the sample formula is C30H32N2O5.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.DIR-146",
+    "queries": [
+      {
+        "query": "Look for research where the sample formula is FeSe and the experimental energy is greater than 1.5 and the publication year is 2016.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.TEST-2173",
+    "queries": [
+      {
+        "query": "Find studies where the sample mass is 5000 and the enviroment temperature is K and the publication year is 2012.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.TEST-2228",
+    "queries": [
+      {
+        "query": "Look for studies where sample container is cylinder and instrument is IN4.",
+        "min_position": 0
+      }
+    ]
+  }
+]

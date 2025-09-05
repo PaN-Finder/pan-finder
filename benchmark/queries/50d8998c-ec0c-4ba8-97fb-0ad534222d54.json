@@ -1,0 +1,173 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-1012127021",
+    "queries": [
+      {
+        "query": "Find datasets related to high-resolution cryo-EM of membrane FtsH proteins that will be publicly released after November 24, 2025 and include more than 12,000 files.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-103822339",
+    "queries": [
+      {
+        "query": "Find datasets related to membrane and water soluble proteins collected with the ID30A-3 instrument where the total elapsed time is less than 5063 seconds and the publication year is 2021.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1057010072",
+    "queries": [
+      {
+        "query": "Look for research on Neanderthal dental growth patterns using synchrotron imaging where the publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-128944986",
+    "queries": [
+      {
+        "query": "Look for datasets related to radiation damage where the sample name is water and the data was collected between October 5, 2018, and December 8, 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1332164270",
+    "queries": [
+      {
+        "query": "Find datasets related to the Scanning Marbles project that involve scanning marble rocks for a PhD student, which will be publicly released on September 15, 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1581843961",
+    "queries": [
+      {
+        "query": "Look for research collaborations in the UK Midlands focusing on microbiology, cancer biology, and enzyme catalysis that will be published in 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1661379888",
+    "queries": [
+      {
+        "query": "Look for studies on solid state battery cells filled with Lithium lanthanum zirconium oxide (LLZO) that are compatible with nano-beam applications and scheduled for testing between April 28 and April 29, 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1823585608",
+    "queries": [
+      {
+        "query": "Look for datasets related to battery materials stored in kapton tape for high throughput setups that will be available after July 17, 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-649493071",
+    "queries": [
+      {
+        "query": "search for studies on ferroelectric domain walls where the phase transitions are examined as a function of temperature and the publication year is 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-659386496",
+    "queries": [
+      {
+        "query": "Look for studies on the 3D characterization of internal fatigue cracks in Ti alloys where the number of mechanical cycles is approximately 1e9 and the findings are expected to be released in 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-937818071",
+    "queries": [
+      {
+        "query": "Look for studies on BaNi2As2 where the uniaxial pressure influences charge density wave ordering and the publication year is 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/MB0035",
+    "queries": [
+      {
+        "query": "Find datasets related to detector test data collected as part of BrightnESS where the publication year is 2018 and the size is greater than 420 MB.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.3-17-18",
+    "queries": [
+      {
+        "query": "Look for studies on gamma-ray spectroscopy of 43-44-45Ca isotopes where the publication year is 2018 and the instrument used is FIPPS.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.4-02-534",
+    "queries": [
+      {
+        "query": "Look for studies on the heavy-fermion superconductor CeCu2Si2 where the environment temperature is less than 2 K and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-11-1718",
+    "queries": [
+      {
+        "query": "Find research on reverse osmosis membranes where the publication year is 2015 and the experimental parameters include an energy resolution of less than 6%.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-12-475",
+    "queries": [
+      {
+        "query": "Look for research on microgel-polymer mixtures where the depletion length is defined by the screening length and the publication year is 2016.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-12-510",
+    "queries": [
+      {
+        "query": "Look for studies on TiO2/poly(N-vinylcaprolactam) composite hydrogels where the experiment energy is 8 and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-13-582",
+    "queries": [
+      {
+        "query": "Look for studies on cholesterol movement in lipid bilayers where the sample includes POPC and the publication year is 2016.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.ST-14",
+    "queries": [
+      {
+        "query": "Search for research proposals on sterile neutrinos using the STEREO instrument published in 2019.",
+        "min_position": 0
+      }
+    ]
+  }
+]

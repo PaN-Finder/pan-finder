@@ -1,0 +1,164 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-1310465158",
+    "queries": [
+      {
+        "query": "Look for studies on Molar Incisor Hypomineralization where the prevalence of the condition is greater than 40% and the publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1317814821",
+    "queries": [
+      {
+        "query": "Look for research on proteins related to pathogenesis of diseases where the study includes both viral and synthetic protein targets, starting from October 29, 2023.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1347248794",
+    "queries": [
+      {
+        "query": "Look for research proposals related to crystallography and bioSAXS projects scheduled to start on or after October 7, 2023, and focusing on cell signaling proteins or drug discovery.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1438319778",
+    "queries": [
+      {
+        "query": "Search for studies on the degeneration of calcified concrements in human pineal gland tissue where the research utilizes XRF mapping and XANES spectroscopy, and the publication year is 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-145450145",
+    "queries": [
+      {
+        "query": "Find datasets from the UK Midlands BAG experiment conducted at the ID23-1 instrument where the total elapsed time is 4500 seconds and the publication year is 2021.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1838040359",
+    "queries": [
+      {
+        "query": "Find datasets related to X-ray nano-tomography of mitochondria in H4 type cells where the experiment is scheduled for July 24-25, 2024, and the total acquisition volume is approximately 273 billion.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1850578943",
+    "queries": [
+      {
+        "query": "Look for research on carbon capture involving CO2-sulfide interactions at hydrothermal pressures and temperatures, focusing on experiments with pyrite (FeS2) and expected results in 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1893933337",
+    "queries": [
+      {
+        "query": "Look for studies related to structural biology and material sciences where the proposal is scheduled between November 27-28, 2024, and the publication year is 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-21481600",
+    "queries": [
+      {
+        "query": "Find datasets related to the Integrated Ligand Screening Pipelines project conducted at ESRF using the ID30B instrument, where the number of images is greater than 150 and the publication year is 2021.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-509945417",
+    "queries": [
+      {
+        "query": "Look for studies on cryo-electron microscopy where the EM sampling rate is less than 0.54 and the publication year is 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-510968852",
+    "queries": [
+      {
+        "query": "Look for research on bio-inspired polymers for capturing Cd2+ where the publication year is 2024 and the experiment involves X-ray reflectivity and grazing incidence X-ray fluorescence techniques.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-654230635",
+    "queries": [
+      {
+        "query": "Look for studies on protein crystallography projects in Finland that involve membrane proteins and signaling proteins, with a focus on applications in biocatalysis and disease.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-814171051",
+    "queries": [
+      {
+        "query": "Look for studies on bio-composite scaffolds for osteoradionecrosis treatment that utilize bioactive glass nanoparticles and are scheduled for release in 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-31-2608",
+    "queries": [
+      {
+        "query": "Look for studies on GaV4S8-ySey materials where the samples include GaV4S6Se2 and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-11-1906",
+    "queries": [
+      {
+        "query": "Look for studies on low molecular weight gels where the publication year is 2019 and the sample formula is C30H32N2O5.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.DIR-146",
+    "queries": [
+      {
+        "query": "Look for research on high-pressure experiments using novel anvils where the experimental energy is greater than 1.5 and the publication year is 2016.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.TEST-2173",
+    "queries": [
+      {
+        "query": "Find studies on the structure and dynamics of bovine optical nerves where the sample mass is 5000 g and the experimental parameters include a liquid contained in an aluminum cylinder.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.TEST-2228",
+    "queries": [
+      {
+        "query": "Look for studies on the dynamic behavior of confined hydrogen in montmorillonite clays where the temperature is less than 301 K and the mass of the sample is 0.5 grams.",
+        "min_position": 0
+      }
+    ]
+  }
+]

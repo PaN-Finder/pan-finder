@@ -1,0 +1,173 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-105710016",
+    "queries": [
+      {
+        "query": "Find datasets related to the phagosomal compartments during phagocytosis of C. albicans where the acquisition type is not 'acquisition' and the publication year is 2021.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1199259177",
+    "queries": [
+      {
+        "query": "Look for studies on the biomechanical structures of the frog tympanic membrane where the publication year is 2026 and the analysis includes at least 10 samples from different species.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1307695043",
+    "queries": [
+      {
+        "query": "Look for studies on Hummers graphite oxide swelling in liquid 1-alcohols where the chain length is greater than C9 and the publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1317821226",
+    "queries": [
+      {
+        "query": "Look for research proposals related to structural biology and material sciences where the publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1515614180",
+    "queries": [
+      {
+        "query": "Look for studies on hybrid organic-inorganic phase change materials where the temperature-dependent analysis includes powder XRD and the publication year is 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1550909093",
+    "queries": [
+      {
+        "query": "Look for research on x-ray magnetic circular dichroism in RuO2 thin films where the publication year is 2027 and the experiment is scheduled between April 16 and April 22, 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1567842882",
+    "queries": [
+      {
+        "query": "Look for research projects on protein structure-function relationships in human health and biotechnology that utilize X-ray crystallography and cryo-EM, with a release date set for March 29, 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1891000070",
+    "queries": [
+      {
+        "query": "Find research on protein/DNA complexes and molecular mechanisms from the BAG Barcelona project where the publication year is 2027 and the project runs from September 21, 2024, to September 21, 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-440023009",
+    "queries": [
+      {
+        "query": "Find datasets related to GaAs surfaces acquired using the ID31 instrument, with a file count greater than 26 and a planned release date after May 14, 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-517790676",
+    "queries": [
+      {
+        "query": "Look for research on sodium-ion batteries where the study involves antimony carbon nanocomposites as anodes and was conducted using the ID15A instrument.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-788660082",
+    "queries": [
+      {
+        "query": "Look for research on strain fluctuations in Si/SiGe spin qubits where the temperature is close to 0 K and the study is set for release in 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/MB0031",
+    "queries": [
+      {
+        "query": "Find datasets related to test data for detectors where the publication year is 2018 and the dataset size is greater than 1.5 GB.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/V200036",
+    "queries": [
+      {
+        "query": "Find datasets related to test data for detectors where the creation time is after April 9, 2019, and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.1-02-135",
+    "queries": [
+      {
+        "query": "Look for research on residual stress measurements in austenitic stainless steel where the experiment energy is greater than 1.5 and the publication year is 2013.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.1-02-153",
+    "queries": [
+      {
+        "query": "Look for studies on tube drawing processes using the SALSA instrument where the experimental parameters include an environment temperature of RT and the publication year is 2014.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-31-2223",
+    "queries": [
+      {
+        "query": "Search for studies on Li3Co2-xNixRuO6 oxides where the publication year is 2012 and the magnetic behavior includes ferromagnetic properties with a transition temperature of 100 K.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.7-05-466",
+    "queries": [
+      {
+        "query": "Look for research on Pt-hydride formation in catalysts where the temperature is between 20K and 650K and the publication year is 2016.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-12-340",
+    "queries": [
+      {
+        "query": "Search for studies on the structural determination of PAMAM dendrimer/SDS complexes where the publication year is 2013 and the sample includes poly(amidoamine) dendrimer generation 2.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-13-845",
+    "queries": [
+      {
+        "query": "Look for studies on the co-adsorption of monoclonal antibodies and non-ionic surfactants at the SiO2/water interface where the temperature is 20°C and the publication year is 2019.",
+        "min_position": 0
+      }
+    ]
+  }
+]

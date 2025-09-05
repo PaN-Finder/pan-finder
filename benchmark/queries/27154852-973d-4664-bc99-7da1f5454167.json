@@ -1,0 +1,182 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-1038848224",
+    "queries": [
+      {
+        "query": "Look for studies on luminescent gold(I) compounds where the pressure is greater than 0.6 GPa and the publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1231839951",
+    "queries": [
+      {
+        "query": "Look for datasets related to structural biology research in the Netherlands where the publication year is 2026 and the focus includes protein interactions and engineering for green chemistry.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-133628388",
+    "queries": [
+      {
+        "query": "Find datasets related to the BAG I2BC - Curie experiment conducted using the ID30A-1 instrument where the elapsed time is greater than 39 hours and the publication year is 2021.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1413558779",
+    "queries": [
+      {
+        "query": "Look for datasets related to macromolecular crystallography that involve CO2-fixation pathways and were published in or after 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1453488999",
+    "queries": [
+      {
+        "query": "Look for studies on Li-rich layered oxides where the publication year is 2027 and the focus is on improving cycling stability.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1487186347",
+    "queries": [
+      {
+        "query": "Look for research initiatives related to the Human Organ Atlas Hub that involve HiP-CT technology and are scheduled to start on or after April 4, 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-189558792",
+    "queries": [
+      {
+        "query": "Find datasets related to Covid-19's impact on lung vasculature collected using the BM05 instrument between May 15, 2020, and July 27, 2020, where the volume of data is greater than 79 GB.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-808490995",
+    "queries": [
+      {
+        "query": "Look for studies on the high-pressure and temperature behavior of natural zeolites where the publication year is 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-94638761",
+    "queries": [
+      {
+        "query": "Search for datasets on Pd-catalysis where the experiment type is COLLECT and the publication year is 2021.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-998664986",
+    "queries": [
+      {
+        "query": "Find datasets from the ESRF experiment session that include 3D XRDCT of YSZ/NI fuel cell samples and were conducted in 2022.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.16907/a97b5230-7a16-4fdf-92f6-1ed800e45e37",
+    "queries": [
+      {
+        "query": "Find datasets related to metamorphic fabrics where the dataset size is greater than 958 MB and the creation time is after June 5, 2021.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/MB0012",
+    "queries": [
+      {
+        "query": "Find datasets related to detector test data collected as part of the BrightnESS project where the creation time is after 2017 and the principal investigator is Francesco Piscitelli.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/NMX0011",
+    "queries": [
+      {
+        "query": "Find datasets related to the detector used in the BrightnESS project where the publication year is 2018 and the creation time is after December 16, 2016.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.4-01-1555",
+    "queries": [
+      {
+        "query": "Look for research on magnetic excitations in Ca3(Ru1-xTix)2O7 where the titanium substitution is 0.05 and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.4-02-474",
+    "queries": [
+      {
+        "query": "Search for studies on orbital magnetic excitations in YBa2Cu3O6.95 where the publication year is 2016 and the experiment energy is measured in meV.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-21-1112",
+    "queries": [
+      {
+        "query": "Look for studies on the thermoelectric properties of copper-containing sulfides where the temperature is 300 K and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-25-245",
+    "queries": [
+      {
+        "query": "Look for studies on lithium hydride hydrolysis reactions where the temperature is between 100°C and 500°C and the publication year is 2016.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.8-02-829",
+    "queries": [
+      {
+        "query": "Search for studies on clathrin-mediated endocytosis where the publication year is 2018 and the experimental parameters include non-infectious, non-toxic synthetic lipids.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-10-1413",
+    "queries": [
+      {
+        "query": "Look for studies on gold nanorod/polymer core/shell colloids where the environment temperature is between 20°C and 50°C and the publication year is 2015.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.TEST-2899",
+    "queries": [
+      {
+        "query": "Find research on hydrogen fuel cells characterized by neutron tomography using the D50 T instrument, specifically focusing on samples composed of C, Pt, and PTFE and published in 2018.",
+        "min_position": 0
+      }
+    ]
+  }
+]

@@ -1,0 +1,173 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-1023265936",
+    "queries": [
+      {
+        "query": "Look for studies on the antitumoral effects of organometallic complexes, particularly the succinimido-ferrociphenol compound, in pancreatic cancer where the publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1118655532",
+    "queries": [
+      {
+        "query": "Look for datasets related to the Iberian cryoEM community where the research involves macromolecular complexes and is scheduled for public release on June 2, 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1334151243",
+    "queries": [
+      {
+        "query": "Look for research on sub-stoichiometric fluorite oxides like (U1-yCey)O2-x where the publication year is expected to be 2026 and the temperature is less than 400°C.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1456775976",
+    "queries": [
+      {
+        "query": "Look for studies on uranium oxidation states in single hot particles where the publication year is expected to be 2027 and the experiment is conducted between March 2-4, 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1518056868",
+    "queries": [
+      {
+        "query": "Look for research on strained infinite-layer nickelate membranes where the publication year is 2027 and the study involves Ni L3-edge RIXS.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1593628367",
+    "queries": [
+      {
+        "query": "Look for research on stress-induced martensitic transformation in beta titanium alloys where the publication year is expected to be 2027 and the study focuses on the effect of alloying elements.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1896676601",
+    "queries": [
+      {
+        "query": "Find research on biomedical projects involving membrane proteins and eukaryotic proteins where the experiment session is scheduled for November 14 to 15, 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-895535202",
+    "queries": [
+      {
+        "query": "Look for research on proteins related to pathogenesis of diseases that includes viral proteins and was conducted using the ID30A-1 instrument.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-897012021",
+    "queries": [
+      {
+        "query": "Look for research on bone structural adaptation in deep-sea teleost fishes where the publication year is 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-998664986",
+    "queries": [
+      {
+        "query": "Find datasets related to 3D XRDCT of YSZ/NI fuel cell samples from the experiment session at ESRF conducted between November 8 and November 10, 2022, with results expected to be released on November 10, 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/NMX0030",
+    "queries": [
+      {
+        "query": "Find datasets related to detector test data where the size is greater than 14 GB and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.3-07-366",
+    "queries": [
+      {
+        "query": "Look for studies on solid polarizers for cold neutrons where the experimental energy is less than -19 A and the publication year is 2016.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-41-970",
+    "queries": [
+      {
+        "query": "Look for studies on beta-CaCr2O4 where the temperature is less than 21 K and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.7-03-182",
+    "queries": [
+      {
+        "query": "Look for studies on lithium diffusion in Li0.4WO3 where the publication year is 2019 and the experiment is conducted at the IN6-SHARP spectrometer.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-10-1474",
+    "queries": [
+      {
+        "query": "Look for studies on the effects of branching in polymer-like micelle systems where the experiment energy is greater than 5A and the publication year is 2016.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-11-1910",
+    "queries": [
+      {
+        "query": "Look for research on light-responsive dye-polyelectrolyte complexes where the environment temperature is between 25 and 45 degrees and the publication year is 2019.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.CRG-2762",
+    "queries": [
+      {
+        "query": "Look for studies on static sequential infiltration synthesis into Polystyrene-block-Maltoheptaose where the environment temperature is at room temperature and the publication year is 2021.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.TEST-2413",
+    "queries": [
+      {
+        "query": "Look for research on ZIF-8 and methane conducted at an environment temperature of 0.2°C and using the IN5 cold neutron multichopper spectrometer in 2014.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.UGA-23",
+    "queries": [
+      {
+        "query": "Look for research proposals involving the D50 T tomograph where the sample formula includes Si, O, K, Al, Na and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  }
+]

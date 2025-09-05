@@ -1,0 +1,173 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-1028113854",
+    "queries": [
+      {
+        "query": "Look for studies on bimetallic catalysts in aqueous phase reforming of ethylene glycol where the publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1035417592",
+    "queries": [
+      {
+        "query": "Look for research on short antimicrobial peptides where the publication year is 2026 and the focus is on their interactions with model bacterial membranes.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1128022289",
+    "queries": [
+      {
+        "query": "Look for studies evaluating the impact of X-ray dose on fixed samples for electron microscopy where the publication year is set for 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1345034866",
+    "queries": [
+      {
+        "query": "Find studies on geobarometers and oxybarometers for volatile-bearing peridotites at Earth's upper mantle conditions, particularly focusing on research published in 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1361434639",
+    "queries": [
+      {
+        "query": "Look for studies on high-Ni NMC cathodes where the research focuses on high voltage instability and is set to start in December 2023.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-143094721",
+    "queries": [
+      {
+        "query": "Find datasets related to macromolecular crystallography conducted on the ID30A-1 instrument where the number of images is 51 and the publication year is 2021.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1487186347",
+    "queries": [
+      {
+        "query": "Search for studies related to the Human Organ Atlas Hub (HOAHub) that will begin on April 4, 2024, and conclude on April 8, 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1527144598",
+    "queries": [
+      {
+        "query": "Find studies on the charge-density waves in Eu(Ga,Al)4 compounds where the experiment is scheduled between April 1 and April 8, 2024, and the publication year is expected to be 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1808039187",
+    "queries": [
+      {
+        "query": "Find datasets related to structural biology projects at EMBL Grenoble where the focus includes cell signaling proteins and the project runs until 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1830139461",
+    "queries": [
+      {
+        "query": "Search for studies on the vibrational density of states of Ta2O5 where the temperature dependence is significant below 300 GHz and the expected publication year is 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1838724332",
+    "queries": [
+      {
+        "query": "Find studies on (Fe2+, Fe3+)-bearing Al-Phase D where the pressure is less than 80 GPa and the temperature is less than 1200 K.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1942239067",
+    "queries": [
+      {
+        "query": "Find datasets related to PDF studies of starch where the analysis is scheduled to occur between October 7, 2024, and October 9, 2024, and the results will be released on October 9, 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1959724122",
+    "queries": [
+      {
+        "query": "Search for proposals related to automated protein-to-structure analysis and fragment screening at ESRF's MASSIF-1 beamline, focusing on services available in 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-94201225",
+    "queries": [
+      {
+        "query": "Find datasets related to the 3D X-Ray investigation of neuronal and capillary networks in Alzheimer's disease where the study was conducted using the ID16A instrument between April 6 and April 10, 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/V200040",
+    "queries": [
+      {
+        "query": "Find datasets related to detector test data from the BrightnESS project where the publication year is 2018 and the data size is greater than 3 MB.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.1-02-199",
+    "queries": [
+      {
+        "query": "Find research on neutronographic residual stress analysis in multiphase materials where the sample is steel and the publication year is 2016.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.4-05-644",
+    "queries": [
+      {
+        "query": "Search for studies on magnetic excitations in Mg-herbertsmithite where the temperature is less than 100 K and the experiment energy is greater than 13 meV.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-22-720",
+    "queries": [
+      {
+        "query": "Look for research on double perovskites for solid oxide fuel cells where the unit cell A is 5.55 Å and the publication year is 2013.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.7-01-440",
+    "queries": [
+      {
+        "query": "Look for studies on Yb:CaF2 transparent ceramics where the experimental energy is 4.1A for IN6 or 2.4A for IN4 and the publication year is 2016.",
+        "min_position": 0
+      }
+    ]
+  }
+]

@@ -1,0 +1,173 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-1059317768",
+    "queries": [
+      {
+        "query": "Look for research on time-resolved serial crystallography at the ID29 beamline where the sample name is lysozyme_PC and the publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1117964871",
+    "queries": [
+      {
+        "query": "Find studies on structural aspects of cellular processes such as RNA processing and protein folding conducted by the Munich Crystallography BAG, with a publication year of 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1221772561",
+    "queries": [
+      {
+        "query": "Look for studies on CO2 direct air capture using CHA-type zeolites where the project spans from July 13 to July 17, 2023, and the publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1417798914",
+    "queries": [
+      {
+        "query": "Look for research on the MCIA complex related to mitochondrial respiration where the findings are scheduled for release on or after November 30, 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1492024740",
+    "queries": [
+      {
+        "query": "Look for research on e-Fe2O3 and Cr-doped e-Fe2O3 where the experiment is scheduled between February 9 and February 10, 2024, and the publication year is 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-708311580",
+    "queries": [
+      {
+        "query": "Look for research on the formation of the SARS-CoV-2 methylation complex involving nsp14, nsp10, and nsp16, expected to be published in 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-748030808",
+    "queries": [
+      {
+        "query": "Look for studies on the microstructural evolution of Fe-Co soft magnetic alloys where the publication year is 2025 and the investigation involves in situ synchrotron X-ray diffraction.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-780223200",
+    "queries": [
+      {
+        "query": "Look for research on Silicon-graphite anodes for lithium-ion batteries that addresses the optimization of Si/graphite ratio and the publication year is set for 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-925349725",
+    "queries": [
+      {
+        "query": "Look for studies related to the Israeli BAG that focus on drug design and molecular recognition, with a publication year of 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-99268493",
+    "queries": [
+      {
+        "query": "Find datasets from the NORWAY BAG experiment conducted at the ID23-1 instrument where the resolution is less than 5 and the number of images is 2.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.16907/febfd200-8b72-48ba-8704-01e842314697",
+    "queries": [
+      {
+        "query": "Find datasets related to chromatin images and gene regulation that are derived and have a size greater than 853 GB, published in 2023.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/NMX0123",
+    "queries": [
+      {
+        "query": "Find datasets related to detectors where the size is greater than 1.8 GB and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.4-03-1706",
+    "queries": [
+      {
+        "query": "Look for research on the field-dependence of magnetic excitations in SrHo2O4 where the experimental temperature is in the millikelvin range and the publication year is 2015.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-22-766",
+    "queries": [
+      {
+        "query": "Look for research on proton localization in Sr2ScGaO5(H2O)0.5 where the publication year is 2019 and the study involves the D2B high-resolution 2-axis diffractometer.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-31-2202",
+    "queries": [
+      {
+        "query": "Look for studies on the structural and magnetic phase diagram of La2O(3-x)F(x)Fe2Se2 where the transition temperature TN is 90 K and the publication year is 2012.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-31-2635",
+    "queries": [
+      {
+        "query": "Look for research on KAgF3 where the temperature is between 2 K and 300 K and the publication year is 2019.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-42-438",
+    "queries": [
+      {
+        "query": "Look for studies on the Néel-type skyrmion lattice in GaV4Se8 where the temperature is down to 0 K and the publication year is 2017.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.6-06-482",
+    "queries": [
+      {
+        "query": "Search for studies on the ordering of oxygen and nitrogen in perovskite-type oxynitrides where the publication year is 2019 and the sample formula includes La0.75Y0.25TaON2.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-13-760",
+    "queries": [
+      {
+        "query": "Look for studies on the incorporation of Archaerhodopsin-3 into phospholipid bilayers conducted using the D17 reflectometer in 2018.",
+        "min_position": 0
+      }
+    ]
+  }
+]

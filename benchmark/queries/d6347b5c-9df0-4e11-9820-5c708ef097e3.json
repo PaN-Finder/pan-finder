@@ -1,0 +1,164 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-1008738620",
+    "queries": [
+      {
+        "query": "Look for studies on molecular machines involved in energy transduction and cellular signaling where the publication year is 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1012127021",
+    "queries": [
+      {
+        "query": "Search for datasets related to high-resolution cryo-EM of membrane FtsH proteins conducted in 2022, with a total acquisition volume greater than 4 trillion bytes.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-108718973",
+    "queries": [
+      {
+        "query": "Find datasets related to the three-dimensional structure of mineral pathways in frozen-hydrated Japanese cedar tree trunks analyzed using cryo-micro-XRF where the data collection occurred between July 6 and July 11, 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1112069360",
+    "queries": [
+      {
+        "query": "Look for studies on the operando HERFD-XAS of La(Mn,Ni)O3 where the thickness of thin films is less than 11 nm and the size of nanoparticles is between 30 and 50 nm.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1303535376",
+    "queries": [
+      {
+        "query": "Find research on signal transduction and DNA repair where the publication year is greater than 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1336747412",
+    "queries": [
+      {
+        "query": "Look for studies on protein structure-function relationships in human health where the release date is set for September 23, 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1353958809",
+    "queries": [
+      {
+        "query": "Find datasets related to iron homeostasis in Medicago truncatula nodules that were collected using the ID21 instrument and include 26 acquisitions.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1584971022",
+    "queries": [
+      {
+        "query": "Look for studies on colloidal suspensions where the project starts on April 1, 2024, and results are expected to be released by April 2, 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-162248067",
+    "queries": [
+      {
+        "query": "Look for studies on biological metals and synaptic proteins in frozen hydrated hippocampal neurons where the instrument used is ID16A and the publication year is 2020.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1976133122",
+    "queries": [
+      {
+        "query": "Look for studies on chromium-coated zirconium claddings for nuclear applications scheduled between November 19 and November 25, 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-748605515",
+    "queries": [
+      {
+        "query": "Search for studies on stress analysis of chromium coatings on Zr-alloy substrates where the publication year is 2025 and the beam energy is between 5 keV and 22 keV.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-752395429",
+    "queries": [
+      {
+        "query": "Look for studies on the UTe2 superconductor where the investigation involves high pressure and the publication year is 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-845372512",
+    "queries": [
+      {
+        "query": "Find datasets related to coherent diffraction imaging of nanostructures where the experiment was conducted at ID01 and the sample name is L11_140cycles.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-21-1121",
+    "queries": [
+      {
+        "query": "Look for studies on the crystallographic structure of honeycomb-ordered layered phases involving Li3Ni2SbO6 and Na3Ni2SbO6 where the publication year is 2019.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-25-261",
+    "queries": [
+      {
+        "query": "Look for studies on all-solid state Li-ion batteries where the temperature is less than 70°C and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-42-418",
+    "queries": [
+      {
+        "query": "Look for studies on Terbium Gallium Garnet (Tb3Ga5O12) where the temperature is less than 8.6 K and the publication year is 2016.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-10-1450",
+    "queries": [
+      {
+        "query": "Find studies on the self-aggregation of the novel surfactant C16G8 where the environment temperature is not specified and the publication year is 2015.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-11-1782",
+    "queries": [
+      {
+        "query": "Look for studies on polymer adsorption effects in polymer/polymer systems using the D17 reflectometer, focusing on environments where the experimental energy is between 2 and 20 and the publication year is 2016.",
+        "min_position": 0
+      }
+    ]
+  }
+]

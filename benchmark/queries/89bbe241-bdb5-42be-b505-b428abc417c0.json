@@ -1,0 +1,164 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-1092782502",
+    "queries": [
+      {
+        "query": "Look for research on CH4-N2 mixtures where the pressure is greater than 5 GPa and the publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1120626143",
+    "queries": [
+      {
+        "query": "Look for studies on the low temperature structure of CaCoSi2O6 pyroxene where the magnetic transition occurs at 40 K and the publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1307410659",
+    "queries": [
+      {
+        "query": "Look for studies on advanced x-ray spectroscopy techniques applied to basaltic silicate glasses where the publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1334151285",
+    "queries": [
+      {
+        "query": "Look for studies on the valence state speciation of transition elements in vitreous materials where the research includes copper (Cu) and cobalt (Co) and is related to artefacts from Paduli, Italy.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1430996853",
+    "queries": [
+      {
+        "query": "Look for research on structural biology and enzymology in the Netherlands where the study is scheduled for January 25-26, 2024 and the publication year is 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1442315662",
+    "queries": [
+      {
+        "query": "Search for studies on the local structure and oxidation state of surface iron-sites in tremolite asbestos scheduled from February 20 to February 24, 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1838055923",
+    "queries": [
+      {
+        "query": "Look for studies on Auger spectra of FeS2 scheduled for measurement using H2S gas and expected to be published in 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1896671507",
+    "queries": [
+      {
+        "query": "Look for studies on macromolecules related to human health where the data release is scheduled for November 16, 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-643877202",
+    "queries": [
+      {
+        "query": "Look for studies on structural biology focusing on soluble and membrane proteins with potential drug targets, published in 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-646362151",
+    "queries": [
+      {
+        "query": "Look for research on transformation-induced plasticity (TRIP) materials where the study focuses on the deformation behavior of austenite grains in bulk steel and the publication year is 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-787695481",
+    "queries": [
+      {
+        "query": "Look for studies on graphene growth using liquid Cu-Sn alloys where the melting point is less than 506 K and the publication year is set for 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-819999907",
+    "queries": [
+      {
+        "query": "Look for studies on the coordination of PtAg nanoclusters in ZIF-8 using in situ HERFD-XANES where the publication year is 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/V200155",
+    "queries": [
+      {
+        "query": "Find datasets related to detectors where the size is greater than 456286050 bytes and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-21-1108",
+    "queries": [
+      {
+        "query": "Find studies on fluorescent sodalites where the publication year is 2018 and the proposal ID is 77731.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-31-2671",
+    "queries": [
+      {
+        "query": "Search for studies on Ag2RuO4 where the experimental temperature is between 6 K and 300 K and the publication year is 2019.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-12-346",
+    "queries": [
+      {
+        "query": "Find studies on the dynamics of CTAB in Hydroxyapatite where the publication year is 2014 and the experimental parameters include temperature in Kelvin.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-13-377",
+    "queries": [
+      {
+        "query": "Find research on the biocompatibility of thermoresponsive polymers where the publication year is 2012 and the sample consists of thin films of polymer oligo (ethylene glycol) methacrylates.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-13-524",
+    "queries": [
+      {
+        "query": "Look for studies on the interaction of Room-Temperature Ionic Liquids with DMPC phospholipid membranes where the environment temperature is between 180 and 320 K and the publication year is 2014.",
+        "min_position": 0
+      }
+    ]
+  }
+]

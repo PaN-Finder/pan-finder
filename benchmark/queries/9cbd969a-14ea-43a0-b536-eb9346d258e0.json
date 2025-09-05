@@ -1,0 +1,182 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-1022934371",
+    "queries": [
+      {
+        "query": "Look for research on in situ 3D printing of high-performance engineering alloys where the publication year is set for 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1119937087",
+    "queries": [
+      {
+        "query": "Look for collaborative projects in structural biology involving macromolecular crystallography that are scheduled to start on June 13, 2023, and end on June 14, 2023.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1310196841",
+    "queries": [
+      {
+        "query": "Look for studies on the valences of Ti, V, Cr, and Fe in chromites from primitive achondrite meteorites where the publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1317772730",
+    "queries": [
+      {
+        "query": "Find research on structure-function relationships of proteins related to human health where the experiment is scheduled for November 23 to 24, 2023 and the data release is planned for November 24, 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1335716605",
+    "queries": [
+      {
+        "query": "Look for studies on the structural analysis of protein machineries using cryo-EM where the publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1398661508",
+    "queries": [
+      {
+        "query": "Look for datasets related to the complexation of zinc with SARS-CoV2 Orf8 where the experiment is scheduled between December 8 and December 13, 2023, and the study will be publicly released in 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1409737032",
+    "queries": [
+      {
+        "query": "Look for datasets related to cryo-electron microscopy where the project is scheduled between February 21 and 23, 2024, and the publication year is 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1413501225",
+    "queries": [
+      {
+        "query": "Look for studies on protein structures and mechanisms in biomedicine where the project is scheduled to start on November 29, 2023, and the publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1427432670",
+    "queries": [
+      {
+        "query": "Find datasets related to the XNH of user experiments at the European Synchrotron Radiation Facility scheduled from December 5 to December 7, 2023, focusing on life science research.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1833164567",
+    "queries": [
+      {
+        "query": "Look for research on lithium plating in anode-free lithium batteries where the study compares pristine and aged samples with various electrolyte formulations and the results are expected to be released by 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-514138492",
+    "queries": [
+      {
+        "query": "Find datasets related to the experiment on neural circuits conducted using the ID16A instrument with a sample named Minatec, where the dataset includes at least 118 datasets and the publication year is 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-657375986",
+    "queries": [
+      {
+        "query": "Find studies on shock wave propagation in porous rocks where the presence of water is considered and the publication year is 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-741742785",
+    "queries": [
+      {
+        "query": "Look for datasets related to RIXS experiments on Ce Kondo lattices conducted between March 4 and March 7, 2022, and expect findings to be publicly available after 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-804825143",
+    "queries": [
+      {
+        "query": "Look for studies on hard X-ray scanning SAXS imaging of hydrated biological cells where the resolution is less than that of freeze-dried samples and the publication year is expected to be 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.7-01-459",
+    "queries": [
+      {
+        "query": "Look for studies on the phonon density of states in LSCO+O where the transition temperature is approximately 40 K and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.7-05-461",
+    "queries": [
+      {
+        "query": "Search for studies on the grafting of fluorescent molecules on double-walled carbon nanotubes where the publication year is 2016 and the experimental parameters involve inelastic neutron scattering spectroscopy.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.8-01-534",
+    "queries": [
+      {
+        "query": "Look for studies on perdeuterated hen egg-white lysozyme where the environment temperature is 298 K and the publication year is 2019.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-13-502",
+    "queries": [
+      {
+        "query": "Look for studies on microdomain formation in lipid mixtures where the temperature is between 5 and 35 degrees Celsius and the publication year is 2013.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.INTER-456",
+    "queries": [
+      {
+        "query": "Look for research on proton dynamics in KH2PO4 and (CH)2(Cl)2S where the environment temperature is 10 K and the publication year is 2019.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.TEST-2705",
+    "queries": [
+      {
+        "query": "Look for studies on spherical neutron polarimetry of Cs2[FeCl5(D2O)] where the temperature is less than 11 K and the publication year is 2016.",
+        "min_position": 0
+      }
+    ]
+  }
+]

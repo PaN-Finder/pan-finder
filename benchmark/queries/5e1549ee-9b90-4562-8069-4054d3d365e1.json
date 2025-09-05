@@ -1,0 +1,164 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-1059381330",
+    "queries": [
+      {
+        "query": "Look for studies on structure-function relationships of proteins in human health and biotechnology that are linked to projects continuing from the MX-2398 proposal and are scheduled for release in 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1117954013",
+    "queries": [
+      {
+        "query": "Look for research on proteins related to pathogenesis of diseases where the project involves both human and viral protein targets and is scheduled for data release after June 12, 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1117959526",
+    "queries": [
+      {
+        "query": "Look for research on nucleic acid-protein complexes in structural biology that utilizes the ID23-2 instrument and is scheduled for release in 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1299138549",
+    "queries": [
+      {
+        "query": "Find research on macromolecular crystallography where the publication year is greater than 2025 and the project includes studies on chromosome organization.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1470486058",
+    "queries": [
+      {
+        "query": "Find studies on Cu-Nb multilayers that involve complementary measurements and are scheduled for release on or after January 24, 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1931738030",
+    "queries": [
+      {
+        "query": "Look for studies on Amelogenesis Imperfecta where the focus is on hypoplastic subtype and the publication year is set for 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1940863499",
+    "queries": [
+      {
+        "query": "Look for studies on forbidden reflections in germanium where the experiment is scheduled between December 4 and 5, 2024, and the publication year is 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1958325677",
+    "queries": [
+      {
+        "query": "Look for studies on cryogenic X-ray holographic nanotomography of biological tissues scheduled between November 1 and November 6, 2024, and involving the ID16A instrument.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-21481600",
+    "queries": [
+      {
+        "query": "Look for datasets from the Integrated Ligand Screening Pipelines project conducted at ESRF where the number of datasets is greater than 7,000 and the instrument used is ID30B.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-406587724",
+    "queries": [
+      {
+        "query": "Find studies on the 3D structure of the human dentate gyrus where the sample pixel size is less than 0.1 and the publication year is 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-540930208",
+    "queries": [
+      {
+        "query": "Find studies on cryo-electron microscopy where the EM sampling rate is greater than 0.4 and the magnification is 105000.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-892044999",
+    "queries": [
+      {
+        "query": "Look for studies on high-pressure nitridation reactions in diamond anvil cells where the publication year is set for 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-902984450",
+    "queries": [
+      {
+        "query": "Search for studies on Fe(II) spin-crossover complexes where the pressure is less than 2.3 GPa and the publication year is 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-925345008",
+    "queries": [
+      {
+        "query": "Find research on single particle cryo-electron microscopy in Italy where the publication year is 2025 and the application aims to enhance access to the CM01 beamline.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.16907/b638b0f7-b8ab-4b10-8950-fa7a61e8e2b8",
+    "queries": [
+      {
+        "query": "Find datasets on wicking in polyethylene terephthalate (PET) yarns where the voxel size is 2.75 um and the beam energy is 20.0 keV.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/V200103",
+    "queries": [
+      {
+        "query": "Find datasets related to detector test data from the BrightnESS project where the dataset size is greater than 121568708 bytes and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.1-02-138",
+    "queries": [
+      {
+        "query": "Look for studies on the effects of Friction Stir Welding process parameters on residual stress development in Ti-6Al-4V welds where the experiment energy is greater than 1.5 and the publication year is 2013.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.TEST-2695",
+    "queries": [
+      {
+        "query": "Find information on aerospace components associated with the SALSA instrument where the sample formula is Al Ti-4Al 6V and the publication year is 2016.",
+        "min_position": 0
+      }
+    ]
+  }
+]

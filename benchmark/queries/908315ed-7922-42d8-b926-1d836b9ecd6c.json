@@ -1,0 +1,173 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-1058387999",
+    "queries": [
+      {
+        "query": "Find research on structural biology from India where the publication year is greater than 2025 and the techniques used include MX or SAXS.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1084898347",
+    "queries": [
+      {
+        "query": "Find studies on mixed Thorium/Uranium oxide thin films where the research was conducted in March 2023 and the planned release date is in 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1426506433",
+    "queries": [
+      {
+        "query": "Search for studies on the Mn-H system where the pressure is up to 150 GPa and the expected results will be released on January 22, 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1560221111",
+    "queries": [
+      {
+        "query": "Look for research on the kinetics of electrooxidation of platinum where the study focuses on Pt(111) and Pt(100) and the publication year is greater than 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1674278888",
+    "queries": [
+      {
+        "query": "Search for research on coseismic fault slip where the project is funded by the European Research Council and the publication year is 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1690172534",
+    "queries": [
+      {
+        "query": "Look for studies on platinum-rare earth nanoalloys where the publication year is 2027 and the focus is on their stability during fuel cell operation.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-580823920",
+    "queries": [
+      {
+        "query": "Look for datasets related to oil-in-water microswimmers where the measurement technique is SAXS and the publication year is 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-741742785",
+    "queries": [
+      {
+        "query": "Look for datasets related to RIXS on Ce Kondo lattices where the findings will be publicly available after March 7, 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-745269441",
+    "queries": [
+      {
+        "query": "Find research on structural biology focusing on macromolecular crystallography conducted at Umeå University, with a release date set for March 11, 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-925343475",
+    "queries": [
+      {
+        "query": "Find research on large assemblies involved in chromosome organization and transcription control where the publication year is 2025 and there are at least 17 publications reported.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/NMX0032",
+    "queries": [
+      {
+        "query": "Find datasets related to detector test data from the BrightnESS project where the dataset size is greater than 141 GB and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/SONDE0008",
+    "queries": [
+      {
+        "query": "Find datasets related to detector test data collected in 2018 under the BrightnESS project where the dataset size is less than 30 MB and the creation location is SoNDe.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.4-01-1607",
+    "queries": [
+      {
+        "query": "Look for studies on MnPS3 where the experimental energy is measured in meV and the publication year is 2019.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.4-05-696",
+    "queries": [
+      {
+        "query": "Look for studies on the quasi-one-dimensional Spin-1/2 antiferromagnet SrCo2V2O8 where the experimental energy is between 0 and 5 meV and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.4-06-7",
+    "queries": [
+      {
+        "query": "Search for studies on antiferromagnetic exchange interactions in dinuclear transition metal complexes where the publication year is 2018 and the experimental parameters include metallophilic Pt-Pt contacts.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-25-244",
+    "queries": [
+      {
+        "query": "Look for studies on the crystallization of para-aminobenzoic acid where the publication year is 2015 and the sample includes ethanol-d6.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-32-875",
+    "queries": [
+      {
+        "query": "Find studies on Mn-based rare-earth-free permanent magnets where the experiment energy is greater than 5A and the environment temperature is room temperature.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-12-340",
+    "queries": [
+      {
+        "query": "Search for studies on the structural determination of PAMAM dendrimer/SDS complexes where the publication year is 2013 and the sample includes poly(amidoamine) dendrimer generation 2.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.TEST-2985",
+    "queries": [
+      {
+        "query": "Look for research related to magnetic field mapping conducted with the PANEDM instrument in 2018.",
+        "min_position": 0
+      }
+    ]
+  }
+]

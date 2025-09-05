@@ -1,6 +1,16 @@
 {
     "version": "0.2.0",
-    "configurations": [        
+    "configurations": [
+        
+        {
+            "name": "Run Benchmark",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/benchmark/src/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "envFile": "${workspaceFolder}/benchmark/.env"
+        },
         {
             "name": "Debug FastAPI Server (Docker)",
             "type": "debugpy",

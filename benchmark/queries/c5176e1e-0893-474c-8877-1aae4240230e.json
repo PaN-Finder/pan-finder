@@ -1,0 +1,182 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-1299126859",
+    "queries": [
+      {
+        "query": "Look for studies on cryo-electron microscopy where the project involves high-resolution data collection and spans from September 13 to September 15, 2023.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1299724228",
+    "queries": [
+      {
+        "query": "Search for resources related to the Austrian Crystallographic Diffraction Consortium where the publication year is greater than 2025 and the focus includes macromolecular biological complexes.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1578694981",
+    "queries": [
+      {
+        "query": "Find studies on La3Ni2O7 high-Tc superconductors where the maximum critical temperature is 80 K and the publication year is set for 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1830824112",
+    "queries": [
+      {
+        "query": "Search for studies on the high entropy oxide Mg0.2Co0.2Ni0.2Cu0.2Zn0.2O where the reaction is investigated at 1000°C and the publication year is 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1875340786",
+    "queries": [
+      {
+        "query": "Find datasets related to VLCAD Mutant where the total volume of data is approximately 254.6 billion units and the project starts on August 30, 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-541045915",
+    "queries": [
+      {
+        "query": "Search for studies on protein structure-function relationships where the publication year is 2024 and the research involves host-pathogen interactions or immunology.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-584032470",
+    "queries": [
+      {
+        "query": "Look for studies on vanadium lubricant additives where the publication year is 2024 and the analysis was conducted using the BM23 instrument.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-744174084",
+    "queries": [
+      {
+        "query": "Look for studies on LiBH4:3LiNH2 where hydrogen mobility is greater than typical values below the melting point and the publication year is 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-885248894",
+    "queries": [
+      {
+        "query": "Search for studies on Co-CeO2 catalysts where the publication year is 2025 and the application involves direct hydrogenation of CO2 to C2+ hydrocarbons.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-898840644",
+    "queries": [
+      {
+        "query": "Look for studies on Prussian Blue Analogues where the publication year is greater than 2024 and the focus is on spin state transitions.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-92150081",
+    "queries": [
+      {
+        "query": "Look for studies on the structure of microcrystals in the Mn/Bi/Te system where the experiment was conducted using the ID11 instrument and the publication year is 2021.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-925349194",
+    "queries": [
+      {
+        "query": "Search for research on structural aspects of cellular processes where the publication year is 2025 and the techniques used include X-ray crystallography or cryo-EM.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-968511974",
+    "queries": [
+      {
+        "query": "Look for research on the crystallization of amorphous calcium carbonate where the pH is between 8 and 12.6 and the publication year is 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/V200125",
+    "queries": [
+      {
+        "query": "Find datasets related to detector test data from the BrightnESS project where the size is greater than 70 MB and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-31-2479",
+    "queries": [
+      {
+        "query": "Search for studies on mixed-valence metal formate frameworks where the ferrimagnetic order temperature is less than 43 K and the publication year is 2016.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-42-476",
+    "queries": [
+      {
+        "query": "Look for studies on magnetic polarons in Ca-doped EuB6 where the temperature is 40 K and the experiment energy is 4.5 AA.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.7-02-170",
+    "queries": [
+      {
+        "query": "Look for studies on thermosalient crystals where the publication year is 2017 and the experimental parameters include temperature in K.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-10-1407",
+    "queries": [
+      {
+        "query": "Look for studies on the passivation of ZnO nanoparticle surfaces where the environment temperature is less than 60°C and the publication year is 2015.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-11-1754",
+    "queries": [
+      {
+        "query": "Search for studies on the kinetics of structural changes in thermoresponsive polymers where the environment temperature is between 15-50°C and the publication year is 2015.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.DIR-105",
+    "queries": [
+      {
+        "query": "Find research on carbon structures using diffusion data where the experiment energy is 5.1A and the sample mass is 3500.",
+        "min_position": 0
+      }
+    ]
+  }
+]

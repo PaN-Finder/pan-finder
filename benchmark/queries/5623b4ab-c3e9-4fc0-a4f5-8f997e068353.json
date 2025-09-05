@@ -1,0 +1,155 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-1094854472",
+    "queries": [
+      {
+        "query": "Look for datasets related to the HERCULES practicals conducted at the European Synchrotron Radiation Facility with 7 acquisitions and a total of 4,471 files, scheduled for public release in 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1106937182",
+    "queries": [
+      {
+        "query": "Look for studies on the interaction of iron with calcium silicate perovskite where the pressure is greater than 29 GPa and the temperature is less than 2501 K.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1186980530",
+    "queries": [
+      {
+        "query": "Look for research on methane-to-hydrogen conversion technologies published in 2026 that involve non-stoichiometric oxides as oxygen-carrier materials.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-118923391",
+    "queries": [
+      {
+        "query": "Find datasets related to the London Cancer BAG project collected using the ID23-2 instrument between September 8, 2018, and December 6, 2018, with a resolution of less than 3.5.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1221035669",
+    "queries": [
+      {
+        "query": "Look for studies on age-related structural changes in the human femoral neck cortex where the publication year is expected to be 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1430229755",
+    "queries": [
+      {
+        "query": "Look for paper where the investigation focuses on the nematic phase transition of FeSe and the results are expected to be released in 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1530268774",
+    "queries": [
+      {
+        "query": "Search for research on the structural properties of polymer blends in organic solar cells where the study focuses on uniaxial tensile stretching and results are expected to be released in 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1597947920",
+    "queries": [
+      {
+        "query": "Look for studies on black-to-brown glazed ceramics from the Song Dynasty where the results are expected to be released after May 10, 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1897081316",
+    "queries": [
+      {
+        "query": "Look for research on the structural biology of light-responsive proteins where the study includes both wild-type and mutant variants of rhodopsins and is set to start between November 21, 2024, and November 22, 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-436275343",
+    "queries": [
+      {
+        "query": "Look for studies on longitudinal fibre strain in fibre-reinforced polymer composites where the publication year is 2024 and the instrument used is ID11.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-755258595",
+    "queries": [
+      {
+        "query": "Search for studies related to Li-ion batteries where the research focuses on bulk-to-surface mechanisms, high energy systems, or smart sensing, and the publication year is set for 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-874769954",
+    "queries": [
+      {
+        "query": "Look for research on structural biochemistry focusing on carbohydrate-active enzymes where the release date is after October 8, 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-974852992",
+    "queries": [
+      {
+        "query": "Look for research on interaction-free measurements using x-rays where the publication year is 2025 and the experiment is designed to reduce radiation doses for biological samples.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-31-2254",
+    "queries": [
+      {
+        "query": "Look for studies on the magnetic structure of Hf1-xTaxFe2 where the pressure is less than 16 kbar and the temperature is between 2 to 300 K.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.6-05-995",
+    "queries": [
+      {
+        "query": "Look for research on Mg-based metallic glasses where the hydrogen storage capacity is between 4 to 5 wt% and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-13-540",
+    "queries": [
+      {
+        "query": "Look for studies on LEA proteins and their role in abiotic stress where the publication year is 2014 and the experimental parameters include samples from genetically modified E. coli.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.TEST-3052",
+    "queries": [
+      {
+        "query": "Find studies related to additional measurements on the D2B high-resolution 2-axis diffractometer for samples including La3TiSb5 and Pr3TiSb5 conducted in 2019.",
+        "min_position": 0
+      }
+    ]
+  }
+]

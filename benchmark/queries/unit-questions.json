@@ -1,0 +1,263 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-27341687",
+    "queries": [
+      {
+        "query": "Looking for datasets where the current of the instrument's source equals 152.72 mA.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-27341687",
+    "queries": [
+      {
+        "query": "Looking for datasets where the current of the instrument's source is exactly 152.72 milliamps.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-27341687",
+    "queries": [
+      {
+        "query": "Looking for datasets where the current of the instrument's source is 0.15272 A.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-27341687",
+    "queries": [
+      {
+        "query": "Looking for datasets where the current of the instrument's source is about 0.1527 A.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-27341687",
+    "queries": [
+      {
+        "query": "Looking for datasets where the current of the instrument's source is 152,720 µA.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-27341687",
+    "queries": [
+      {
+        "query": "Looking for datasets where the current of the instrument's source is 152720 microamps.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-27341687",
+    "queries": [
+      {
+        "query": "Looking for datasets where the current of the instrument's source ≈ 152.72 mA.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-27341687",
+    "queries": [
+      {
+        "query": "Looking for datasets where the current of the instrument's source is between 152.7 mA and 152.8 mA.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-27341687",
+    "queries": [
+      {
+        "query": "Looking for datasets where the current of the instrument's source is greater than 152 mA and less than 153 mA.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-27341687",
+    "queries": [
+      {
+        "query": "Looking for datasets where the current of the instrument's source is 152.72 mA on the storage ring.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-27341687",
+    "queries": [
+      {
+        "query": "Looking for datasets where the current of the instrument's source is 0.15272 amperes.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-27341687",
+    "queries": [
+      {
+        "query": "Looking for datasets where the current of the instrument's source equals 1.5272e-1 A.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-27341687",
+    "queries": [
+      {
+        "query": "Looking for datasets where the current of the instrument's source value recorded is 152.72 mA.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-27341687",
+    "queries": [
+      {
+        "query": "Looking for datasets where the current of the instrument's source is roughly 152.7 mA (±0.1 mA).",
+        "min_position": 20
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-27341687",
+    "queries": [
+      {
+        "query": "Looking for datasets where the current of the instrument's source matches 152.72 mA exactly.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-27341687",
+    "queries": [
+      {
+        "query": "Looking for datasets where the current of the instrument's source is 152.72 mA at acquisition time.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-27341687",
+    "queries": [
+      {
+        "query": "Looking for datasets where the current of the instrument's source is 152720 uA.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-27341687",
+    "queries": [
+      {
+        "query": "Looking for datasets where the current of the instrument's source equals 152,720 microampere.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-133044090",
+    "queries": [
+      {
+        "query": "Looking for datasets where the sample to detector distance equals 7.3127 cm.",
+        "min_position": 20
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-133044090",
+    "queries": [
+      {
+        "query": "Looking for datasets where the sample detector distance is 7.3127 cm.",
+        "min_position": 20
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-133044090",
+    "queries": [
+      {
+        "query": "Looking for datasets where the sample detector distance is 0.073127 m.",
+        "min_position": 20
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-133044090",
+    "queries": [
+      {
+        "query": "Looking for datasets where the sample detector distance is 73,127 µm.",
+        "min_position": 20
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-133044090",
+    "queries": [
+      {
+        "query": "Looking for datasets where the sample detector distance is between 7.31 cm and 7.32 cm.",
+        "min_position": 20
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-133044090",
+    "queries": [
+      {
+        "query": "Looking for datasets where the sample detector distance is 7.3127e-2 m.",
+        "min_position": 20
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-133044090",
+    "queries": [
+      {
+        "query": "Looking for datasets where the sample detector gap matches 7.3127 cm exactly.",
+        "min_position": 20
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-133044090",
+    "queries": [
+      {
+        "query": "Looking for datasets where the sample detector distance value recorded is 73,127 µm.",
+        "min_position": 20
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-133044090",
+    "queries": [
+      {
+        "query": "Looking for datasets where the  sample detector distance equals 7.3127 cm.",
+        "min_position": 20
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-133044090",
+    "queries": [
+      {
+        "query": "Looking for datasets where the sample detector distance equals 7.3127e-2 m.",
+        "min_position": 20
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-133044090",
+    "queries": [
+      {
+        "query": "Looking for datasets where the x-shutter time is 12,000 µs.",
+        "min_position": 20
+      }
+    ]
+  }
+]

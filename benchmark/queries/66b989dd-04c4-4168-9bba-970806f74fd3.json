@@ -1,0 +1,173 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-1026511637",
+    "queries": [
+      {
+        "query": "Look for studies on the interactions of plant hemoglobin BvPgb1.2 where the project involves different protein concentrations and the publication year is expected to be 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1059388977",
+    "queries": [
+      {
+        "query": "Look for research on the structural biology of light-responsive proteins where the publication year is 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1306923444",
+    "queries": [
+      {
+        "query": "Search for studies on metalloenzymes and metalloproteins where the publication year is 2026 and the project duration is less than 3 years.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1374614564",
+    "queries": [
+      {
+        "query": "Look for datasets related to time-resolved serial crystallography experiments at the ID29 beamline where the publication year is expected to be 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1409494197",
+    "queries": [
+      {
+        "query": "Look for research on ligand screening methodologies using X-ray diffraction where the publication year is 2027 and the focus includes therapeutic applications.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1443216899",
+    "queries": [
+      {
+        "query": "Look for studies on hydrocracking catalysts deactivated in industrial reactors where the investigation uses nearfield ptychographic X-ray computed tomography and the findings will be released after 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1699368896",
+    "queries": [
+      {
+        "query": "Look for studies on the kagome metal ScV6Sn6 where the temperature dependence of competing charge density waves is measured under uniaxial pressure, with results expected to be released in 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1710756361",
+    "queries": [
+      {
+        "query": "Look for research on chaotic mixing in porous rocks scheduled for experiments between July 2 and July 5, 2024, with a focus on reactive transport processes.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-404435502",
+    "queries": [
+      {
+        "query": "Find research on nanocrystalline titanium monoxide (TiOy) where the study involves extreme conditions like high pressure and/or high temperature, and the publication year is 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-771390324",
+    "queries": [
+      {
+        "query": "Look for research projects in structural biology and material sciences that involve beam time for Bio-SAXS and Cryo-EM, with a focus on carbohydrate-active proteins and DNA repair inhibition, scheduled for release in 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-781826130",
+    "queries": [
+      {
+        "query": "Look for research on the origins of endothermy in dicynodonts where the publication year is 2025 and the study involves high-quality skull scans from fossils found in Mozambique.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-91732236",
+    "queries": [
+      {
+        "query": "Find datasets from the Munich Crystallography BAG experiment conducted at the ID23-1 instrument between March 12 and July 27, 2018, where the resolution is less than 2.1 and the number of images is 2.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-922456225",
+    "queries": [
+      {
+        "query": "Find studies on structural biology of macromolecules in India that utilize MX and SAXS techniques and are scheduled to release findings in November 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-948811450",
+    "queries": [
+      {
+        "query": "Look for studies on Co doped 2D Fe5GeTe2 where the publication year is 2025 and the focus is on understanding the ferromagnetic transition.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.1-02-135",
+    "queries": [
+      {
+        "query": "Find studies on residual stress measurements in austenitic stainless steel where the publication year is 2013 and the experimental temperature is room temperature.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.4-01-1215",
+    "queries": [
+      {
+        "query": "Search for studies on spin-wave excitations in the compound Ca3Co2O6 where the publication year is 2013 and the sample is a single crystal mosaic.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.4-03-1702",
+    "queries": [
+      {
+        "query": "Search for studies on low energy excitations in Tb2Ti2O7 where the excitation energy is around 0.1-0.2 meV and the applied magnetic field is less than 2 T.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.8-02-779",
+    "queries": [
+      {
+        "query": "Search for studies on the initial interaction of antimicrobial proteins with the Gram-negative bacterial outer membrane using the FIGARO instrument, focusing on experiments conducted in 2016.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.DIR-120",
+    "queries": [
+      {
+        "query": "Look for studies on double wall nanotubes where the temperature is 10 K and the sample mass is 100 each.",
+        "min_position": 0
+      }
+    ]
+  }
+]

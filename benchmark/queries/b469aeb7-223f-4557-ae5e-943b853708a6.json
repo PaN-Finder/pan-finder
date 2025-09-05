@@ -1,0 +1,182 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-1012450919",
+    "queries": [
+      {
+        "query": "Look for research on proteins related to pathogenesis of diseases where the total number of datasets generated is 58 and the planned release date is after December 1, 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1615407834",
+    "queries": [
+      {
+        "query": "Look for resources on X-ray coherent microscopy for mapping mammalian brain regions where the publication year is 2027 and the project spans from April 18 to April 20, 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1830137785",
+    "queries": [
+      {
+        "query": "Look for datasets related to structural biology where the data collection is planned for 300kV systems and the publication year is 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1880628986",
+    "queries": [
+      {
+        "query": "Find studies on cellular filtration and extracellular matrix production in electrospun scaffolds scheduled for experiments from September 17, 2024, to September 17, 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1897081481",
+    "queries": [
+      {
+        "query": "Find information on the Israeli BAG's plans to utilize ESRF in 2024, particularly focusing on single crystal capabilities and SAXS time, while considering the publication year of 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1926172617",
+    "queries": [
+      {
+        "query": "Look for studies on early-branching theropod dinosaurs from South Africa that focus on growth strategies and anatomy with publication year greater than 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-514138857",
+    "queries": [
+      {
+        "query": "Look for studies on the local switching mechanisms of ferroelectric domains in (K,Na)NbO3 thin films where the sample name is KKNO-47-013 and the publication year is 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-856435678",
+    "queries": [
+      {
+        "query": "Find studies on correlative imaging for additive manufacturing of metallic alloys where the publication year is 2025 and the project aims to enhance data quality.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-885526513",
+    "queries": [
+      {
+        "query": "Find research on protein/DBA complexes and molecular machines conducted by BAG Barcelona where the publication year is 2025.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/NMX0030",
+    "queries": [
+      {
+        "query": "Find datasets related to detectors where the dataset size is greater than 14 GB and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.48391/91a3a886-df6f-434a-9a1d-7304a0061e00",
+    "queries": [
+      {
+        "query": "Find datasets related to remote experiments at BioMAX where the energy is 13.0003 and the publication year is 2022.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.1-02-277",
+    "queries": [
+      {
+        "query": "Look for studies on the residual stress analysis of 20MnCr5 where the carbon content is less than 0.9% and the publication year is 2019.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.4-02-496",
+    "queries": [
+      {
+        "query": "Search for studies on polarized neutron scattering experiments on SrCo2As2 where the environment temperature is 5 K and the publication year is 2018.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-24-569",
+    "queries": [
+      {
+        "query": "Look for studies on lithium borohydride where the temperature is between 2 K and 300 K and the publication year is 2015.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-42-480",
+    "queries": [
+      {
+        "query": "Look for studies on iron oxide ferrofluid where the publication year is 2018 and the experimental energy is in Angstrom.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.7-01-398",
+    "queries": [
+      {
+        "query": "Look for research on tetrahedrite compounds where the publication year is 2014 and the experimental parameters include an energy of less than 5 meV.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.7-04-168",
+    "queries": [
+      {
+        "query": "Look for studies on the structural dynamics of bulk heterojunctions in organic photovoltaics where the publication year is 2019 and the sample includes non-fullerene acceptors.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-13-832",
+    "queries": [
+      {
+        "query": "Look for research on the dynamics of monoclonal antibodies using Neutron Spin Echo where the experimental energy is greater than 13 Å and the publication year is 2019.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.TEST-2548",
+    "queries": [
+      {
+        "query": "Look for studies on Metal-Organic Frameworks with perovskite architecture where the sample is polycrystalline CH3)2NH2MnCHCOO3 and the environment temperature is room temperature.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.TEST-2609",
+    "queries": [
+      {
+        "query": "Look for studies on vibrational spectroscopy of polymer-fullerene bulk heterojunction organic solar cells where the temperature is between 10 K and 300 K and the publication year is 2016.",
+        "min_position": 0
+      }
+    ]
+  }
+]

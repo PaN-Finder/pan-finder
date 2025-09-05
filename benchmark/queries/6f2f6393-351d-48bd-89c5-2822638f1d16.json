@@ -1,0 +1,182 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-1084467841",
+    "queries": [
+      {
+        "query": "Look for research on CO2 hydrogenation to methane using Ni-doped ceria catalysts where the publication year is set for 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1108938830",
+    "queries": [
+      {
+        "query": "Look for studies on iron localization in Toxoplasma gondii where the research focuses on how iron is stored within the parasite and its effect on the host cell iron response.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1317797897",
+    "queries": [
+      {
+        "query": "Find research on macromolecular crystallography at Philipps University Marburg where the publication year is 2026 and the project aims to produce structures with a resolution of 3Å.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1352731648",
+    "queries": [
+      {
+        "query": "Search for studies on organic photovoltaics where the project starts after November 23, 2023, and results are expected by November 27, 2026.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1361431177",
+    "queries": [
+      {
+        "query": "Look for studies on conversion/alloying materials as anodes in sodium-ion batteries where the publication year is 2026 and the experiment is scheduled between December 1 and December 5, 2023.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1430996165",
+    "queries": [
+      {
+        "query": "Look for studies on the cemento-dentine junction where the research involves nanoXRD mapping and is scheduled to take place in 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1431868416",
+    "queries": [
+      {
+        "query": "Look for research on chemical probes targeting the m6A-mRNA reader YTHDC1 where the publication year is 2027 and the project starts on February 27, 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1441230666",
+    "queries": [
+      {
+        "query": "Search for studies on the lacunar-canalicular network in grafted bone where the graft type includes autografts, xenografts, or synthetic materials and the findings will be available after 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1585625799",
+    "queries": [
+      {
+        "query": "Look for studies on the pressure behavior of double perovskite Sr2FeMoO6 where the pressure is less than 51 GPa and the results are expected to be released by 2027.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-565653577",
+    "queries": [
+      {
+        "query": "Look for studies on Co-doped Ni-Mn-Sn shape memory alloys where the temperature is varied in both austenite and martensitic phases and the publication year is 2024.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-676020253",
+    "queries": [
+      {
+        "query": "Look for datasets related to spherulites of bottlebrush copolymers (PCL) scanned on SiN substrates from experiments scheduled between January 29 and January 31, 2022.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.16907/af8a7dae-97de-4205-b4cc-886634963647",
+    "queries": [
+      {
+        "query": "Look for studies on photopharmacology where the release of drugs from tubulin is observed at time intervals shorter than 100 ms and the publication year is 2023.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/NMX0112",
+    "queries": [
+      {
+        "query": "Find datasets related to detectors where the creation time is before 2018 and the sample chemical formula is V.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-23-701",
+    "queries": [
+      {
+        "query": "Search for studies on LaNi0.6Fe0.4O3 perovskite where the publication year is 2018 and the synthesis method involves combustion.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.6-03-426",
+    "queries": [
+      {
+        "query": "Look for research on molten Fe-Ni alloys where the composition varies with x values of 0.85 and 1.0, and the publication year is 2013.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.6-06-453",
+    "queries": [
+      {
+        "query": "Look for studies on UO2+x where the temperature is less than 900°C and the oxygen incorporation is between 0 and 0.25.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.7-05-413",
+    "queries": [
+      {
+        "query": "Look for research on halogen bonds in physisorbed monolayers on graphite where the publication year is 2013 and the sample includes 1,4-diiodobenzene.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.7-05-470",
+    "queries": [
+      {
+        "query": "Search for research on the carbonylation of methanol using mordenite zeolite where the publication year is 2018 and the experimental parameters include mordenite with a Si/Al ratio of 10.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-10-1457",
+    "queries": [
+      {
+        "query": "Look for studies on CO2-microemulsions where the environment temperature is between 15°C and 50°C and the publication year is 2016.",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.TEST-2772",
+    "queries": [
+      {
+        "query": "Look for research on the size distribution of diamond nanoparticles conducted at room temperature in 2017.",
+        "min_position": 0
+      }
+    ]
+  }
+]
