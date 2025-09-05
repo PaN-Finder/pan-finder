@@ -38,10 +38,10 @@ It automatically connects to the PanFinder API server running on [127.0.0.1:8080
 - [x] Score normalization (0-1) and UI changes based on the new scores
 - [x] Improve No Document Found (NDF) UI and LLM respones
 - [x] Use SQL injection protection
+- [x] Improve number handling (database) – resolve slow query issue
+- [x] Implement unit handling
 - [ ] Improve LLM response in the end of the query
 - [ ] Try new GPT-5 and GPT 5-mini models
-- [ ] Improve number handling (database) – resolve slow query issue
-- [ ] Implement unit handling
 - [ ] Add input validation and clarification → Build a dataset that can be used for validation
 - [ ] No datasets found → Provide example queries based on input and stored data
 - [ ] Implement the ingestor service !!!
