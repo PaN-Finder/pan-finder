@@ -1,39 +1,39 @@
+import csv
 import json
 import logging
-import time
 import sys
-from pathlib import Path
+import time
 from datetime import datetime
-from openai import AzureOpenAI
-import csv
+from pathlib import Path
+from typing import Any, Dict, List, Tuple
+
 import pandas as pd
+from openai import AzureOpenAI
 from sentence_transformers import SentenceTransformer
+
 from plotting import (
-    plot_avarage_scores_per_dataset,
+    plot_avarage_scores_per_dataset as plot_average_scores_per_dataset,  # alias for readability
     plot_overall_changes,
     plot_score_distribution_boxplot,
 )
 
 # Make server code importable without modifying server files
 server_dir = Path(__file__).parent.parent.parent / "server"
-server_src = server_dir / "src"
-# Add the 'server' directory so we can import packages as 'src.*'
 sys.path.insert(0, str(server_dir))
-# Add the 'core' subpackage root to import search_query_builder directly (avoid core.__init__)
-sys.path.insert(0, str(server_src / "core"))
 
-from search_query_builder import SearchQueryBuilder
+from src.core.search_query_builder import SearchQueryBuilder
 from src.db.connection import get_connection_pool, get_db_connection
 from src.config import get_settings
 
-logging.setLoggerClass(logging.Logger)
+logging.getLogger("benchmark")
+
 # Global cache for LLM responses (loaded from file)
-llm_response_cache = {}
+llm_response_cache: Dict[str, str] = {}
 
 
 def root_dir() -> Path:
-    """Returns the project root directory."""
-    return Path(__file__).parent.parent.parent
+    """Project root directory."""
+    return Path(__file__).resolve().parents[2]
 
 
 # Define cache file path
@@ -41,21 +41,9 @@ CACHE_FILE_PATH = root_dir() / "benchmark" / "cache" / "llm_cache.json"
 settings = get_settings()
 
 
-def openai_client(self) -> AzureOpenAI:
-    """Lazy-loaded OpenAI client."""
-    if self._openai_client is None:
-        self._openai_client = AzureOpenAI(
-            api_key=settings.azure_openai_api_key,
-            azure_endpoint=settings.azure_openai_endpoint,
-            api_version=settings.azure_openai_api_version,
-        )
-    return self._openai_client
-
-
 def load_system_prompt(model: str, version: str) -> str:
-    filepath = Path(root_dir()) / "benchmark" / "prompts" / model / version
-    prompt = filepath.read_text()
-    return prompt
+    filepath = root_dir() / "benchmark" / "prompts" / model / version
+    return filepath.read_text()
 
 
 # Load prompt globally
@@ -64,8 +52,8 @@ system_prompt_version = "1_0_7.md"
 extract_prompt = load_system_prompt(llm_model, system_prompt_version)
 
 
-def load_llm_cache():
-    """Loads the LLM response cache from a file."""
+def load_llm_cache() -> None:
+    """Load the LLM response cache from disk (if present)."""
     global llm_response_cache
     if CACHE_FILE_PATH.exists():
         try:
@@ -80,8 +68,8 @@ def load_llm_cache():
         llm_response_cache = {}
 
 
-def save_llm_cache():
-    """Saves the LLM response cache to a file."""
+def save_llm_cache() -> None:
+    """Persist the LLM response cache to disk."""
     try:
         # Ensure parent directory exists
         CACHE_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -91,31 +79,31 @@ def save_llm_cache():
         logging.info("Error saving LLM cache: %s", e)
 
 
-def load_rrf_score_k_values() -> list:
-    filepath = Path(root_dir()) / "benchmark" / "rrf_score_k_values_matrix.json"
-    rrf_score_k_values = json.loads(filepath.read_text())
-    return rrf_score_k_values
+def load_rrf_score_k_values() -> List[Dict[str, Any]]:
+    filepath = root_dir() / "benchmark" / "rrf_score_k_values_matrix.json"
+    return json.loads(filepath.read_text())
 
 
-def load_datasets():
-    base_dir = Path(root_dir()) / "benchmark" / "queries"
-    datasets = {}
-    for filepath in base_dir.glob("*.json"):
-        datasets[filepath.name] = filepath.read_text()
+def load_datasets() -> Dict[str, List[Dict[str, Any]]]:
+    """Load all query datasets, returning parsed JSON per file name."""
+    base_dir = root_dir() / "benchmark" / "queries"
+    datasets: Dict[str, List[Dict[str, Any]]] = {}
+    for filepath in sorted(base_dir.glob("*.json")):
+        datasets[filepath.name] = json.loads(filepath.read_text())
     return datasets
 
 
 def extract_json_from_response(text: str) -> str:
-    # extract json string from response
-    # scenario: ```{...}``` -> {...}
+    """Extract JSON object from a text blob that may include code fences.
+
+    Note: With response_format=json_object this should be unnecessary, but kept
+    minimal for resilience when reading existing cache entries.
+    """
     start = text.find("{")
     end = text.rfind("}")
     if start == -1 or end == -1:
         raise ValueError("Response does not contain a valid JSON object")
     return text[start : end + 1]
-
-
-query_ix = 0
 
 
 def get_openai_client_instance() -> AzureOpenAI:
@@ -130,7 +118,7 @@ def get_openai_client_instance() -> AzureOpenAI:
 
 
 def get_llm_response(prompt: str, query: str, **kwargs) -> str | None:
-    """Gets response from OpenAI API, using file-backed cache if available."""
+    """Get response from OpenAI API, using file-backed cache if available."""
 
     cache_key = f"{llm_model}_{system_prompt_version}|{query}|{json.dumps(kwargs, sort_keys=True)}"
     if cache_key in llm_response_cache:
@@ -151,7 +139,7 @@ def get_llm_response(prompt: str, query: str, **kwargs) -> str | None:
         temperature=0.1,
         response_format={"type": "json_object"},
     )
-    answer = response.choices[0].message.content
+    answer: str | None = response.choices[0].message.content
 
     if answer is not None:
         llm_response_cache[cache_key] = answer
@@ -159,90 +147,105 @@ def get_llm_response(prompt: str, query: str, **kwargs) -> str | None:
     return answer
 
 
-def process_query(query_obj: dict, doi: str, builder: SearchQueryBuilder) -> tuple:
-    global query_ix
-    query_text = query_obj.get("query", "")
-    if query_text == "":
+def process_query(
+    query_obj: Dict[str, Any], doi: str, builder: SearchQueryBuilder
+) -> Tuple[float, float, float, float, float, float, float, float]:
+    query_text = query_obj.get("query", "").strip()
+    if not query_text:
         raise ValueError("Query text is empty")
 
-    min_position = query_obj.get("min_position", 0)
+    min_position: int = int(query_obj.get("min_position", 0))
 
     response = get_llm_response(
         extract_prompt, query_text, temperature=0, max_tokens=500
     )
-
     if response is None:
         raise ValueError("LLM response is None")
 
-    logging.info("DOI: %s", doi)
-    logging.info("Query Index: %s", query_ix)
-    query_ix += 1
+    logging.debug("DOI: %s", doi)
     logging.info("Query: %s", query_text)
-    logging.info("LLM Response: %s", response)
 
-    formatted_data = extract_json_from_response(response)
-    data = json.loads(formatted_data)
-    logging.info("Formatted Data: %s", data)
+    # Prefer direct JSON when provided, fallback to extracting
+    try:
+        data = json.loads(response)
+    except json.JSONDecodeError:
+        data = json.loads(extract_json_from_response(response))
 
     query = builder.build_query(data)
     try:
-        logging.info("SQL Query: %s", query.as_string())
+        logging.debug("SQL Query: %s", query.as_string())
     except Exception:
-        # Fallback in case as_string() requires a connection in this psycopg setup
-        logging.info("SQL Query constructed (use DB to render string safely)")
+        logging.debug("SQL Query constructed (requires DB to render string)")
 
-    with get_db_connection() as conn:
-        with conn.cursor() as cursor:
-            start_time = time.time()
-            cursor.execute(query)
-            results = cursor.fetchall()
-            elapsed_time = time.time() - start_time
-    df = pd.DataFrame(
-        results,
-        columns=[
-            "Doi",
-            "Overall Score",
-            "Similarity Score",
-            "Chunk Similarity Score",
-            "Full Match Score",
-            "Partial Match Score",
-            "Keyword Score",
-        ],
-    ).astype(
-        {
-            "Overall Score": float,
-            "Similarity Score": float,
-            "Chunk Similarity Score": float,
-            "Full Match Score": float,
-            "Partial Match Score": float,
-            "Keyword Score": float,
-        }
-    )
+    with get_db_connection() as conn, conn.cursor() as cursor:
+        start_time = time.time()
+        cursor.execute(query)
+        results = cursor.fetchall()
+        elapsed_time = time.time() - start_time
 
-    logging.info("Results")
+        df = pd.DataFrame(
+            results,
+            columns=[
+                "Doi",
+                "Overall Score",
+                "Similarity Score",
+                "Chunk Similarity Score",
+                "Full Match Score",
+                "Partial Match Score",
+                "Keyword Score",
+            ],
+        ).astype(
+            {
+                "Overall Score": float,
+                "Similarity Score": float,
+                "Chunk Similarity Score": float,
+                "Full Match Score": float,
+                "Partial Match Score": float,
+                "Keyword Score": float,
+            }
+        )
+
     logging.info("%s", df.to_string(index=True))
 
-    position = next((i for i, result in enumerate(results) if result[0] == doi), -1)
-    score = (
-        0
-        if position < 0
-        else (1 if position <= min_position else 1 - (position - min_position) / 20)
-    )
+    # Find the position of target DOI
+    position = next((i for i, row in enumerate(results) if row[0] == doi), -1)
+
+    # Score: full credit if within min_position, then linear decay up to 20 ranks, clamped at 0
+    if position < 0:
+        score = 0.0
+    else:
+        offset = max(0, position - min_position)
+        score = max(0.0, 1.0 - (offset / 20.0))
+
     if position != -1:
-        overall = results[position][1]
-        sim_score = results[position][2]
-        chunk_score = results[position][3]
-        full_match_score = results[position][4]
-        partial_match_score = results[position][5]
-        keyword_score = results[position][6]
+        (
+            overall,
+            sim_score,
+            chunk_score,
+            full_match_score,
+            partial_match_score,
+            keyword_score,
+        ) = (
+            float(results[position][1]),
+            float(results[position][2]),
+            float(results[position][3]),
+            float(results[position][4]),
+            float(results[position][5]),
+            float(results[position][6]),
+        )
     else:
         overall = sim_score = chunk_score = full_match_score = partial_match_score = (
             keyword_score
-        ) = 0
+        ) = 0.0
 
-    print(
-        f"Score: {score} | Position: {position} | Min Position: {min_position} | Query Runtime: {elapsed_time:.3f}s\n\n"
+    logging.info(
+        "Score: %.3f | Position: %d | Min: %d | Runtime: %.3fs",
+        score,
+        position,
+        min_position,
+        elapsed_time,
     )
+
     return (
         score,
         overall,
@@ -255,7 +258,9 @@ def process_query(query_obj: dict, doi: str, builder: SearchQueryBuilder) -> tup
     )
 
 
-def process_document(doc: dict, builder: SearchQueryBuilder) -> tuple:
+def process_document(
+    doc: Dict[str, Any], builder: SearchQueryBuilder
+) -> Tuple[List[float], List[float], List[Dict[str, float]]]:
     doi = doc.get("doi", "N/A")
     scores = []
     runtimes = []
@@ -287,14 +292,13 @@ def process_document(doc: dict, builder: SearchQueryBuilder) -> tuple:
 
 
 def process_dataset(
-    dataset_name: str, dataset: str, builder: SearchQueryBuilder
-) -> tuple:
+    dataset_name: str, dataset: List[Dict[str, Any]], builder: SearchQueryBuilder
+) -> Tuple[List[float], List[float], List[Dict[str, float]]]:
     logging.info("Dataset: %s", dataset_name)
     dataset_scores = []
     dataset_runtimes = []
     dataset_breakdowns = []
-    data = json.loads(dataset)
-    for doc in data:
+    for doc in dataset:
         scores, runtimes, breakdowns = process_document(doc, builder)
         dataset_scores.extend(scores)
         dataset_runtimes.extend(runtimes)
@@ -302,30 +306,35 @@ def process_dataset(
     return dataset_scores, dataset_runtimes, dataset_breakdowns
 
 
-def get_sentence_transformer(model: str = "all-MiniLM-L12-v2"):
+def get_sentence_transformer(model: str = "all-MiniLM-L12-v2") -> SentenceTransformer:
     model_path = root_dir() / "models" / model
     return SentenceTransformer(str(model_path), device="cpu")
 
 
-def main():
-    # Load cache at the beginning
-    load_llm_cache()
+def main() -> None:
+    # Basic logging setup for the benchmark script
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s | %(levelname)s | %(message)s",
+        datefmt="%H:%M:%S",
+    )
 
+    # Load cache and inputs
+    load_llm_cache()
     rrf_score_k_values = load_rrf_score_k_values()
     datasets = load_datasets()
     sentence_transformer = get_sentence_transformer()
 
-    all_test_results = []  # Initialize list to store results for CSV
-    overall_test_metrics = {}  # Store overall avg score and runtime per test
-    all_scores_by_test_config = {}  # To store raw scores for each test config
+    all_test_results: List[Dict[str, Any]] = []
+    overall_test_metrics: Dict[str, Dict[str, float]] = {}
+    all_scores_by_test_config: Dict[str, List[float]] = {}
 
-    # --- Loop through each RRF K configuration ---
+    # Run each RRF configuration across all datasets
     for rrf_config in rrf_score_k_values:
         test_name = rrf_config.get("test_name", "unknown_test")
-        logging.info(f"--- Running Test: {test_name} ---")
-        logging.info("RRF Score K Values: %s", rrf_config)
+        logging.info("=== Test: %s ===", test_name)
+        logging.info("RRF k-values: %s", rrf_config)
 
-        # Instantiate builder with the current configuration
         builder = SearchQueryBuilder(
             sentence_transformer=sentence_transformer,
             pool=get_connection_pool(),
@@ -337,69 +346,56 @@ def main():
             logger=logging.getLogger("search_query_builder"),
         )
 
-        # Reset results for each test configuration
-        scores_by_dataset = {}
-        runtimes_by_dataset = {}
-        breakdowns_by_dataset = {}
-        test_all_scores = []  # Scores for the current test config
-        test_all_runtimes = []  # Runtimes for the current test config
-        test_total_queries = 0  # Query count for the current test config
+        test_all_scores: List[float] = []
+        test_all_runtimes: List[float] = []
+        test_total_queries = 0
 
-        # --- Process datasets for the current configuration ---
         for dataset_name, dataset in datasets.items():
             ds_scores, ds_runtimes, ds_breakdowns = process_dataset(
                 dataset_name, dataset, builder
             )
-            scores_by_dataset[dataset_name] = ds_scores
-            runtimes_by_dataset[dataset_name] = ds_runtimes
-            breakdowns_by_dataset[dataset_name] = ds_breakdowns
 
-            # Calculate dataset-specific average score
+            # Aggregate per dataset
             ds_total_queries = len(ds_scores)
-            ds_score_sum = sum(ds_scores)
-            ds_avg_score = ds_score_sum / ds_total_queries if ds_total_queries else 0
-            ds_avg_score_percent = ds_avg_score * 100
+            ds_avg_score = (
+                (sum(ds_scores) / ds_total_queries) if ds_total_queries else 0.0
+            )
 
-            # Append dataset result to the main list
             all_test_results.append(
                 {
                     "test_name": test_name,
-                    "dataset_name": dataset_name.replace(
-                        ".json", ""
-                    ),  # Clean dataset name
+                    "dataset_name": dataset_name.replace(".json", ""),
                     "avg_score": round(ds_avg_score, 4),
-                    "avg_score_percent": round(ds_avg_score_percent, 2),
+                    "avg_score_percent": round(ds_avg_score * 100.0, 2),
                 }
             )
 
-            # Accumulate for overall test average
             test_total_queries += ds_total_queries
             test_all_scores.extend(ds_scores)
             test_all_runtimes.extend(ds_runtimes)
 
-        # --- Calculate and log overall results for the current test configuration ---
-        overall_score_sum = sum(test_all_scores)
-        avg_score = overall_score_sum / test_total_queries if test_total_queries else 0
-        avg_runtime = (
-            sum(test_all_runtimes) / test_total_queries if test_total_queries else 0
+        avg_score = (
+            (sum(test_all_scores) / test_total_queries) if test_total_queries else 0.0
         )
-        logging.info(f"--- Overall Results for Test: {test_name} ---")
-        logging.info("Average Score: %s", avg_score)
-        logging.info("Average Query Runtime: %s", avg_runtime)
+        avg_runtime = (
+            (sum(test_all_runtimes) / test_total_queries) if test_total_queries else 0.0
+        )
 
-        # Store overall metrics for this test
+        logging.info(
+            "Overall avg score: %.4f | avg runtime: %.3fs", avg_score, avg_runtime
+        )
+
         overall_test_metrics[test_name] = {
-            "avg_score": avg_score * 100,  # Store as percentage
+            "avg_score": avg_score * 100.0,
             "avg_runtime": avg_runtime,
         }
 
         if test_all_scores:
             all_scores_by_test_config[test_name] = test_all_scores
 
-    results_dir = Path(root_dir()) / "benchmark" / "results"
-    results_dir.mkdir(parents=True, exist_ok=True)  # Ensure directory exists
+    results_dir = root_dir() / "benchmark" / "results"
+    results_dir.mkdir(parents=True, exist_ok=True)
 
-    # --- Save all aggregated results to CSV and plots after all tests are done ---
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     raw_scores_data_path = results_dir / f"raw_scores_by_test_config_{timestamp}.json"
     try:
@@ -413,9 +409,8 @@ def main():
         results_dir / f"score_distribution_boxplot_{timestamp}.png",
     )
 
-    # Use pandas to easily write to CSV
     results_df = pd.DataFrame(all_test_results)
-    plot_avarage_scores_per_dataset(
+    plot_average_scores_per_dataset(
         results_df,
         overall_test_metrics,
         results_dir / f"average_scores_per_dataset_{timestamp}.png",
@@ -426,10 +421,7 @@ def main():
         quoting=csv.QUOTE_NONNUMERIC,
     )
 
-    plot_overall_changes(
-        results_dir,
-        results_dir / "overall_changes.png",
-    )
+    plot_overall_changes(results_dir, results_dir / "overall_changes.png")
 
 
 if __name__ == "__main__":
