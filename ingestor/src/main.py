@@ -13,6 +13,7 @@ from filter_ingestor import FilterIngestor
 from numeric_filter_ingestor import NumericFilterIngestor
 from filter_value_converter import FilterValueConverter
 from filter_enricher import FilterEnricher
+from summary_ingestor import SummaryIngestor
 
 logging.basicConfig(
     level=logging.INFO,
@@ -43,6 +44,9 @@ def main():
 
     # 6. Enrich filter table with derived publisher data
     FilterEnricher(get_db_connection).run()
+
+    # 7. Populate document summaries
+    SummaryIngestor(get_db_connection, settings).run()
 
     logging.info("Ingestor finished.")
 
