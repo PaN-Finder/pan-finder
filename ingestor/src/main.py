@@ -11,6 +11,7 @@ from document_ingestor import DocumentIngestor
 from chunk_ingestor import ChunkIngestor
 from filter_ingestor import FilterIngestor
 from numeric_filter_ingestor import NumericFilterIngestor
+from filter_value_converter import FilterValueConverter
 
 logging.basicConfig(
     level=logging.INFO,
@@ -35,6 +36,9 @@ def main():
 
     # 4. Derive numeric filters
     NumericFilterIngestor(get_db_connection, settings).run()
+
+    # 5. Convert filter values to structured types
+    FilterValueConverter(get_db_connection).run()
 
     logging.info("Ingestor finished.")
 
