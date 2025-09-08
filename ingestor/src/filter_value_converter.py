@@ -21,83 +21,62 @@ class FilterValueConverter:
     def __init__(self, db_conn_factory: Callable[[], ContextManager[Any]]) -> None:
         self.db_conn_factory = db_conn_factory
 
-    def update_filter_value_boolean(self) -> None:
+    def run(self) -> None:
+        """Execute all updates in one transaction and log affected rows."""
         try:
             with self.db_conn_factory() as conn:
                 with conn.cursor() as cursor:
+                    # Boolean
                     cursor.execute(
                         """
                         UPDATE filter
                         SET value_boolean = cast_to_bool(value)
-                        WHERE cast_to_bool(value) IS NOT NULL AND value not in ('1', '0')
+                        WHERE cast_to_bool(value) IS NOT NULL
+                          AND value NOT IN ('1', '0')
+                          AND (value_boolean IS DISTINCT FROM cast_to_bool(value))
                         """
                     )
-                conn.commit()
-        except Exception as e:
-            self.logger.error(f"Error updating filter value boolean: {e}")
-            raise
+                    self.logger.info("Updated value_boolean rows: %s", cursor.rowcount)
 
-    def update_filter_value_numeric(self) -> None:
-        try:
-            with self.db_conn_factory() as conn:
-                with conn.cursor() as cursor:
+                    # Numeric
                     cursor.execute(
                         """
                         UPDATE filter
                         SET value_numeric = cast_to_numeric(value)
                         WHERE cast_to_numeric(value) IS NOT NULL
+                          AND (value_numeric IS DISTINCT FROM cast_to_numeric(value))
                         """
                     )
-                conn.commit()
-        except Exception as e:
-            self.logger.error(f"Error updating filter value numeric: {e}")
-            raise
+                    self.logger.info("Updated value_numeric rows: %s", cursor.rowcount)
 
-    def update_filter_value_timestamp(self) -> None:
-        try:
-            with self.db_conn_factory() as conn:
-                with conn.cursor() as cursor:
+                    # Timestamp
                     cursor.execute(
                         """
                         UPDATE filter
                         SET value_timestamp = cast_to_timestamp(value)
-                        WHERE cast_to_timestamp(value) IS NOT NULL AND cast_to_float(value) IS NULL
+                        WHERE cast_to_timestamp(value) IS NOT NULL
+                          AND cast_to_float(value) IS NULL
+                          AND (value_timestamp IS DISTINCT FROM cast_to_timestamp(value))
                         """
                     )
-                conn.commit()
-        except Exception as e:
-            self.logger.error(f"Error updating filter value timestamp: {e}")
-            raise
+                    self.logger.info(
+                        "Updated value_timestamp rows: %s", cursor.rowcount
+                    )
 
-    def update_filter_value_unit(self) -> None:
-        try:
-            with self.db_conn_factory() as conn:
-                with conn.cursor() as cursor:
+                    # SI unit
                     cursor.execute(
                         """
                         UPDATE filter
                         SET value_si = to_unit(value_numeric, unit)
-                        WHERE unit is not null and lower(unit) not in ('na', 'none', '') and value_numeric is not null;
+                        WHERE unit IS NOT NULL
+                          AND lower(unit) NOT IN ('na', 'none', '')
+                          AND value_numeric IS NOT NULL
+                          AND (value_si IS DISTINCT FROM to_unit(value_numeric, unit));
                         """
                     )
+                    self.logger.info("Updated value_si rows: %s", cursor.rowcount)
                 conn.commit()
+            self.logger.info("Filter value conversion completed.")
         except Exception as e:
-            self.logger.error(f"Error updating filter value unit: {e}")
+            self.logger.error(f"Filter value conversion failed: {e}")
             raise
-
-    def run(self) -> None:
-        self.logger.info("Updating filter value boolean...")
-        self.update_filter_value_boolean()
-        self.logger.info("Filter value boolean update completed.")
-
-        self.logger.info("Updating filter value numeric...")
-        self.update_filter_value_numeric()
-        self.logger.info("Filter value numeric update completed.")
-
-        self.logger.info("Updating filter value timestamp...")
-        self.update_filter_value_timestamp()
-        self.logger.info("Filter value timestamp update completed.")
-
-        self.logger.info("Updating filter value unit...")
-        self.update_filter_value_unit()
-        self.logger.info("Filter value unit update completed.")
