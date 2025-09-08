@@ -6,6 +6,7 @@ casting helpers to populate the following derived columns when possible:
 - `value_boolean` via `cast_to_bool(value)` (excluding literal '1'/'0' strings)
 - `value_numeric` via `cast_to_numeric(value)`
 - `value_timestamp` via `cast_to_timestamp(value)` when `cast_to_float(value)` is NULL
+- `value_si` via `to_unit(value_numeric, unit)` when `unit` is valid and `value_numeric` is not NULL
 """
 
 import logging
@@ -68,6 +69,22 @@ class FilterValueConverter:
             self.logger.error(f"Error updating filter value timestamp: {e}")
             raise
 
+    def update_filter_value_unit(self) -> None:
+        try:
+            with self.db_conn_factory() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(
+                        """
+                        UPDATE filter
+                        SET value_si = to_unit(value_numeric, unit)
+                        WHERE unit is not null and lower(unit) not in ('na', 'none', '') and value_numeric is not null;
+                        """
+                    )
+                conn.commit()
+        except Exception as e:
+            self.logger.error(f"Error updating filter value unit: {e}")
+            raise
+
     def run(self) -> None:
         self.logger.info("Updating filter value boolean...")
         self.update_filter_value_boolean()
@@ -80,3 +97,7 @@ class FilterValueConverter:
         self.logger.info("Updating filter value timestamp...")
         self.update_filter_value_timestamp()
         self.logger.info("Filter value timestamp update completed.")
+
+        self.logger.info("Updating filter value unit...")
+        self.update_filter_value_unit()
+        self.logger.info("Filter value unit update completed.")
