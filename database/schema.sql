@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 7tysmXoukROamxUn7gbNg4aClhJm9cJGYPqcnnHzZUpJnMribEfQlEvQHU8c5jj
+\restrict NMyiHVaD7MHiMRibYFCUct2diP6fivuLoHRjZD9qXwAw5bUaLwQbHhJiII5FbAW
 
 -- Dumped from database version 17.4 (Debian 17.4-1.pgdg120+2)
 -- Dumped by pg_dump version 17.6
@@ -129,6 +129,22 @@ CREATE FUNCTION public.cast_to_numeric(text) RETURNS numeric
     AS $_$
                     BEGIN
                         RETURN $1::NUMERIC;
+                    EXCEPTION
+                        WHEN others THEN
+                            RETURN NULL;
+                    END;
+                    $_$;
+
+
+--
+-- Name: cast_to_timestamp(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.cast_to_timestamp(text) RETURNS timestamp without time zone
+    LANGUAGE plpgsql
+    AS $_$
+                    BEGIN
+                        RETURN $1::TIMESTAMP;
                     EXCEPTION
                         WHEN others THEN
                             RETURN NULL;
@@ -792,5 +808,5 @@ ALTER TABLE ONLY public.filter
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 7tysmXoukROamxUn7gbNg4aClhJm9cJGYPqcnnHzZUpJnMribEfQlEvQHU8c5jj
+\unrestrict NMyiHVaD7MHiMRibYFCUct2diP6fivuLoHRjZD9qXwAw5bUaLwQbHhJiII5FbAW
 

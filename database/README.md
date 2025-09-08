@@ -12,3 +12,8 @@ docker run --name pan-finder-postgres -e POSTGRES_PASSWORD=yourpassword -e POSTG
 cat schema.sql | docker exec -i pan-finder-postgres psql -U youruser -d panfinder
 ```
 
+## Save the schema to a file
+
+```bash
+pg_dump --schema-only --no-owner --no-privileges -U usr -h localhost -p 5432 pan-finder > schema.sql
+```
