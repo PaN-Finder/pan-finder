@@ -10,6 +10,7 @@ from src.config import get_settings
 from document_ingestor import DocumentIngestor
 from chunk_ingestor import ChunkIngestor
 from filter_ingestor import FilterIngestor
+from numeric_filter_ingestor import NumericFilterIngestor
 
 logging.basicConfig(
     level=logging.INFO,
@@ -31,6 +32,9 @@ def main():
 
     # 3. Populate filters
     FilterIngestor(get_db_connection, settings).run()
+
+    # 4. Derive numeric filters
+    NumericFilterIngestor(get_db_connection, settings).run()
 
     logging.info("Ingestor finished.")
 
