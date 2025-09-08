@@ -20,31 +20,21 @@ pytest
 
 ## Database
 
-The database can be restored from the Pan-Finder-Poc repository: [pan-finder-poc/backups](https://gitlab.esss.lu.se/swap/pan-finder-poc/-/tree/main/backups?ref_type=heads)
+The `database` directory contains the current schema for the PostgreSQL database, including the `pgvector` and `postgresql-unit` extensions.
+
+# Ingestor Service
+
+The ingestor service needs to be implementd. However the `ingestor` directory contains a basic implementation that can be used to ingest documents, create chunks, populate filters, and derive numeric filters.
+
+# Benchmarking
+
+The `benchmark` directory contains scripts to benchmark the performance of the Pan-Finder Query Builder.
 
 ## Using Frontend (Optional)
 
 (Repository: https://github.com/panosc-eu/searchui)<br>
 Clone the frontend repository somewhere and run it.<br>
 It automatically connects to the PanFinder API server running on [127.0.0.1:8080](http://127.0.0.1:8080).
-
-## Tasks
-
-- [x] Allow extracted data to be modified by the client and re-executed
-- [x] Add statistics tracking
-- [x] Add feedback functionality
-- [x] Use rate limiting vs. CAPTCHA vs. Cloudflare Turnstile (https://developers.cloudflare.com/turnstile)
-- [x] Having LLM response in the end of the query
-- [x] Score normalization (0-1) and UI changes based on the new scores
-- [x] Improve No Document Found (NDF) UI and LLM respones
-- [x] Use SQL injection protection
-- [x] Improve number handling (database) – resolve slow query issue
-- [x] Implement unit handling
-- [ ] Improve LLM response in the end of the query
-- [ ] Try new GPT-5 and GPT 5-mini models
-- [ ] Add input validation and clarification → Build a dataset that can be used for validation
-- [ ] No datasets found → Provide example queries based on input and stored data
-- [ ] Implement the ingestor service !!!
 
 ## Temporary docker commands (local development)
 
