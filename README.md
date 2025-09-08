@@ -1,12 +1,14 @@
 # Pan‑Finder
 
+(This project is under active development; use at your own risk. If you have any questions or issues, please use the discussion forum.)
+
 Search API for scientific documents combining vector similarity (pgvector), full‑text, and structured filters, with SSE streaming and LLM‑based query parsing.
 
 ## Overview
 - Backend: `server/` (FastAPI). Endpoints stream results via Server‑Sent Events (SSE).
 - Data: PostgreSQL with `pgvector` + `postgresql-unit` (see `database/`).
-- Ingestion: `ingestor/` contains starter scripts (ingestor service is not finalized).
-- Evaluation: `benchmark/` runs LLM‑driven parsing + ranking tests and plots.
+- Ingestion: `ingestor/` contains starter scripts (the ingestor service is not yet finalized).
+- Evaluation: `benchmark/` runs LLM‑driven parsing and ranking tests, and generates plots.
 - Optional UI: `searchui/` SPA for demos; backend works independently.
 
 ## Quick start (dev)
@@ -32,7 +34,7 @@ API usage (endpoints, session handling, SSE examples) is documented in `server/R
 	- Vector similarity over documents and chunks (pgvector)
 	- Full‑text search over titles (`to_tsquery`)
 	- Structured filters with unit‑aware comparisons (`postgresql-unit`)
-- Scores fused via Reciprocal Rank Fusion (RRF); final LIMIT 20.
+- Scores are fused via Reciprocal Rank Fusion (RRF), with a final limit of 20.
 
 ## Benchmarking
 Evaluate RRF settings and prompts using datasets in `benchmark/queries/`.
@@ -47,7 +49,7 @@ Outputs CSVs and plots to `benchmark/results/`.
 - Applying schema: `database/README.md` has examples for Docker and local Postgres.
 
 ## Ingestor
-`ingestor/` provides a basic framework to ingest documents, create chunks, populate filters, and derive numeric filters (service not finalized yet). See its `README.md`.
+`ingestor/` provides a basic framework for ingesting documents, creating chunks, populating filters, and deriving numeric filters (the service is not yet finalized). See its `README.md`.
 
 ## Build images (optional, local)
 
@@ -75,4 +77,4 @@ docker push registry.esss.lu.se/swap/pan-finder:postgresql
 ```
 
 ## Optional UI
-You can use the bundled `searchui/` or the external repo https://github.com/panosc-eu/searchui. By default the UI expects the API at http://127.0.0.1:8080.
+You can use the bundled `searchui/` or the external repo https://github.com/panosc-eu/searchui. By default, the UI expects the API at http://127.0.0.1:8080.
