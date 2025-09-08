@@ -1,7 +1,9 @@
 name: pan-finder
 services:
   pgvector:
-    image: ghcr.io/pan-finder/pan-finder:postgresql
+    build:
+      context: database
+      dockerfile: Dockerfile.postgresql
     ports:
       - 5432:5432
     volumes:
