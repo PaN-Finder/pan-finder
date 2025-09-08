@@ -12,6 +12,7 @@ from chunk_ingestor import ChunkIngestor
 from filter_ingestor import FilterIngestor
 from numeric_filter_ingestor import NumericFilterIngestor
 from filter_value_converter import FilterValueConverter
+from filter_enricher import FilterEnricher
 
 logging.basicConfig(
     level=logging.INFO,
@@ -39,6 +40,9 @@ def main():
 
     # 5. Convert filter values to structured types
     FilterValueConverter(get_db_connection).run()
+
+    # 6. Enrich filter table with derived publisher data
+    FilterEnricher(get_db_connection).run()
 
     logging.info("Ingestor finished.")
 
