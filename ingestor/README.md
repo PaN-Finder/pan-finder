@@ -1,9 +1,9 @@
-# Pand-Finder Ingestor
+# Pan‑Finder Ingestor
 
-It is an initial collection of scripts to ingest data into the Pan-Finder database.
-The ingestor service can be implemented based on this source code.
+This folder contains an initial set of scripts for ingesting data into the Pan‑Finder database.
+A production‑grade ingestor service can be implemented based on this source code.
 
-## Install requirements
+## Install dependencies
 
 ```bash
 python -m venv .venv
@@ -13,11 +13,16 @@ pip install -r requirements.txt
 
 ## Configuration
 
-Create a `.env` file from `.env.example` and fill in the required variables.
+Create a `.env` file from `.env.example` and set the required variables.
 
 ## Database setup
 
-In the `database` folder, you can find the SQL scripts to set up the database schema.
+You can find SQL scripts to set up the database schema in the `database` folder.
+
+## Prepare data
+
+You can find data in the [deliverables](https://github.com/PaN-Finder/deliverables/tree/main/task-1/data) repository.
+Downloadt theme into the `data` folder.
 
 ## Run the ingestor
 
