@@ -2,24 +2,38 @@ import logging
 import sys
 from pathlib import Path
 
-# Make server code importable without modifying server files
 server_dir = Path(__file__).parent.parent.parent / "server"
 sys.path.insert(0, str(server_dir))
 
 from src.db.connection import get_db_connection
-from store import store_data
+from src.config import get_settings
+from document_ingestor import DocumentIngestor
+from chunk_ingestor import ChunkIngestor
+from filter_ingestor import FilterIngestor
 
-logging.getLogger("ingestor").setLevel(logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logging.getLogger("Ingestor")
 
 
 def main():
     logging.info("Starting ingestor...")
-    db_conn = get_db_connection()
+
+    settings = get_settings()
 
     # 1. Store data
-    store_data(db_conn)
+    DocumentIngestor(get_db_connection).run()
+
+    # 2. Create chunks
+    ChunkIngestor(get_db_connection, settings).run()
+
+    # 3. Populate filters
+    FilterIngestor(get_db_connection, settings).run()
+
+    logging.info("Ingestor finished.")
 
 
 if __name__ == "__main__":
     main()
-    logging.info("Ingestor finished.")
