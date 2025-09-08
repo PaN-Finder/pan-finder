@@ -12,7 +12,7 @@ Evaluate search ranking quality across Reciprocal Rank Fusion (RRF) configuratio
 
 ## Prerequisites
 - Python 3.10+ (recommended)
-- A running Pan‑Finder database with `registry.esss.lu.se/swap/pan-finder:postgresql` and data loaded
+- A running Pan‑Finder database with `ghcr.io/pan-finder/pan-finder:postgresql` and data loaded
 	- Easiest local setup:
 		```bash
 		docker compose -f docker-compose.dev.yml up

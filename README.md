@@ -72,8 +72,8 @@ docker push registry.esss.lu.se/swap/pan-finder:frontend
 
 ### Custom Postgres image (with extensions)
 ```bash
-docker build -f database/Dockerfile.postgresql . -t registry.esss.lu.se/swap/pan-finder:postgresql --platform linux/amd64
-docker push registry.esss.lu.se/swap/pan-finder:postgresql
+docker build -f database/Dockerfile.postgresql . -t ghcr.io/pan-finder/pan-finder:postgresql --platform linux/amd64
+docker push ghcr.io/pan-finder/pan-finder:postgresql
 ```
 
 ## Optional UI
