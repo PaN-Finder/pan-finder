@@ -15,6 +15,10 @@ pip install -r requirements.txt
 
 Create a `.env` file from `.env.example` and fill in the required variables.
 
+## Database setup
+
+In the `database` folder, you can find the SQL scripts to set up the database schema.
+
 ## Run the ingestor
 
 ```bash
