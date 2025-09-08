@@ -1,5 +1,8 @@
 # Pand-Finder Ingestor
 
+It is an initial collection of scripts to ingest data into the Pan-Finder database.
+The ingestor service can be implemented based on this source code.
+
 ## Install requirements
 
 ```bash
