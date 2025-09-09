@@ -28,14 +28,6 @@ docker compose -f docker-compose.dev.yml up
 ## API
 API usage (endpoints, session handling, SSE examples) is documented in `server/README.md`.
 
-## How search works (high level)
-- `POST /search` → LLM parses query to structured data (see `server/src/core/ai/prompts.py`).
-- `SearchQueryBuilder` builds SQL with psycopg composables (no string concat), combining:
-	- Vector similarity over documents and chunks (pgvector)
-	- Full‑text search over titles (`to_tsquery`)
-	- Structured filters with unit‑aware comparisons (`postgresql-unit`)
-- Scores are fused via Reciprocal Rank Fusion (RRF), with a final limit of 20.
-
 ## Benchmarking
 Evaluate RRF settings and prompts using datasets in `benchmark/queries/`.
 ```bash
@@ -50,31 +42,6 @@ Outputs CSVs and plots to `benchmark/results/`.
 
 ## Ingestor
 `ingestor/` provides a basic framework for ingesting documents, creating chunks, populating filters, and deriving numeric filters (the service is not yet finalized). See its `README.md`.
-
-## Build images (optional, local)
-
-### Server image
-```bash
-docker build -f server/docker/Dockerfile.k8s . -t registry.esss.lu.se/swap/pan-finder:server --platform linux/amd64
-docker push registry.esss.lu.se/swap/pan-finder:server
-```
-
-### Frontend image (example args)
-```bash
-cd searchui
-docker build \
-	--build-arg API=https://federated.panosc.ess.eu/api \
-	--build-arg PAN_FINDER_API=https://pan-finder-api.dev-sims.ess.eu \
-	--build-arg TURNSTILE_SITE_KEY=*** \
-	-f Dockerfile . -t registry.esss.lu.se/swap/pan-finder:frontend --platform linux/amd64
-docker push registry.esss.lu.se/swap/pan-finder:frontend
-```
-
-### Custom Postgres image (with extensions)
-```bash
-docker build -f database/Dockerfile.postgresql . -t ghcr.io/pan-finder/pan-finder:postgresql --platform linux/amd64
-docker push ghcr.io/pan-finder/pan-finder:postgresql
-```
 
 ## Optional UI
 You can use the bundled `searchui/` or the external repo https://github.com/panosc-eu/searchui. By default, the UI expects the API at http://127.0.0.1:8080.
