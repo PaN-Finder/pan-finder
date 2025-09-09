@@ -44,4 +44,4 @@ Outputs CSVs and plots to `benchmark/results/`.
 `ingestor/` provides a basic framework for ingesting documents, creating chunks, populating filters, and deriving numeric filters (the service is not yet finalized). See its `README.md`.
 
 ## Optional UI
-You can use the bundled `searchui/` or the external repo https://github.com/panosc-eu/searchui. By default, the UI expects the API at http://127.0.0.1:8080.
+You can use the bundled `searchui/` or the external repo https://github.com/panosc-eu/searchui/tree/pan-finder-page. By default, the UI expects the API at http://127.0.0.1:8080.
