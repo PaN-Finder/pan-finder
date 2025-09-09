@@ -2,15 +2,3 @@ FROM pgvector/pgvector:0.8.0-pg17
 
 # Install additional postgresql-unit extension (postgresql-17-unit)
 RUN apt-get update && apt-get install -y postgresql-17-unit=7.10-1.pgdg120+1
-
-# How to build and run:
-# docker build -t pan-finder-postgresql .
-# docker run -d --name pan-finder-postgresql -e POSTGRES_PASSWORD=mysecretpassword -p 5432:5432 pan-finder-postgresql
-# Connect: psql -h localhost -U postgres -d postgres
-# Password: mysecretpassword
-# Create extension: CREATE EXTENSION vector;
-# Create extension: CREATE EXTENSION unit;
-# List extensions: \dx
-
-# Remove container: docker rm -f pan-finder-postgres
-# Remove image: docker rmi pan-finder-postgres
