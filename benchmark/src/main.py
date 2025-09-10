@@ -48,7 +48,7 @@ def load_system_prompt(model: str, version: str) -> str:
 
 # Load prompt globally
 llm_model = "gpt-4.1-mini"
-system_prompt_version = "1_0_7.md"
+system_prompt_version = "1_0_8.md"
 extract_prompt = load_system_prompt(llm_model, system_prompt_version)
 
 

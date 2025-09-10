@@ -13,6 +13,10 @@
       {
         "query": "data produced at the Paul Scherrer Institute",
         "min_position": 20
+      },
+      {
+        "query": "data collected at the Paul Scherrer Institute",
+        "min_position": 20
       }
     ]
   },
@@ -21,15 +25,6 @@
     "queries": [
       { "query": "datasets from PSI LMU", "min_position": 1 },
       { "query": "data acquired at psi lmu", "min_position": 1 }
-    ]
-  },
-  {
-    "doi": "10.16907/5f65290a-f282-486b-b0ea-8c4ab2dbeeff",
-    "queries": [
-      {
-        "query": "data collected at the Paul Scherrer Institute",
-        "min_position": 8
-      }
     ]
   },
   {
@@ -45,16 +40,16 @@
         "query": "datasets from the European Synchrotron Radiation Facility",
         "min_position": 20
       },
-      { "query": "synchrotron datasets from esrf", "min_position": 20 }
+      {
+        "query": "data collected at the European Synchrotron Radiation Facility",
+        "min_position": 20
+      }
     ]
   },
   {
     "doi": "10.15151/ESRF-ES-1207226941",
     "queries": [
-      {
-        "query": "data collected at the European Synchrotron Radiation Facility",
-        "min_position": 1
-      }
+      { "query": "synchrotron datasets from esrf", "min_position": 1 }
     ]
   },
   {
@@ -89,17 +84,7 @@
       {
         "query": "experiments conducted at the Institut Laue-Langevin",
         "min_position": 20
-      }
-    ]
-  },
-  {
-    "doi": "10.5291/ILL-DATA.1-20-36",
-    "queries": [{ "query": "neutron datasets from ill", "min_position": 20 }]
-  },
-  {
-    "doi": "10.5291/ILL-DATA.9-10-1609",
-    "queries": [
-      { "query": "data from Institut Laue-Langevin", "min_position": 20 },
+      },
       {
         "query": "data acquired at Institut Laue-Langevin",
         "min_position": 20
@@ -107,18 +92,16 @@
     ]
   },
   {
+    "doi": "10.5291/ILL-DATA.1-20-36",
+    "queries": [{ "query": "neutron datasets from ill", "min_position": 2 }]
+  },
+  {
     "doi": "10.17199/BRIGHTNESS/V200181",
     "queries": [
       { "query": "datasets from ESS", "min_position": 20 },
       { "query": "experiments conducted at ESS", "min_position": 20 },
       { "query": "research data from ess", "min_position": 20 },
-      { "query": "results from experiments at ESS", "min_position": 20 }
-    ]
-  },
-  {
-    "doi": "10.17199/BRIGHTNESS/SONDE0018",
-    "queries": [
-      { "query": "data at the European Spallation Source", "min_position": 20 },
+      { "query": "results from experiments at ESS", "min_position": 20 },
       {
         "query": "data collected at European Spallation Source",
         "min_position": 20
@@ -126,7 +109,8 @@
       {
         "query": "datasets acquired at the European Spallation Source",
         "min_position": 20
-      }
+      },
+      { "query": "data at the European Spallation Source", "min_position": 20 }
     ]
   },
   {
