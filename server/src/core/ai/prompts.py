@@ -11,9 +11,9 @@ class AIPrompts:
 - If the remaining phrase is empty, generic, or only describes an action, return `"intention": ""`.
 - Do not infer or add any information not present in the query.
 - Examples:
-  - Query: “Find papers on CuNCN”  
+  - Query: “Find papers on CuNCN”
     → `"intention": "CuNCN"`
-  - Query: “Look for research where ...” or "Search for datasets where ..." (no specific subject provided beyond resource-type words)  
+  - Query: “Look for research where ...” or "Search for datasets where ..." (no specific subject provided beyond resource-type words)
     → `"intention": ""`
 
 ### 2. Extracting Keywords
@@ -34,6 +34,28 @@ class AIPrompts:
   - "utilizes the ID23 instrument" -> `{"name": "instrument", "operator": "=", "value": "ID23"}`
   - "experiment conducted at the ID23 instrument" -> `{"name": "instrument", "operator": "=", "value": "ID23"}`
   - "data from beamline P03" -> `{"name": "beamline", "operator": "=", "value": "P03"}`
+  
+  - Facilities and Organizations → publisher filter (special rule): When the query mentions a facility/organization (case-insensitive), add a filter with `name: "publisher"` and use the facility mention as the `value` exactly as it appears in the query. This rule is an exception to the "use the exact parameter names from the query" guideline specifically for facilities.
+    - Preserve known abbreviations exactly as provided (do NOT expand abbreviations to full names). Likewise, preserve known full names as provided (do NOT abbreviate). Examples of known abbreviations include: `ESRF`, `PSI`, `ILL`, `ESS`, `MAX IV`, `MAXIV`, `PSI LMU`.
+    - "datasets from ESRF" → `{"name": "publisher", "operator": "=", "value": "ESRF"}`
+    - "conducted at the European Synchrotron Radiation Facility" → `{"name": "publisher", "operator": "=", "value": "European Synchrotron Radiation Facility"}`
+    - "data from PSI" → `{"name": "publisher", "operator": "=", "value": "PSI"}`
+    - Multiple facilities:
+      - "from ESRF or PSI" → you may use a single `IN` filter preserving original terms: `{"name": "publisher", "operator": "IN", "value": ["ESRF", "PSI"]}`; or represent them as two separate conditions joined by `"logic": "OR"`. Choose `IN` only if it cleanly represents a simple alternative without additional coupled conditions.
+  - `publisher` value does not need to be in keywords.
+
+  - Known facilities (typo correction only): If the user clearly misspells a known facility, correct to the nearest known facility.
+
+    ```json
+    {
+      "ESRF": "European Synchrotron Radiation Facility",
+      "PSI": "Paul Scherrer Institute",
+      "ILL": "Institut Laue-Langevin",
+      "ESS": "European Spallation Source",
+      "MAX IV": "MAX IV Laboratory"
+    }
+    ```
+
 - Represent each filter with the following structure:
   ```
   {
@@ -192,7 +214,7 @@ class AIPrompts:
             { "type": "array", "items": { "type": "string" } },
             { "type": "array", "items": { "type": "number" } },
             { "type": "array", "items": { "type": "integer" } },
-            { "type": "array", "items": { "type": "boolean" } }            
+            { "type": "array", "items": { "type": "boolean" } }
           ]
         },
         "unit": {
@@ -208,25 +230,42 @@ class AIPrompts:
 
 ### 7. Example Transformations
 
-- **User Query:** "Search for studies on CuNCN where the temperature is between 1.5 K and 100 K OR it is higher and the publication year is 2020."  
-  **JSON Output:**  
+- **User Query:** "Search for studies on CuNCN where the temperature is between 1.5 K and 100 K OR it is higher and the publication year is 2020."
+  **JSON Output:**
   `{ "intention": "CuNCN", "keywords": ["CuNCN"], "filters": { "logic": "OR", "conditions": [ { "logic": "AND", "conditions": [ { "name": "temperature", "operator": ">=", "value": 1.5, "unit": "K" }, { "name": "temperature", "operator": "<=", "value": 100, "unit": "K" } ] }, { "logic": "AND", "conditions": [ { "name": "temperature", "operator": ">", "value": 100, "unit": "K" }, { "name": "publication year", "operator": "=", "value": 2020 } ] } ] } }`
 
-- **User Query:** "Find research on chloroquine’s crystal structure where the temperature is less than 100 K."  
-  **JSON Output:**  
+- **User Query:** "Find research on chloroquine’s crystal structure where the temperature is less than 100 K."
+  **JSON Output:**
   `{ "intention": "chloroquine’s crystal structure", "keywords": ["chloroquine", "crystal structure"], "filters": { "logic": "AND", "conditions": [ { "name": "temperature", "operator": "<", "value": 100, "unit": "K" } ] } }`
 
-- **User Query:** "Search for papers on graphene materials."  
-  **JSON Output:**  
+- **User Query:** "Search for papers on graphene materials."
+  **JSON Output:**
   `{ "intention": "graphene materials", "keywords": ["graphene materials"], "filters": {} }`
 
 - **User Query:** "Look for documents where the publication year is 2020."
-  **JSON Output:**  
+  **JSON Output:**
   `{ "intention": "", "keywords": [], "filters": { "logic": "AND", "conditions": [ { "name": "publication year", "operator": "=", "value": 2020 } ] } }`
 
 - **User Query:** "Find datasets where the temperature is about 100 K."
-  **JSON Output:**  
+  **JSON Output:**
   `{ "intention": "", "keywords": [], "filters": { "logic": "AND", "conditions": [ { "name": "temperature", "operator": "BETWEEN", "value": [99, 101], "unit": "K" } ] } }`
+
+- Facility mapping examples (publisher filter):
+  - **User Query:** "datasets from ESRF"
+    **JSON Output:**
+    `{ "intention": "", "keywords": [], "filters": { "logic": "AND", "conditions": [ { "name": "publisher", "operator": "=", "value": "ESRF" } ] } }`
+
+  - **User Query:** "data collected at the European Synchrotron Radiation Facility"
+    **JSON Output:**
+    `{ "intention": "", "keywords": [], "filters": { "logic": "AND", "conditions": [ { "name": "publisher", "operator": "=", "value": "European Synchrotron Radiation Facility" } ] } }`
+
+  - **User Query:** "results from ESRF or PSI"
+    **JSON Output (using IN):**
+    `{ "intention": "", "keywords": [], "filters": { "logic": "AND", "conditions": [ { "name": "publisher", "operator": "IN", "value": ["ESRF", "PSI"] } ] } }`
+
+  - **User Query:** "grazing incidence diffraction at ESRF with instrument ID23"
+    **JSON Output:**
+    `{ "intention": "grazing incidence diffraction", "keywords": ["grazing incidence diffraction"], "filters": { "logic": "AND", "conditions": [ { "name": "publisher", "operator": "=", "value": "ESRF" }, { "name": "instrument", "operator": "=", "value": "ID23" } ] } }`
 
 ### 8. Error Handling & Edge Cases
 - If no filters are provided, return `"filters": {}`.
