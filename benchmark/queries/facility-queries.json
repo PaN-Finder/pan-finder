@@ -1,0 +1,157 @@
+[
+  {
+    "doi": "10.16907/1ac46f03-6e1b-4230-b5c0-3df2cec87b5e",
+    "queries": [
+      { "query": "datasets from PSI", "min_position": 20 },
+      { "query": "data from PSI", "min_position": 20 },
+      { "query": "datasets from Paul Scherrer Institute", "min_position": 20 },
+      { "query": "research data from PSI", "min_position": 20 },
+      { "query": "experiments conducted at PSI", "min_position": 20 },
+      { "query": "data acquired at PSI", "min_position": 20 },
+      { "query": "datasets recorded at psi", "min_position": 20 },
+      { "query": "beamline data from PSI", "min_position": 20 },
+      {
+        "query": "data produced at the Paul Scherrer Institute",
+        "min_position": 20
+      }
+    ]
+  },
+  {
+    "doi": "10.16907/24ee1f7e-f047-4973-95bf-656943d63774",
+    "queries": [
+      { "query": "datasets from PSI LMU", "min_position": 1 },
+      { "query": "data acquired at psi lmu", "min_position": 1 }
+    ]
+  },
+  {
+    "doi": "10.16907/5f65290a-f282-486b-b0ea-8c4ab2dbeeff",
+    "queries": [
+      {
+        "query": "data collected at the Paul Scherrer Institute",
+        "min_position": 8
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1983130384",
+    "queries": [
+      { "query": "datasets from ESRF", "min_position": 20 },
+      { "query": "data at ESRF", "min_position": 20 },
+      { "query": "research data from ESRF", "min_position": 20 },
+      { "query": "experiments conducted at ESRF", "min_position": 20 },
+      { "query": "data produced at ESRF", "min_position": 20 },
+      { "query": "datasets acquired at esrf", "min_position": 20 },
+      {
+        "query": "datasets from the European Synchrotron Radiation Facility",
+        "min_position": 20
+      },
+      { "query": "synchrotron datasets from esrf", "min_position": 20 }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1207226941",
+    "queries": [
+      {
+        "query": "data collected at the European Synchrotron Radiation Facility",
+        "min_position": 1
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1332958643",
+    "queries": [
+      {
+        "query": "mrna bacteria taken with cryo-em at esrf",
+        "min_position": 1
+      }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1059300963",
+    "queries": [
+      { "query": "Give all MX data collected at ESRF", "min_position": 3 }
+    ]
+  },
+  {
+    "doi": "10.15151/ESRF-ES-1534186994",
+    "queries": [
+      { "query": "grazing incidence diffraction at ESRF", "min_position": 1 }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.INTER-421",
+    "queries": [
+      { "query": "datasets from ILL", "min_position": 20 },
+      { "query": "data collected at ILL", "min_position": 20 },
+      { "query": "research data at ILL", "min_position": 20 },
+      { "query": "datasets produced at ILL Grenoble", "min_position": 20 },
+      { "query": "data from Institut Laue-Langevin", "min_position": 20 },
+      {
+        "query": "experiments conducted at the Institut Laue-Langevin",
+        "min_position": 20
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.1-20-36",
+    "queries": [{ "query": "neutron datasets from ill", "min_position": 20 }]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-10-1609",
+    "queries": [
+      { "query": "data from Institut Laue-Langevin", "min_position": 20 },
+      {
+        "query": "data acquired at Institut Laue-Langevin",
+        "min_position": 20
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/V200181",
+    "queries": [
+      { "query": "datasets from ESS", "min_position": 20 },
+      { "query": "experiments conducted at ESS", "min_position": 20 },
+      { "query": "research data from ess", "min_position": 20 },
+      { "query": "results from experiments at ESS", "min_position": 20 }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/SONDE0018",
+    "queries": [
+      { "query": "data at the European Spallation Source", "min_position": 20 },
+      {
+        "query": "data collected at European Spallation Source",
+        "min_position": 20
+      },
+      {
+        "query": "datasets acquired at the European Spallation Source",
+        "min_position": 20
+      }
+    ]
+  },
+  {
+    "doi": "10.17199/BRIGHTNESS/V200075",
+    "queries": [{ "query": "neutron data produced at ESS", "min_position": 20 }]
+  },
+  {
+    "doi": "10.48391/52813eb9-df48-4f4c-911b-f24f8d079419",
+    "queries": [
+      { "query": "datasets from MAX IV", "min_position": 5 },
+      { "query": "datasets from MAXIV", "min_position": 5 },
+      { "query": "datasets from MAX IV Laboratory", "min_position": 5 },
+      {
+        "query": "datasets from MAX IV Laboratory",
+        "min_position": 5
+      },
+      { "query": "data collected at MAX IV", "min_position": 5 },
+      { "query": "research data from max iv laboratory", "min_position": 5 },
+      { "query": "experiments conducted at MAXIV", "min_position": 5 },
+      { "query": "synchrotron datasets at MAX IV", "min_position": 5 },
+      {
+        "query": "data acquired at MAX IV Laboratory",
+        "min_position": 5
+      },
+      { "query": "beamline data from MAX IV", "min_position": 5 }
+    ]
+  }
+]
