@@ -12,12 +12,11 @@ if str(server_path) not in sys.path:
     sys.path.insert(0, str(server_path))
 
 from src.core.engine.knee_point import KneePoint
+from src.db.models.search import EnhancedSearchResult
 
 
-def make_result(score: float, doi: str = "d") -> MagicMock:
+def make_result(score: float, doi: str = "d") -> EnhancedSearchResult:
     """Helper to create a mocked search result object with a given score."""
-    # Pass attributes directly to the MagicMock constructor.
-    # This ensures each mock instance has its own independent 'overall_score'.
     return MagicMock(overall_score=score, doi=f"{doi}:{score:.3f}")
 
 

@@ -5,7 +5,9 @@ This module provides functionality to filter out weakly-relevant results from a 
 of search results using a simple knee (elbow) detection algorithm.
 """
 
-from typing import List, TypeVar, Protocol, NamedTuple, Any
+from typing import List, TypeVar, Protocol, NamedTuple
+
+from ...db.models.search import EnhancedSearchResult
 
 # Generic type for objects that have an overall_score attribute
 T = TypeVar("T", bound="ScoredResult")
@@ -20,7 +22,7 @@ class ScoredResult(Protocol):
 class KneePointResult(NamedTuple):
     """Result of knee point filtering with detailed statistics."""
 
-    filtered_results: List[Any]
+    filtered_results: List[EnhancedSearchResult]
     original_count: int
     filtered_count: int
     knee_index: int
@@ -63,7 +65,7 @@ class KneePoint:
         self.min_results = min_results
         self.linearity_epsilon = linearity_epsilon
 
-    def filter(self, results: List[T]) -> List[T]:
+    def filter(self, results: List[EnhancedSearchResult]) -> List[EnhancedSearchResult]:
         """
         Filter out the weakest tail items using a simple knee (elbow) heuristic.
 
@@ -87,7 +89,7 @@ class KneePoint:
         result = self.filter_with_stats(results)
         return result.filtered_results
 
-    def filter_with_stats(self, results: List[T]) -> KneePointResult:
+    def filter_with_stats(self, results: List[EnhancedSearchResult]) -> KneePointResult:
         """
         Filter out the weakest tail items and return detailed statistics.
 
