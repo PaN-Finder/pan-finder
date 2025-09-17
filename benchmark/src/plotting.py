@@ -406,6 +406,228 @@ def plot_score_distribution_stripplot(
     print(f"Strip plot saved to {output_path}")
 
 
+def plot_knee_point_distribution(knee_data_path: Path, output_path: Path):
+    """
+    Plots distribution of knee point statistics.
+
+    Args:
+        knee_data_path: Path to JSON file containing knee point data
+        output_path: Path to save the generated plot
+    """
+    try:
+        with open(knee_data_path, "r") as f:
+            knee_data = json.load(f)
+    except FileNotFoundError:
+        print(f"Error: The file {knee_data_path} was not found.")
+        return
+    except json.JSONDecodeError:
+        print(f"Error: Could not decode JSON from {knee_data_path}.")
+        return
+
+    if not knee_data or not isinstance(knee_data, dict):
+        print("No valid knee point data available in the JSON file.")
+        return
+
+    # Extract data for plotting
+    all_stats = []
+    for test_name, test_data in knee_data.items():
+        for query_stats in test_data:
+            query_stats["test_name"] = test_name
+            all_stats.append(query_stats)
+
+    if not all_stats:
+        print("No knee point statistics found to plot.")
+        return
+
+    df = pd.DataFrame(all_stats)
+
+    # Create subplots - 2x4 grid for 8 plots
+    fig, axes = plt.subplots(2, 4, figsize=(24, 12))
+    fig.suptitle("Knee Point Filtering Statistics Distribution", fontsize=16)
+
+    # Plot 1: Original vs Filtered count
+    axes[0, 0].scatter(df["original_count"], df["filtered_count"], alpha=0.6)
+    axes[0, 0].plot(
+        [0, df["original_count"].max()],
+        [0, df["original_count"].max()],
+        "r--",
+        alpha=0.8,
+    )
+    axes[0, 0].set_xlabel("Original Result Count")
+    axes[0, 0].set_ylabel("Filtered Result Count")
+    axes[0, 0].set_title("Original vs Filtered Results")
+    axes[0, 0].grid(True, alpha=0.3)
+
+    # Plot 2: Filtering effectiveness (percentage kept)
+    df["percentage_kept"] = (df["filtered_count"] / df["original_count"] * 100).fillna(
+        100
+    )
+    sns.histplot(data=df, x="percentage_kept", bins=20, ax=axes[0, 1])
+    axes[0, 1].set_xlabel("Percentage of Results Kept (%)")
+    axes[0, 1].set_ylabel("Frequency")
+    axes[0, 1].set_title("Distribution of Filtering Effectiveness")
+    axes[0, 1].grid(True, alpha=0.3)
+
+    # Plot 3: Knee index distribution
+    valid_knee_df = df[df["knee_index"] >= 0]
+    if not valid_knee_df.empty:
+        sns.histplot(data=valid_knee_df, x="knee_index", bins=20, ax=axes[0, 2])
+        axes[0, 2].set_xlabel("Knee Point Index")
+        axes[0, 2].set_ylabel("Frequency")
+        axes[0, 2].set_title("Distribution of Knee Point Positions")
+        axes[0, 2].grid(True, alpha=0.3)
+    else:
+        axes[0, 2].text(
+            0.5,
+            0.5,
+            "No valid knee indices found",
+            transform=axes[0, 2].transAxes,
+            ha="center",
+            va="center",
+        )
+        axes[0, 2].set_title("Distribution of Knee Point Positions")
+
+    # Plot 4: Knee point value distribution
+    valid_knee_value_df = df[df["knee_point_value"] >= 0]  # Include 0 values
+    if not valid_knee_value_df.empty:
+        sns.histplot(
+            data=valid_knee_value_df, x="knee_point_value", bins=20, ax=axes[0, 3]
+        )
+        axes[0, 3].set_xlabel("Knee Point Value (Score)")
+        axes[0, 3].set_ylabel("Frequency")
+        axes[0, 3].set_title("Distribution of Knee Point Values")
+        axes[0, 3].grid(True, alpha=0.3)
+
+        # Add statistical info
+        mean_val = valid_knee_value_df["knee_point_value"].mean()
+        median_val = valid_knee_value_df["knee_point_value"].median()
+        axes[0, 3].axvline(
+            mean_val,
+            color="red",
+            linestyle="--",
+            alpha=0.7,
+            label=f"Mean: {mean_val:.3f}",
+        )
+        axes[0, 3].axvline(
+            median_val,
+            color="orange",
+            linestyle="--",
+            alpha=0.7,
+            label=f"Median: {median_val:.3f}",
+        )
+        axes[0, 3].legend(fontsize=8)
+    else:
+        axes[0, 3].text(
+            0.5,
+            0.5,
+            "No valid knee point values found",
+            transform=axes[0, 3].transAxes,
+            ha="center",
+            va="center",
+        )
+        axes[0, 3].set_title("Distribution of Knee Point Values")
+
+    # Plot 5: Max distance from line
+    valid_distance_df = df[df["max_distance"] >= 0]
+    if not valid_distance_df.empty:
+        sns.histplot(data=valid_distance_df, x="max_distance", bins=20, ax=axes[1, 0])
+        axes[1, 0].set_xlabel("Max Distance from Line")
+        axes[1, 0].set_ylabel("Frequency")
+        axes[1, 0].set_title("Distribution of Knee Point Distances")
+        axes[1, 0].grid(True, alpha=0.3)
+    else:
+        axes[1, 0].text(
+            0.5,
+            0.5,
+            "No valid distances found",
+            transform=axes[1, 0].transAxes,
+            ha="center",
+            va="center",
+        )
+        axes[1, 0].set_title("Distribution of Knee Point Distances")
+
+    # Plot 6: Top score distribution
+    sns.histplot(data=df, x="top_score", bins=20, ax=axes[1, 1])
+    axes[1, 1].set_xlabel("Top Score")
+    axes[1, 1].set_ylabel("Frequency")
+    axes[1, 1].set_title("Distribution of Top Scores")
+    axes[1, 1].grid(True, alpha=0.3)
+
+    # Plot 7: Threshold flags summary
+    threshold_data = []
+    for _, row in df.iterrows():
+        threshold_data.append(
+            {
+                "linearity_met": row["linearity_threshold_met"],
+                "min_results_met": row["min_results_threshold_met"],
+                "min_top_score_met": row["min_top_score_threshold_met"],
+            }
+        )
+
+    threshold_df = pd.DataFrame(threshold_data)
+    threshold_counts = {
+        "Linearity": threshold_df["linearity_met"].sum(),
+        "Min Results": threshold_df["min_results_met"].sum(),
+        "Min Top Score": threshold_df["min_top_score_met"].sum(),
+    }
+
+    bars = axes[1, 2].bar(threshold_counts.keys(), threshold_counts.values())
+    axes[1, 2].set_ylabel("Count")
+    axes[1, 2].set_title("Threshold Conditions Met")
+    axes[1, 2].grid(True, alpha=0.3)
+
+    # Add value labels on bars
+    for bar in bars:
+        height = bar.get_height()
+        axes[1, 2].text(
+            bar.get_x() + bar.get_width() / 2.0,
+            height,
+            f"{int(height)}",
+            ha="center",
+            va="bottom",
+        )
+
+    # Plot 8: Knee point value vs filtering effectiveness
+    if "knee_point_value" in df.columns:
+        # Only plot points where knee point filtering actually occurred
+        filtered_df = df[(df["knee_point_value"] > 0) & (df["percentage_kept"] < 100)]
+        if not filtered_df.empty:
+            axes[1, 3].scatter(
+                filtered_df["knee_point_value"],
+                filtered_df["percentage_kept"],
+                alpha=0.6,
+            )
+            axes[1, 3].set_xlabel("Knee Point Value (Score)")
+            axes[1, 3].set_ylabel("Percentage Kept (%)")
+            axes[1, 3].set_title("Knee Point Value vs Filtering Effectiveness")
+            axes[1, 3].grid(True, alpha=0.3)
+        else:
+            axes[1, 3].text(
+                0.5,
+                0.5,
+                "No filtering events found",
+                transform=axes[1, 3].transAxes,
+                ha="center",
+                va="center",
+            )
+            axes[1, 3].set_title("Knee Point Value vs Filtering Effectiveness")
+    else:
+        axes[1, 3].text(
+            0.5,
+            0.5,
+            "Knee point value data not available",
+            transform=axes[1, 3].transAxes,
+            ha="center",
+            va="center",
+        )
+        axes[1, 3].set_title("Knee Point Value vs Filtering Effectiveness")
+
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    plt.close()
+    print(f"Knee point distribution plot saved to {output_path}")
+
+
 def plot_overall_changes(results_dir: Path, output_path: Path):
     """
     Reads all 'results_*.csv' files from the specified directory,

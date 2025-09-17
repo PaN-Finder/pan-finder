@@ -6,7 +6,7 @@ from fastapi import APIRouter, Header
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from ..core.engine import get_search_engine
+from ..core.engine import get_search_engine, KneePointResult
 from ..db.models.search import EnhancedSearchResult, StructuredQueryData
 from ..db.models.statistic import Statistic
 from ..db.models.statistic_repository import StatisticRepository
@@ -25,7 +25,8 @@ class SearchRequest(BaseModel):
 class SearchResponse(BaseModel):
     id: str | None
     raw_structured_data: dict
-    results: List[EnhancedSearchResult]
+    relevant_results: List[EnhancedSearchResult] = []
+    weakly_relevant_results: List[EnhancedSearchResult] = []
     total_results: int
 
 
@@ -81,7 +82,20 @@ async def search_with_ai_stream(
                 yield event
 
             # Step 4: Execute search and stream final results
-            search_results, sql_query = await engine.execute_search(search_data)
+            search_results, sql_query, knee_point_result = await engine.execute_search(
+                search_data
+            )
+
+            relevant_results: List[EnhancedSearchResult] = (
+                knee_point_result.filtered_results
+                if knee_point_result
+                else search_results
+            )
+            weakly_relevant_results: List[EnhancedSearchResult] = (
+                [r for r in search_results if r not in relevant_results]
+                if knee_point_result
+                else []
+            )
 
             # Store statistics
             stat_id = None
@@ -90,7 +104,12 @@ async def search_with_ai_stream(
                     search_query=raw_query,
                     sql_query=sql_query.as_string(),
                     structured_data=raw_structured_data,
-                    results=[result.model_dump() for result in search_results],
+                    results={
+                        "relevant": [r.model_dump() for r in relevant_results],
+                        "weakly_relevant": [
+                            r.model_dump() for r in weakly_relevant_results
+                        ],
+                    },
                     execution_time_ms=0,  # Optionally measure and store real execution time
                 )
                 stat_id = StatisticRepository.insert(stat)
@@ -100,7 +119,8 @@ async def search_with_ai_stream(
             response = SearchResponse(
                 id=stat_id,
                 raw_structured_data=raw_structured_data,
-                results=search_results,
+                relevant_results=relevant_results,
+                weakly_relevant_results=weakly_relevant_results,
                 total_results=len(search_results),
             )
 
@@ -109,14 +129,14 @@ async def search_with_ai_stream(
             ):
                 yield event
 
-            if len(search_results) > 0:
+            if len(relevant_results) > 0:
                 # Step 5: Stream explanation
                 async for event in sse_yield(StreamEvent(event="explanation_started")):
                     yield event
 
                 try:
                     async for explanation_chunk in engine.explain_search_results(
-                        raw_query, search_results, search_data
+                        raw_query, relevant_results, search_data
                     ):
                         async for event in sse_yield(
                             StreamEvent(
@@ -207,7 +227,18 @@ async def search_with_structured_data(
             )
 
             # Step 3: Execute search directly with structured data
-            search_results, sql_query = await engine.execute_search(structured_data)
+            search_results, sql_query, knee_point_result = await engine.execute_search(
+                structured_data
+            )
+
+            relevant_results: List[EnhancedSearchResult] = (
+                knee_point_result.filtered_results if knee_point_result else []
+            )
+            weakly_relevant_results: List[EnhancedSearchResult] = (
+                [r for r in search_results if r not in relevant_results]
+                if knee_point_result
+                else search_results
+            )
 
             stat_id = None
             try:
@@ -215,7 +246,13 @@ async def search_with_structured_data(
                     search_query=original.search_query,
                     sql_query=sql_query.as_string(),
                     structured_data=request.structured_data,
-                    results=[result.model_dump() for result in search_results],
+                    results={
+                        "relevant": [r.model_dump() for r in relevant_results],
+                        "weakly_relevant": [
+                            r.model_dump() for r in weakly_relevant_results
+                        ],
+                        "knee_point": knee_point_result
+                    },
                     execution_time_ms=0,
                     modified_query_id=request.modified_query_id,
                 )
@@ -226,7 +263,8 @@ async def search_with_structured_data(
             response = SearchResponse(
                 id=stat_id,
                 raw_structured_data=request.structured_data,
-                results=search_results,
+                relevant_results=relevant_results,
+                weakly_relevant_results=weakly_relevant_results,
                 total_results=len(search_results),
             )
 

@@ -4,7 +4,6 @@ import logging
 import sys
 import time
 from datetime import datetime
-from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 import pandas as pd
@@ -15,34 +14,31 @@ from plotting import (
     plot_avarage_scores_per_dataset as plot_average_scores_per_dataset,  # alias for readability
     plot_overall_changes,
     plot_score_distribution_boxplot,
+    plot_knee_point_distribution,
 )
+from paths import benchmark_dir, root_dir, project_root
 
 # Make server code importable without modifying server files
-server_dir = Path(__file__).parent.parent.parent / "server"
-sys.path.insert(0, str(server_dir))
+sys.path.insert(0, str(project_root() / "server"))
 
 from src.core.search_query_builder import SearchQueryBuilder
+from src.core.engine.engine import SearchEngine
 from src.db.connection import get_connection_pool, get_db_connection
 from src.config import get_settings
+from src.db.models.search import StructuredQueryData
 
 logging.getLogger("benchmark")
 
 # Global cache for LLM responses (loaded from file)
 llm_response_cache: Dict[str, str] = {}
 
-
-def root_dir() -> Path:
-    """Project root directory."""
-    return Path(__file__).resolve().parents[2]
-
-
 # Define cache file path
-CACHE_FILE_PATH = root_dir() / "benchmark" / "cache" / "llm_cache.json"
+CACHE_FILE_PATH = benchmark_dir() / "cache" / "llm_cache.json"
 settings = get_settings()
 
 
 def load_system_prompt(model: str, version: str) -> str:
-    filepath = root_dir() / "benchmark" / "prompts" / model / version
+    filepath = benchmark_dir() / "prompts" / model / version
     return filepath.read_text()
 
 
@@ -80,13 +76,13 @@ def save_llm_cache() -> None:
 
 
 def load_rrf_score_k_values() -> List[Dict[str, Any]]:
-    filepath = root_dir() / "benchmark" / "rrf_score_k_values_matrix.json"
+    filepath = benchmark_dir() / "rrf_score_k_values_matrix.json"
     return json.loads(filepath.read_text())
 
 
 def load_datasets() -> Dict[str, List[Dict[str, Any]]]:
     """Load all query datasets, returning parsed JSON per file name."""
-    base_dir = root_dir() / "benchmark" / "queries"
+    base_dir = benchmark_dir() / "queries"
     datasets: Dict[str, List[Dict[str, Any]]] = {}
     for filepath in sorted(base_dir.glob("*.json")):
         datasets[filepath.name] = json.loads(filepath.read_text())
@@ -148,8 +144,8 @@ def get_llm_response(prompt: str, query: str, **kwargs) -> str | None:
 
 
 def process_query(
-    query_obj: Dict[str, Any], doi: str, builder: SearchQueryBuilder
-) -> Tuple[float, float, float, float, float, float, float, float]:
+    query_obj: Dict[str, Any], doi: str, search_engine: SearchEngine
+) -> Tuple[float, float, float, float, float, float, float, float, Dict[str, Any]]:
     query_text = query_obj.get("query", "").strip()
     if not query_text:
         raise ValueError("Query text is empty")
@@ -171,20 +167,53 @@ def process_query(
     except json.JSONDecodeError:
         data = json.loads(extract_json_from_response(response))
 
-    query = builder.build_query(data)
-    try:
-        logging.debug("SQL Query: %s", query.as_string())
-    except Exception:
-        logging.debug("SQL Query constructed (requires DB to render string)")
+    # Convert to StructuredQueryData
+    structured_data = StructuredQueryData(
+        intention=data.get("intention", ""),
+        keywords=data.get("keywords", []),
+        filters=data.get("filters", {}),
+    )
 
-    with get_db_connection() as conn, conn.cursor() as cursor:
+    # Execute search with knee point statistics
+    import asyncio
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
         start_time = time.time()
-        cursor.execute(query)
-        results = cursor.fetchall()
+        results, query, knee_stats = loop.run_until_complete(
+            search_engine.execute_search(structured_data)
+        )
         elapsed_time = time.time() - start_time
+    finally:
+        loop.close()
+
+    logging.debug(
+        "SQL Query: %s",
+        query.as_string() if hasattr(query, "as_string") else str(query),
+    )
+
+    # Apply knee point filtering
+    # results = knee_stats.filtered_results if knee_stats else results
+
+    # Convert results to DataFrame format for compatibility
+    if results:
+        df_data = []
+        for result in results:
+            df_data.append(
+                [
+                    result.doi,
+                    result.overall_score,
+                    result.similarity_score,
+                    result.chunk_similarity_score,
+                    result.full_match_score,
+                    result.partial_match_score,
+                    result.keyword_score,
+                ]
+            )
 
         df = pd.DataFrame(
-            results,
+            df_data,
             columns=[
                 "Doi",
                 "Overall Score",
@@ -204,11 +233,23 @@ def process_query(
                 "Keyword Score": float,
             }
         )
+    else:
+        df = pd.DataFrame(
+            columns=[
+                "Doi",
+                "Overall Score",
+                "Similarity Score",
+                "Chunk Similarity Score",
+                "Full Match Score",
+                "Partial Match Score",
+                "Keyword Score",
+            ]
+        )
 
     logging.info("%s", df.to_string(index=True))
 
     # Find the position of target DOI
-    position = next((i for i, row in enumerate(results) if row[0] == doi), -1)
+    position = next((i for i, result in enumerate(results) if result.doi == doi), -1)
 
     # Score: full credit if within min_position, then linear decay up to 20 ranks, clamped at 0
     if position < 0:
@@ -217,7 +258,8 @@ def process_query(
         offset = max(0, position - min_position)
         score = max(0.0, 1.0 - (offset / 20.0))
 
-    if position != -1:
+    if position != -1 and results:
+        result = results[position]
         (
             overall,
             sim_score,
@@ -226,12 +268,12 @@ def process_query(
             partial_match_score,
             keyword_score,
         ) = (
-            float(results[position][1]),
-            float(results[position][2]),
-            float(results[position][3]),
-            float(results[position][4]),
-            float(results[position][5]),
-            float(results[position][6]),
+            float(result.overall_score),
+            float(result.similarity_score),
+            float(result.chunk_similarity_score),
+            float(result.full_match_score),
+            float(result.partial_match_score),
+            float(result.keyword_score),
         )
     else:
         overall = sim_score = chunk_score = full_match_score = partial_match_score = (
@@ -239,12 +281,28 @@ def process_query(
         ) = 0.0
 
     logging.info(
-        "Score: %.3f | Position: %d | Min: %d | Runtime: %.3fs",
+        "Score: %.3f | Position: %d | Min: %d | Runtime: %.3fs | Knee point: %s",
         score,
         position,
         min_position,
         elapsed_time,
+        knee_stats.knee_point_value if knee_stats else "N/A",
     )
+
+    # Prepare knee point statistics
+    knee_point_stats = {}
+    if knee_stats:
+        knee_point_stats = {
+            "original_count": knee_stats.original_count,
+            "filtered_count": knee_stats.filtered_count,
+            "knee_index": knee_stats.knee_index,
+            "knee_point_value": knee_stats.knee_point_value,
+            "max_distance": knee_stats.max_distance,
+            "top_score": knee_stats.top_score,
+            "linearity_threshold_met": knee_stats.linearity_threshold_met,
+            "min_results_threshold_met": knee_stats.min_results_threshold_met,
+            "min_top_score_threshold_met": knee_stats.min_top_score_threshold_met,
+        }
 
     return (
         score,
@@ -255,16 +313,18 @@ def process_query(
         full_match_score,
         partial_match_score,
         keyword_score,
+        knee_point_stats,
     )
 
 
 def process_document(
-    doc: Dict[str, Any], builder: SearchQueryBuilder
-) -> Tuple[List[float], List[float], List[Dict[str, float]]]:
+    doc: Dict[str, Any], search_engine: SearchEngine
+) -> Tuple[List[float], List[float], List[Dict[str, float]], List[Dict[str, Any]]]:
     doi = doc.get("doi", "N/A")
     scores = []
     runtimes = []
     breakdowns = []  # to store detailed score breakdown per query
+    knee_stats = []  # to store knee point statistics per query
     for query_obj in doc.get("queries", []):
         (
             score,
@@ -275,7 +335,8 @@ def process_document(
             full_match_score,
             partial_match_score,
             keyword_score,
-        ) = process_query(query_obj, doi, builder)
+            knee_point_stats,
+        ) = process_query(query_obj, doi, search_engine)
         scores.append(score)
         runtimes.append(runtime)
         breakdowns.append(
@@ -288,22 +349,25 @@ def process_document(
                 "keyword": keyword_score,
             }
         )
-    return scores, runtimes, breakdowns
+        knee_stats.append(knee_point_stats)
+    return scores, runtimes, breakdowns, knee_stats
 
 
 def process_dataset(
-    dataset_name: str, dataset: List[Dict[str, Any]], builder: SearchQueryBuilder
-) -> Tuple[List[float], List[float], List[Dict[str, float]]]:
+    dataset_name: str, dataset: List[Dict[str, Any]], search_engine: SearchEngine
+) -> Tuple[List[float], List[float], List[Dict[str, float]], List[Dict[str, Any]]]:
     logging.info("Dataset: %s", dataset_name)
     dataset_scores = []
     dataset_runtimes = []
     dataset_breakdowns = []
+    dataset_knee_stats = []
     for doc in dataset:
-        scores, runtimes, breakdowns = process_document(doc, builder)
+        scores, runtimes, breakdowns, knee_stats = process_document(doc, search_engine)
         dataset_scores.extend(scores)
         dataset_runtimes.extend(runtimes)
         dataset_breakdowns.extend(breakdowns)
-    return dataset_scores, dataset_runtimes, dataset_breakdowns
+        dataset_knee_stats.extend(knee_stats)
+    return dataset_scores, dataset_runtimes, dataset_breakdowns, dataset_knee_stats
 
 
 def get_sentence_transformer(model: str = "all-MiniLM-L12-v2") -> SentenceTransformer:
@@ -328,6 +392,7 @@ def main() -> None:
     all_test_results: List[Dict[str, Any]] = []
     overall_test_metrics: Dict[str, Dict[str, float]] = {}
     all_scores_by_test_config: Dict[str, List[float]] = {}
+    all_knee_stats_by_test_config: Dict[str, List[Dict[str, Any]]] = {}
 
     # Run each RRF configuration across all datasets
     for rrf_config in rrf_score_k_values:
@@ -335,7 +400,12 @@ def main() -> None:
         logging.info("=== Test: %s ===", test_name)
         logging.info("RRF k-values: %s", rrf_config)
 
-        builder = SearchQueryBuilder(
+        # Create SearchEngine with specific RRF configuration
+        search_engine = SearchEngine(
+            sentence_transformer=sentence_transformer,
+        )
+        # Update the query builder with specific RRF values
+        search_engine._query_builder = SearchQueryBuilder(
             sentence_transformer=sentence_transformer,
             pool=get_connection_pool(),
             rrf_k_similarity=rrf_config.get("rrf_k_similarity", 60),
@@ -348,11 +418,14 @@ def main() -> None:
 
         test_all_scores: List[float] = []
         test_all_runtimes: List[float] = []
+        test_knee_stats: List[Dict[str, Any]] = []
         test_total_queries = 0
 
         for dataset_name, dataset in datasets.items():
-            ds_scores, ds_runtimes, ds_breakdowns = process_dataset(
-                dataset_name, dataset, builder
+            dataset = [doc for doc in dataset if doc.get("type", None) == None]
+
+            ds_scores, ds_runtimes, ds_breakdowns, ds_knee_stats = process_dataset(
+                dataset_name, dataset, search_engine
             )
 
             # Aggregate per dataset
@@ -373,6 +446,7 @@ def main() -> None:
             test_total_queries += ds_total_queries
             test_all_scores.extend(ds_scores)
             test_all_runtimes.extend(ds_runtimes)
+            test_knee_stats.extend(ds_knee_stats)
 
         avg_score = (
             (sum(test_all_scores) / test_total_queries) if test_total_queries else 0.0
@@ -393,10 +467,15 @@ def main() -> None:
         if test_all_scores:
             all_scores_by_test_config[test_name] = test_all_scores
 
-    results_dir = root_dir() / "benchmark" / "results"
+        if test_knee_stats:
+            all_knee_stats_by_test_config[test_name] = test_knee_stats
+
+    results_dir = benchmark_dir() / "results"
     results_dir.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    # Save raw scores data
     raw_scores_data_path = results_dir / f"raw_scores_by_test_config_{timestamp}.json"
     try:
         with open(raw_scores_data_path, "w") as f:
@@ -404,10 +483,27 @@ def main() -> None:
     except IOError as e:
         logging.info("Error saving raw scores data: %s", e)
 
+    # Save knee point statistics
+    knee_stats_data_path = results_dir / f"knee_point_stats_{timestamp}.json"
+    try:
+        with open(knee_stats_data_path, "w") as f:
+            json.dump(all_knee_stats_by_test_config, f, indent=2)
+        logging.info("Knee point statistics saved to %s", knee_stats_data_path)
+    except IOError as e:
+        logging.info("Error saving knee point statistics: %s", e)
+
+    # Generate plots
     plot_score_distribution_boxplot(
         raw_scores_data_path,
         results_dir / f"score_distribution_boxplot_{timestamp}.png",
     )
+
+    # Generate knee point distribution plot
+    if all_knee_stats_by_test_config:
+        plot_knee_point_distribution(
+            knee_stats_data_path,
+            results_dir / f"knee_point_distribution_{timestamp}.png",
+        )
 
     results_df = pd.DataFrame(all_test_results)
     plot_average_scores_per_dataset(

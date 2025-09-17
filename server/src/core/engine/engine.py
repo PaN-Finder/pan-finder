@@ -17,6 +17,7 @@ from ..ai.cache import LLMResponseCache
 from ...utils import get_logger
 from ...config import get_settings
 from .scoring import Scoring
+from .knee_point import KneePoint, KneePointResult
 
 settings = get_settings()
 
@@ -48,6 +49,7 @@ class SearchEngine:
         self._query_builder = query_builder
         self._logger = get_logger(self.__class__.__name__)
         self._llm_cache = LLMResponseCache(logger=self._logger)
+        self._knee_point = KneePoint()
 
     @property
     def openai_client(self) -> AzureOpenAI:
@@ -186,15 +188,16 @@ class SearchEngine:
 
     async def execute_search(
         self, search_data: StructuredQueryData
-    ) -> Tuple[List[EnhancedSearchResult], Composed]:
+    ) -> Tuple[List[EnhancedSearchResult], Composed, Optional[KneePointResult]]:
         """
         Execute the search using the structured query data.
 
         Args:
             search_data: Structured query information
+            return_knee_stats: Whether to return knee point statistics
 
         Returns:
-            List of enhanced search results
+            Tuple of (enhanced search results, SQL query, optional knee point stats)
         """
         try:
             # Generate SQL query
@@ -216,11 +219,14 @@ class SearchEngine:
             # Normalize scores to a 0-1 range
             Scoring.normalize_scores(results, search_data)
 
-            return (results, sql_query)
+            # Apply knee-point filtering to discard low-relevance tail
+            knee_result = self._knee_point.filter_with_stats(results)
+
+            return (results, sql_query, knee_result)
 
         except Exception as e:
             self._logger.error(f"Search execution error: {e}")
-            return [], sql_query
+            return [], sql_query, None
 
     def _execute_database_query(
         self, sql_query: Composed
@@ -304,43 +310,6 @@ class SearchEngine:
 
         return search_results
 
-    def _group_results_by_relevance(
-        self, search_results: List[EnhancedSearchResult]
-    ) -> dict:
-        """
-        Group search results into high, medium, and low relevance based on overall_score.
-
-        Score ranges (0-1 scale where 1 is best):
-        - High: 0.7 and above (highly relevant)
-        - Medium: 0.5 to 0.7 (moderately relevant)
-        - Low: below 0.5 (less relevant)
-
-        Args:
-            search_results: List of search results to group
-
-        Returns:
-            Dictionary with high, medium, low relevance groups
-        """
-        if not search_results:
-            return {"high": [], "medium": [], "low": []}
-
-        # Define absolute thresholds based on 0-1 score scale
-        high_threshold = 0.7  # High relevance: 70% and above
-        medium_threshold = 0.5  # Medium relevance: 50-70%
-        # Low relevance: below 40%
-
-        groups = {"high": [], "medium": [], "low": []}
-
-        for result in search_results:
-            if result.overall_score >= high_threshold:
-                groups["high"].append(result)
-            elif result.overall_score >= medium_threshold:
-                groups["medium"].append(result)
-            else:
-                groups["low"].append(result)
-
-        return groups
-
     def _build_result_dict(
         self, result: EnhancedSearchResult, structured_data: StructuredQueryData
     ) -> dict:
@@ -386,85 +355,42 @@ class SearchEngine:
         search_results: List[EnhancedSearchResult],
         structured_data: StructuredQueryData,
     ) -> AsyncGenerator[str, None]:
-        """
-        Generate a streaming explanation of search results using OpenAI.
+        """Stream a qualitative explanation for the ranked (knee-point filtered) results.
 
-        Args:
-            query: The original search query
-            search_results: List of search results to explain
-
-        Yields:
-            Streaming explanation content
+        The method prepares a flattened list of relevant results (no grouping) and calls
+        the LLM with the updated single-section explanation prompt. Responses are cached
+        keyed on the query plus the serialized results for determinism.
         """
         model_name = settings.azure_openai_explanation_model_name
 
-        # Group results by relevance
-        relevance_groups = self._group_results_by_relevance(search_results)
-
-        # Prepare the results data for the LLM
+        # Prepare data (already knee-point filtered upstream)
         results_summary = {
             "total_results": len(search_results),
-            "relevance_groups": {
-                "high": {
-                    "count": len(relevance_groups["high"]),
-                    "results": [
-                        self._build_result_dict(result, structured_data)
-                        for result in relevance_groups["high"][
-                            :5
-                        ]  # Limit to top 5 per group
-                    ],
-                },
-                "medium": {
-                    "count": len(relevance_groups["medium"]),
-                    "results": [
-                        self._build_result_dict(result, structured_data)
-                        for result in relevance_groups["medium"][
-                            :3
-                        ]  # Limit to top 3 per group
-                    ],
-                },
-                "low": {
-                    "count": len(relevance_groups["low"]),
-                    "results": [
-                        self._build_result_dict(result, structured_data)
-                        for result in relevance_groups["low"][
-                            :2
-                        ]  # Limit to top 2 per group
-                    ],
-                },
-            },
+            "relevant": [
+                self._build_result_dict(result, structured_data)
+                for result in search_results
+            ],
         }
 
-        # Create cache key from query and results summary
+        # Cache key
         results_json = json.dumps(results_summary, sort_keys=True)
         cache_key = f"{query}||{results_json}"
 
-        # Check if we have a cached response
         cached_response = self._llm_cache.get(model_name, cache_key)
         if cached_response is not None:
-            self._logger.debug(f"Using cached explanation for query: {query}")
-            # Yield cached response as a single chunk
+            self._logger.debug("Using cached explanation for query: %s", query)
             yield cached_response
             return
 
-        # Prepare the prompt with query and results
-        user_content = f"""
-        Original Query: "{query}"
-
-        Structured Query Data which is used to generate the search results:
-        {json.dumps(structured_data.model_dump(), indent=2)}
-
-        Search Results Summary:
-        - Total results found: {results_summary['total_results']}
-        - High relevance results: {results_summary['relevance_groups']['high']['count']}
-        - Medium relevance results: {results_summary['relevance_groups']['medium']['count']}
-        - Low relevance results: {results_summary['relevance_groups']['low']['count']}
-
-        Results by Relevance Groups:
-        {json.dumps(results_summary['relevance_groups'], indent=2)}
-
-        Please explain these search results in relation to the user's query, organizing your explanation by relevance groups (high, medium, low).
-        """
+        user_content = (
+            'Original Query: "'
+            + query
+            + '"\n\nStructured Query Data (reference context only):\n'
+            + json.dumps(structured_data.model_dump(), indent=2)
+            + "\n\nRanked Relevant Results (already knee-point filtered, DO NOT mention that process):\n"
+            + json.dumps(results_summary["relevant"], indent=2)
+            + "\n\nInstructions Recap (do NOT repeat to user): Provide markdown with a single section `## Relevant Results` (or the no-results header) and up to 3 bullets, one sentence each, qualitative only."
+        )
 
         def _start_stream():
             return self.openai_client.chat.completions.create(
@@ -499,7 +425,6 @@ class SearchEngine:
                     if content:
                         collected_content += content
                         yield content
-                # Non-conforming chunks are silently skipped after a warning
                 else:
                     self._logger.warning(
                         "Unexpected chunk format from OpenAI during streaming: %s",
@@ -507,10 +432,10 @@ class SearchEngine:
                     )
         except Exception as e:  # noqa: BLE001
             self._logger.error(
-                f"Streaming error from OpenAI (explanation). Yielding fallback. Error: {e}"
+                "Streaming error from OpenAI (explanation). Yielding fallback. Error: %s",
+                e,
             )
             if not collected_content:
-                # Only fallback if we have nothing yet
                 yield self._create_fallback_explanation(query, len(search_results))
         else:
             self._logger.debug("OpenAI streaming completed")
