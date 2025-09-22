@@ -209,7 +209,7 @@ def plot_stacked_bar_query_score_breakdown(
     plt.close()
 
 
-def plot_avarage_scores_per_dataset(
+def plot_average_scores_per_dataset(
     results_df: pd.DataFrame, overall_test_metrics: dict, output_path: Path
 ):
     """

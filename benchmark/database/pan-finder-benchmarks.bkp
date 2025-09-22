@@ -1,0 +1,437 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 17.4 (Debian 17.4-1.pgdg120+2)
+-- Dumped by pg_dump version 17.0
+
+-- Started on 2025-09-22 11:07:38 CEST
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 2 (class 3079 OID 268655)
+-- Name: pg_trgm; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public;
+
+
+--
+-- TOC entry 3701 (class 0 OID 0)
+-- Dependencies: 2
+-- Name: EXTENSION pg_trgm; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION pg_trgm IS 'text similarity measurement and index searching based on trigrams';
+
+
+--
+-- TOC entry 3 (class 3079 OID 268736)
+-- Name: vector; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public;
+
+
+--
+-- TOC entry 3702 (class 0 OID 0)
+-- Dependencies: 3
+-- Name: EXTENSION vector; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION vector IS 'vector data type and ivfflat and hnsw access methods';
+
+
+--
+-- TOC entry 1010 (class 1247 OID 269065)
+-- Name: filter_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.filter_type AS ENUM (
+    'EXPLICIT',
+    'DERIVED',
+    'INFERRED'
+);
+
+
+--
+-- TOC entry 1013 (class 1247 OID 269072)
+-- Name: test_pair_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.test_pair_type AS ENUM (
+    'synthetic',
+    'expert'
+);
+
+
+--
+-- TOC entry 257 (class 1255 OID 269077)
+-- Name: cast_to_bool(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.cast_to_bool(text) RETURNS boolean
+    LANGUAGE plpgsql
+    AS $_$
+                    BEGIN
+                        RETURN $1::BOOLEAN;
+                    EXCEPTION
+                        WHEN others THEN
+                            RETURN NULL;
+                    END;
+                    $_$;
+
+
+--
+-- TOC entry 314 (class 1255 OID 269078)
+-- Name: cast_to_float(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.cast_to_float(text) RETURNS double precision
+    LANGUAGE plpgsql
+    AS $_$
+                    BEGIN
+                        RETURN $1::FLOAT;
+                    EXCEPTION
+                        WHEN others THEN
+                            RETURN NULL;
+                    END;
+                    $_$;
+
+
+--
+-- TOC entry 259 (class 1255 OID 269079)
+-- Name: cast_to_int(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.cast_to_int(text) RETURNS bigint
+    LANGUAGE plpgsql
+    AS $_$
+                    BEGIN
+                        RETURN $1::BIGINT;
+                    EXCEPTION
+                        WHEN others THEN
+                            RETURN NULL;
+                    END;
+                    $_$;
+
+
+--
+-- TOC entry 273 (class 1255 OID 269080)
+-- Name: rrf_score(bigint, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.rrf_score(rank bigint, rrf_k integer DEFAULT 50) RETURNS numeric
+    LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE
+    AS $$
+                    BEGIN
+                        IF rank = 0 THEN RETURN 0.0; END IF;
+
+                        RETURN 1.0 / (rank + rrf_k);
+                    END;
+                    $$;
+
+
+--
+-- TOC entry 349 (class 1255 OID 269081)
+-- Name: update_document_tsvector(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.update_document_tsvector() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+                    BEGIN
+                        NEW.title_text_search_vector = to_tsvector('english', coalesce(NEW.title, '') || ' ' || coalesce(NEW.text, ''));
+                        RETURN NEW;
+                    END;
+                    $$;
+
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 219 (class 1259 OID 269082)
+-- Name: benchmarks_run; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.benchmarks_run (
+    runid uuid NOT NULL,
+    startdate timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    enddate timestamp without time zone,
+    hyperparameters jsonb
+);
+
+
+--
+-- TOC entry 220 (class 1259 OID 269088)
+-- Name: benchmarks_run_test; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.benchmarks_run_test (
+    testid uuid NOT NULL,
+    runid uuid,
+    tpid uuid,
+    intention text,
+    keywords text[],
+    filters jsonb,
+    rank integer,
+    runtime numeric,
+    extractiontime numeric,
+    buildingtime numeric,
+    querytime numeric,
+    sqlquery text,
+    resultsset jsonb
+);
+
+
+--
+-- TOC entry 221 (class 1259 OID 269093)
+-- Name: run_metrics_values; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.run_metrics_values (
+    id uuid NOT NULL,
+    runid uuid,
+    metric text,
+    value numeric
+);
+
+
+--
+-- TOC entry 222 (class 1259 OID 269098)
+-- Name: test_pair_metrics_values; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.test_pair_metrics_values (
+    id uuid NOT NULL,
+    runid uuid,
+    testid uuid,
+    metric text,
+    value numeric
+);
+
+
+--
+-- TOC entry 223 (class 1259 OID 269103)
+-- Name: test_pairs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.test_pairs (
+    tpid uuid NOT NULL,
+    userprompt text,
+    targetdoi text,
+    expectedrank integer,
+    promptid uuid,
+    expertname text,
+    groupid text,
+    type public.test_pair_type,
+    created timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    deprecated timestamp without time zone
+);
+
+
+--
+-- TOC entry 3526 (class 2606 OID 288504)
+-- Name: benchmarks_run benchmarks_run_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.benchmarks_run
+    ADD CONSTRAINT benchmarks_run_pkey PRIMARY KEY (runid);
+
+
+--
+-- TOC entry 3529 (class 2606 OID 288506)
+-- Name: benchmarks_run_test benchmarks_run_test_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.benchmarks_run_test
+    ADD CONSTRAINT benchmarks_run_test_pkey PRIMARY KEY (testid);
+
+
+--
+-- TOC entry 3533 (class 2606 OID 288508)
+-- Name: run_metrics_values run_metrics_values_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.run_metrics_values
+    ADD CONSTRAINT run_metrics_values_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3537 (class 2606 OID 288510)
+-- Name: test_pair_metrics_values test_pair_metrics_values_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.test_pair_metrics_values
+    ADD CONSTRAINT test_pair_metrics_values_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3545 (class 2606 OID 288512)
+-- Name: test_pairs test_pairs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.test_pairs
+    ADD CONSTRAINT test_pairs_pkey PRIMARY KEY (tpid);
+
+
+--
+-- TOC entry 3524 (class 1259 OID 288513)
+-- Name: benchmarks_run_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX benchmarks_run_idx ON public.benchmarks_run USING btree (runid);
+
+
+--
+-- TOC entry 3527 (class 1259 OID 288514)
+-- Name: benchmarks_run_test_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX benchmarks_run_test_idx ON public.benchmarks_run_test USING btree (runid);
+
+
+--
+-- TOC entry 3530 (class 1259 OID 288515)
+-- Name: benchmarks_run_test_test_pair_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX benchmarks_run_test_test_pair_idx ON public.benchmarks_run_test USING btree (tpid);
+
+
+--
+-- TOC entry 3531 (class 1259 OID 288516)
+-- Name: run_metrics_values_metrics_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX run_metrics_values_metrics_idx ON public.run_metrics_values USING btree (metric);
+
+
+--
+-- TOC entry 3534 (class 1259 OID 288517)
+-- Name: run_metrics_values_run_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX run_metrics_values_run_idx ON public.run_metrics_values USING btree (runid);
+
+
+--
+-- TOC entry 3540 (class 1259 OID 288518)
+-- Name: test_pair_doi_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX test_pair_doi_idx ON public.test_pairs USING btree (targetdoi);
+
+
+--
+-- TOC entry 3541 (class 1259 OID 288519)
+-- Name: test_pair_group_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX test_pair_group_id_idx ON public.test_pairs USING btree (groupid);
+
+
+--
+-- TOC entry 3535 (class 1259 OID 288520)
+-- Name: test_pair_metrics_values_metrics_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX test_pair_metrics_values_metrics_idx ON public.test_pair_metrics_values USING btree (metric);
+
+
+--
+-- TOC entry 3538 (class 1259 OID 288521)
+-- Name: test_pair_metrics_values_run_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX test_pair_metrics_values_run_idx ON public.test_pair_metrics_values USING btree (runid);
+
+
+--
+-- TOC entry 3539 (class 1259 OID 288522)
+-- Name: test_pair_metrics_values_test_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX test_pair_metrics_values_test_idx ON public.test_pair_metrics_values USING btree (testid);
+
+
+--
+-- TOC entry 3542 (class 1259 OID 288523)
+-- Name: test_pair_type_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX test_pair_type_idx ON public.test_pairs USING btree (type);
+
+
+--
+-- TOC entry 3543 (class 1259 OID 288524)
+-- Name: test_pair_unique_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX test_pair_unique_idx ON public.test_pairs USING btree (userprompt, targetdoi);
+
+
+--
+-- TOC entry 3546 (class 2606 OID 288525)
+-- Name: benchmarks_run_test benchmarks_run_test_runid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.benchmarks_run_test
+    ADD CONSTRAINT benchmarks_run_test_runid_fkey FOREIGN KEY (runid) REFERENCES public.benchmarks_run(runid);
+
+
+--
+-- TOC entry 3547 (class 2606 OID 288530)
+-- Name: benchmarks_run_test benchmarks_run_test_tpid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.benchmarks_run_test
+    ADD CONSTRAINT benchmarks_run_test_tpid_fkey FOREIGN KEY (tpid) REFERENCES public.test_pairs(tpid);
+
+
+--
+-- TOC entry 3548 (class 2606 OID 288535)
+-- Name: run_metrics_values run_metrics_values_runid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.run_metrics_values
+    ADD CONSTRAINT run_metrics_values_runid_fkey FOREIGN KEY (runid) REFERENCES public.benchmarks_run(runid);
+
+
+--
+-- TOC entry 3549 (class 2606 OID 288540)
+-- Name: test_pair_metrics_values test_pair_metrics_values_runid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.test_pair_metrics_values
+    ADD CONSTRAINT test_pair_metrics_values_runid_fkey FOREIGN KEY (runid) REFERENCES public.benchmarks_run(runid);
+
+
+--
+-- TOC entry 3550 (class 2606 OID 288545)
+-- Name: test_pair_metrics_values test_pair_metrics_values_testid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.test_pair_metrics_values
+    ADD CONSTRAINT test_pair_metrics_values_testid_fkey FOREIGN KEY (testid) REFERENCES public.benchmarks_run_test(testid);
+
+
+-- Completed on 2025-09-22 11:07:39 CEST
+
+--
+-- PostgreSQL database dump complete
+--
+

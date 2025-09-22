@@ -1,82 +1,40 @@
 import csv
 import json
 import logging
-import sys
 import time
 from datetime import datetime
-from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 import pandas as pd
-from openai import AzureOpenAI
-from sentence_transformers import SentenceTransformer
 
+from helper import get_llm_client, load_system_prompt, get_sentence_transformer
+from paths import root_dir, benchmark_dir, include_server_modules
 from plotting import (
-    plot_avarage_scores_per_dataset as plot_average_scores_per_dataset,  # alias for readability
+    plot_average_scores_per_dataset,
     plot_overall_changes,
     plot_score_distribution_boxplot,
 )
 
-# Make server code importable without modifying server files
-server_dir = Path(__file__).parent.parent.parent / "server"
-sys.path.insert(0, str(server_dir))
-
+include_server_modules()
 from src.core.search_query_builder import SearchQueryBuilder
-from src.db.connection import get_connection_pool, get_db_connection
+from src.core.ai.llm_client import LLMClient, LLMMessage
+from src.db.connection import get_database_pool, get_database_connection
 from src.config import get_settings
 
-logging.getLogger("benchmark")
-
-# Global cache for LLM responses (loaded from file)
-llm_response_cache: Dict[str, str] = {}
-
-
-def root_dir() -> Path:
-    """Project root directory."""
-    return Path(__file__).resolve().parents[2]
-
+logging.getLogger("multi_config_evaluator")
 
 # Define cache file path
-CACHE_FILE_PATH = root_dir() / "benchmark" / "cache" / "llm_cache.json"
+CACHE_FILE_PATH = benchmark_dir() / "cache" / "llm_cache.json"
 settings = get_settings()
 
-
-def load_system_prompt(model: str, version: str) -> str:
-    filepath = root_dir() / "benchmark" / "prompts" / model / version
-    return filepath.read_text()
-
-
-# Load prompt globally
 llm_model = "gpt-4.1-mini"
 system_prompt_version = "1_0_8.md"
+
+# Global LLM client with file caching
+llm_client: LLMClient = get_llm_client(llm_model)
+
+# Load prompt globally
 extract_prompt = load_system_prompt(llm_model, system_prompt_version)
-
-
-def load_llm_cache() -> None:
-    """Load the LLM response cache from disk (if present)."""
-    global llm_response_cache
-    if CACHE_FILE_PATH.exists():
-        try:
-            with open(CACHE_FILE_PATH, "r") as f:
-                llm_response_cache = json.load(f)
-            logging.info("LLM cache loaded from %s", str(CACHE_FILE_PATH))
-        except (json.JSONDecodeError, IOError) as e:
-            logging.info("Error loading LLM cache: %s. Starting with empty cache.", e)
-            llm_response_cache = {}
-    else:
-        logging.info("LLM cache file not found. Starting with empty cache.")
-        llm_response_cache = {}
-
-
-def save_llm_cache() -> None:
-    """Persist the LLM response cache to disk."""
-    try:
-        # Ensure parent directory exists
-        CACHE_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with open(CACHE_FILE_PATH, "w") as f:
-            json.dump(llm_response_cache, f, indent=2)
-    except IOError as e:
-        logging.info("Error saving LLM cache: %s", e)
 
 
 def load_rrf_score_k_values() -> List[Dict[str, Any]]:
@@ -93,61 +51,38 @@ def load_datasets() -> Dict[str, List[Dict[str, Any]]]:
     return datasets
 
 
-def extract_json_from_response(text: str) -> str:
-    """Extract JSON object from a text blob that may include code fences.
+async def get_llm_response(prompt: str, query: str, **kwargs) -> str | None:
+    """Get response from LLM using LLMClient with built-in caching."""
+    messages = [
+        LLMMessage(role="system", content=prompt),
+        LLMMessage(role="user", content=query),
+    ]
 
-    Note: With response_format=json_object this should be unnecessary, but kept
-    minimal for resilience when reading existing cache entries.
-    """
-    start = text.find("{")
-    end = text.rfind("}")
-    if start == -1 or end == -1:
-        raise ValueError("Response does not contain a valid JSON object")
-    return text[start : end + 1]
+    # Create metadata for this specific cache entry
+    cache_metadata = {
+        "llm_model": llm_model,
+        "system_prompt_version": system_prompt_version,
+        **kwargs,
+    }
 
-
-def get_openai_client_instance() -> AzureOpenAI:
-    """Returns a singleton instance of the AzureOpenAI client."""
-    if not hasattr(get_openai_client_instance, "_client"):
-        get_openai_client_instance._client = AzureOpenAI(
-            api_key=settings.azure_openai_api_key,
-            azure_endpoint=settings.azure_openai_endpoint,
-            api_version=settings.azure_openai_api_version,
-        )
-    return get_openai_client_instance._client
-
-
-def get_llm_response(prompt: str, query: str, **kwargs) -> str | None:
-    """Get response from OpenAI API, using file-backed cache if available."""
-
-    cache_key = f"{llm_model}_{system_prompt_version}|{query}|{json.dumps(kwargs, sort_keys=True)}"
-    if cache_key in llm_response_cache:
-        logging.info("LLM Cache Hit: %s", query)
-        return llm_response_cache[cache_key]
-
-    logging.info("LLM Cache Miss: %s", query)
-    response = get_openai_client_instance().chat.completions.create(
-        model=llm_model,
-        messages=[
-            {
-                "role": "system",
-                "content": prompt,
-            },
-            {"role": "user", "content": query},
-        ],
-        max_tokens=500,
-        temperature=0.1,
+    request = llm_client.create_request(
+        messages=messages,
+        max_tokens=kwargs.get("max_tokens", 500),
+        temperature=kwargs.get("temperature", 0.1),
         response_format={"type": "json_object"},
+        cache_metadata=cache_metadata,
     )
-    answer: str | None = response.choices[0].message.content
 
-    if answer is not None:
-        llm_response_cache[cache_key] = answer
-        save_llm_cache()  # Save cache after adding a new entry
-    return answer
+    try:
+        response = await llm_client.complete(request)
+
+        return response.content
+    except Exception as e:
+        logging.error("LLM request failed: %s", e)
+        return None
 
 
-def process_query(
+async def process_query(
     query_obj: Dict[str, Any], doi: str, builder: SearchQueryBuilder
 ) -> Tuple[float, float, float, float, float, float, float, float]:
     query_text = query_obj.get("query", "").strip()
@@ -156,7 +91,7 @@ def process_query(
 
     min_position: int = int(query_obj.get("min_position", 0))
 
-    response = get_llm_response(
+    response = await get_llm_response(
         extract_prompt, query_text, temperature=0, max_tokens=500
     )
     if response is None:
@@ -165,19 +100,14 @@ def process_query(
     logging.debug("DOI: %s", doi)
     logging.info("Query: %s", query_text)
 
-    # Prefer direct JSON when provided, fallback to extracting
-    try:
-        data = json.loads(response)
-    except json.JSONDecodeError:
-        data = json.loads(extract_json_from_response(response))
-
+    data = json.loads(response)
     query = builder.build_query(data)
     try:
         logging.debug("SQL Query: %s", query.as_string())
     except Exception:
         logging.debug("SQL Query constructed (requires DB to render string)")
 
-    with get_db_connection() as conn, conn.cursor() as cursor:
+    with get_database_connection() as conn, conn.cursor() as cursor:
         start_time = time.time()
         cursor.execute(query)
         results = cursor.fetchall()
@@ -258,7 +188,7 @@ def process_query(
     )
 
 
-def process_document(
+async def process_document(
     doc: Dict[str, Any], builder: SearchQueryBuilder
 ) -> Tuple[List[float], List[float], List[Dict[str, float]]]:
     doi = doc.get("doi", "N/A")
@@ -275,7 +205,7 @@ def process_document(
             full_match_score,
             partial_match_score,
             keyword_score,
-        ) = process_query(query_obj, doi, builder)
+        ) = await process_query(query_obj, doi, builder)
         scores.append(score)
         runtimes.append(runtime)
         breakdowns.append(
@@ -291,7 +221,7 @@ def process_document(
     return scores, runtimes, breakdowns
 
 
-def process_dataset(
+async def process_dataset(
     dataset_name: str, dataset: List[Dict[str, Any]], builder: SearchQueryBuilder
 ) -> Tuple[List[float], List[float], List[Dict[str, float]]]:
     logging.info("Dataset: %s", dataset_name)
@@ -299,19 +229,14 @@ def process_dataset(
     dataset_runtimes = []
     dataset_breakdowns = []
     for doc in dataset:
-        scores, runtimes, breakdowns = process_document(doc, builder)
+        scores, runtimes, breakdowns = await process_document(doc, builder)
         dataset_scores.extend(scores)
         dataset_runtimes.extend(runtimes)
         dataset_breakdowns.extend(breakdowns)
     return dataset_scores, dataset_runtimes, dataset_breakdowns
 
 
-def get_sentence_transformer(model: str = "all-MiniLM-L12-v2") -> SentenceTransformer:
-    model_path = root_dir() / "models" / model
-    return SentenceTransformer(str(model_path), device="cpu")
-
-
-def main() -> None:
+async def main() -> None:
     # Basic logging setup for the benchmark script
     logging.basicConfig(
         level=logging.INFO,
@@ -319,8 +244,7 @@ def main() -> None:
         datefmt="%H:%M:%S",
     )
 
-    # Load cache and inputs
-    load_llm_cache()
+    # Load inputs (LLM client will handle its own caching)
     rrf_score_k_values = load_rrf_score_k_values()
     datasets = load_datasets()
     sentence_transformer = get_sentence_transformer()
@@ -337,7 +261,7 @@ def main() -> None:
 
         builder = SearchQueryBuilder(
             sentence_transformer=sentence_transformer,
-            pool=get_connection_pool(),
+            pool=get_database_pool("default"),
             rrf_k_similarity=rrf_config.get("rrf_k_similarity", 60),
             rrf_k_chunk=rrf_config.get("rrf_k_chunk", 60),
             rrf_k_full_match=rrf_config.get("rrf_k_full_match", 60),
@@ -351,7 +275,7 @@ def main() -> None:
         test_total_queries = 0
 
         for dataset_name, dataset in datasets.items():
-            ds_scores, ds_runtimes, ds_breakdowns = process_dataset(
+            ds_scores, ds_runtimes, ds_breakdowns = await process_dataset(
                 dataset_name, dataset, builder
             )
 
@@ -393,7 +317,7 @@ def main() -> None:
         if test_all_scores:
             all_scores_by_test_config[test_name] = test_all_scores
 
-    results_dir = root_dir() / "benchmark" / "results"
+    results_dir = benchmark_dir() / "results"
     results_dir.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -425,4 +349,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+
+    asyncio.run(main())

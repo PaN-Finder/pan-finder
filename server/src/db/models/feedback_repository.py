@@ -1,4 +1,4 @@
-from ..connection import get_db_connection
+from ..connection import get_database_connection
 from .feedback import Feedback
 import json
 
@@ -15,7 +15,7 @@ class FeedbackRepository:
             VALUES (%s, %s, %s)
             RETURNING id
         """
-        with get_db_connection() as conn:
+        with get_database_connection() as conn:
             cur = conn.execute(
                 query,
                 [
@@ -45,7 +45,7 @@ class FeedbackRepository:
             SELECT * FROM feedback
             WHERE statistic_id = %s AND metadata = %s
         """
-        with get_db_connection() as conn:
+        with get_database_connection() as conn:
             cur = conn.execute(
                 query,
                 [
@@ -72,7 +72,7 @@ class FeedbackRepository:
             WHERE id = %s
             RETURNING *
         """
-        with get_db_connection() as conn:
+        with get_database_connection() as conn:
             cur = conn.execute(query, [feedback_type, feedback_id])
             row = cur.fetchone()
             if row:

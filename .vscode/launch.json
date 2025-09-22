@@ -1,12 +1,24 @@
 {
     "version": "0.2.0",
     "configurations": [
-        
         {
-            "name": "Run Benchmark",
+            "name":"Python Debugger: Current File (Benchmark)",
+            "type":"debugpy",
+            "request":"launch",
+            "program":"${file}",
+            "console":"integratedTerminal", 
+            "justMyCode": true,
+            "envFile": "${workspaceFolder}/benchmark/.env"
+        },
+        {
+            "name": "Run Benchmark (Hyperparameter)",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/benchmark/src/main.py",
+            "program": "${workspaceFolder}/benchmark/src/hyperparameter_runner.py",
+            "args": [
+                "-p",
+                "${workspaceFolder}/benchmark/hyperparameters/hyperparameters-06c77f68-8fd7-11f0-9d35-2b5dd810f8be.json"
+            ],
             "console": "integratedTerminal",
             "justMyCode": true,
             "envFile": "${workspaceFolder}/benchmark/.env"

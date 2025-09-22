@@ -9,8 +9,7 @@ from .routers import feedback
 from .routers import session
 from .db.connection import (
     check_database_health,
-    init_connection_pool,
-    cleanup_connection_pool,
+    cleanup_connection_pools,
 )
 from .utils import get_logger
 
@@ -39,12 +38,11 @@ app.include_router(session.router)
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database connection pool on startup."""
+    """Initialize database connection and check connectivity on startup."""
     try:
-        logger.info("Initializing database connection pool...")
-        init_connection_pool()
+        logger.info("Checking database connectivity...")
 
-        # Check database connectivity
+        # Check database connectivity (this will automatically initialize the default pool)
         if check_database_health():
             logger.info("Database connection established successfully")
             # Run migrations after DB is up
@@ -82,7 +80,7 @@ async def shutdown_event():
     """Clean up resources on shutdown."""
     try:
         logger.info("Shutting down application...")
-        cleanup_connection_pool()
+        cleanup_connection_pools()
         logger.info("Application shutdown complete")
     except Exception as e:
         logger.error(f"Error during shutdown: {e}")

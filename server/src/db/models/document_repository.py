@@ -1,7 +1,7 @@
 from psycopg.rows import dict_row
 from typing import List, cast
 
-from ..connection import get_db_connection
+from ..connection import get_database_connection
 from .document import Document, DocumentTypedDict
 
 
@@ -18,7 +18,7 @@ class DocumentRepository:
             LEFT JOIN facility f ON d.facility_id = f.id
             WHERE d.doi = %s
         """
-        with get_db_connection() as conn:
+        with get_database_connection() as conn:
             cur = conn.execute(query, [doi])
             row = cur.fetchone()
             if row:
@@ -40,7 +40,7 @@ class DocumentRepository:
             LEFT JOIN facility f ON d.facility_id = f.id
             WHERE d.doi = ANY(%s)
         """
-        with get_db_connection() as conn:
+        with get_database_connection() as conn:
             with conn.cursor(row_factory=dict_row) as cursor:
                 cursor.execute(query, [dois])
                 return cast(List[DocumentTypedDict], cursor.fetchall())
