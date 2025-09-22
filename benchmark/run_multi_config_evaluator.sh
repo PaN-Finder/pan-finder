@@ -22,5 +22,5 @@ fi
 source .venv/bin/activate
 
 # run the benchmark script
-python src/main.py
+python src/multi_config_evaluator.py
 

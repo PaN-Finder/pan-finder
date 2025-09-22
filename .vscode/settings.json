@@ -3,10 +3,9 @@
     "python.defaultInterpreterPath": "./.venv/bin/python",
     "python.terminal.activateEnvironment": true,
     "python.analysis.extraPaths": [
-        "./server",            
-        "./server/src",        
-        "./server/src/core",   
-        "./benchmark/src"      
+        "./server",
+        "./benchmark",
+        "./ingestor"
     ],
     "python.analysis.autoImportCompletions": true,
     "python.testing.pytestEnabled": true,
@@ -15,5 +14,8 @@
     ],
     "files.associations": {
         "*.py": "python"
-    }
+    },
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.autoSearchPaths": true,
+    "python.analysis.diagnosticMode": "workspace"
 }

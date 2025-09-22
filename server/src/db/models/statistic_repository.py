@@ -1,4 +1,4 @@
-from ..connection import get_db_connection
+from ..connection import get_database_connection
 from .statistic import Statistic
 import json
 
@@ -17,7 +17,7 @@ class StatisticRepository:
         Returns a Statistic instance or raises an error if not found.
         """
         query = "SELECT * FROM statistic WHERE id = %s"
-        with get_db_connection() as conn:
+        with get_database_connection() as conn:
             cur = conn.execute(query, (stat_id,))
             row = cur.fetchone()
             if row:
@@ -39,7 +39,7 @@ class StatisticRepository:
             VALUES (%s, %s, %s, %s, %s, %s)
             RETURNING id
         """
-        with get_db_connection() as conn:
+        with get_database_connection() as conn:
             cur = conn.execute(
                 query,
                 [
