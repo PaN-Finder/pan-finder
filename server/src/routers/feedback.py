@@ -51,7 +51,11 @@ def submit_feedback(
 
         # Check if doi is in the statistic's result data (to prevent invalid feedback)
         if feedback_request.doi not in [
-            result.get("doi") for result in statistic.results
+            result.get("doi")
+            for result in (
+                statistic.results.get("relevant", [])
+                + statistic.results.get("weakly_relevant", [])
+            )
         ]:
             logger.error(
                 f"DOI {feedback_request.doi} not found in statistic results for ID {feedback_request.statistic_id}."
