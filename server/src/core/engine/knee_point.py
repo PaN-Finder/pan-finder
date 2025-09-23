@@ -180,7 +180,9 @@ class KneePoint:
             # Almost linear decay -> no clear knee -> keep all
             kept = results_sorted
         else:
-            kept = results_sorted[: knee_index + 1]
+            kept = results_sorted[
+                :knee_index
+            ]  # reults before knee point (excliding knee point)
 
         # Calculate the knee point value (score at the knee index)
         knee_point_value = (
