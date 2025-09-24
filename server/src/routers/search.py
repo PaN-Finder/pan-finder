@@ -6,7 +6,7 @@ from fastapi import APIRouter, Header
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from ..core.engine import get_search_engine, KneePointResult
+from ..core.engine import get_search_engine
 from ..db.models.search import EnhancedSearchResult, StructuredQueryData
 from ..db.models.statistic import Statistic
 from ..db.models.statistic_repository import StatisticRepository
@@ -251,7 +251,7 @@ async def search_with_structured_data(
                         "weakly_relevant": [
                             r.model_dump() for r in weakly_relevant_results
                         ],
-                        "knee_point": knee_point_result
+                        "knee_point": knee_point_result,
                     },
                     execution_time_ms=0,
                     modified_query_id=request.modified_query_id,

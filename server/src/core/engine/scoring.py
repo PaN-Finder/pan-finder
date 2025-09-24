@@ -105,17 +105,3 @@ class Scoring:
             result.overall_score = (
                 safe_div(result.overall_score, overall_max) if overall_max > 0 else 0.0
             )
-
-        logger.debug("Normalized Search Results:")
-        logger.debug("=" * 120)
-        logger.debug(
-            f"{'DOI':<30} {'Overall':<8} {'Similarity':<10} {'Chunk':<8} {'Keyword':<8} {'FullMatch':<9} {'Partial':<8}"
-        )
-        logger.debug("-" * 120)
-        for result in results:
-            logger.info(
-                f"{result.doi:<30} {result.overall_score:<8.6f} {result.similarity_score:<10.6f} "
-                f"{result.chunk_similarity_score:<8.6f} {result.keyword_score:<8.6f} "
-                f"{result.full_match_score:<9.6f} {result.partial_match_score:<8.6f}"
-            )
-        logger.debug("=" * 120)
