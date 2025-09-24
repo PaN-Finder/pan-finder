@@ -72,16 +72,6 @@ class Scoring:
             return value / denom
 
         for result in results:
-            # Snapshot original (pre-normalization) scores for logging
-            original = {
-                "doi": result.doi,
-                "overall": result.overall_score,
-                "similarity": result.similarity_score,
-                "chunk_similarity": result.chunk_similarity_score,
-                "keyword": result.keyword_score,
-                "full_match": result.full_match_score,
-                "partial_match": result.partial_match_score,
-            }
             if enabled["similarity"]:
                 result.similarity_score = safe_div(
                     result.similarity_score, Scoring.similarity_score_max
@@ -114,28 +104,4 @@ class Scoring:
             overall_max = Scoring.overall_score_max(query_data)
             result.overall_score = (
                 safe_div(result.overall_score, overall_max) if overall_max > 0 else 0.0
-            )
-
-            # Disable logarithmic boost for now
-            # boost_factor = 4.0
-            # boosted = math.log(boost_factor * result.overall_score + 1) / math.log(
-            #    boost_factor + 1
-            # )
-            # result.overall_score = max(0.0, min(1.0, boosted))
-
-            logger.debug(
-                "Score normalization | doi=%s | before={overall:%.6f sim:%.6f chunk:%.6f keyword:%.6f full:%.6f partial:%.6f} | after={overall:%.6f sim:%.6f chunk:%.6f keyword:%.6f full:%.6f partial:%.6f}",
-                original["doi"],
-                original["overall"],
-                original["similarity"],
-                original["chunk_similarity"],
-                original["keyword"],
-                original["full_match"],
-                original["partial_match"],
-                result.overall_score,
-                result.similarity_score,
-                result.chunk_similarity_score,
-                result.keyword_score,
-                result.full_match_score,
-                result.partial_match_score,
             )
