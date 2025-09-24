@@ -11,8 +11,8 @@ This package contains the main business logic components:
 # Main search functionality
 from .engine import get_search_engine
 
-# AI components
-from .ai import AIPrompts, LLMResponseCache
+# AI components (high-level only)
+from .ai import AIPrompts
 
 # Search query building
 from .search_query_builder import SearchQueryBuilder, SearchResult
@@ -25,7 +25,6 @@ __all__ = [
     "get_search_engine",
     # AI
     "AIPrompts",
-    "LLMResponseCache",
     # Query Builder
     "SearchQueryBuilder",
     "SearchResult",

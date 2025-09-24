@@ -5,7 +5,7 @@ in exactly one place. Add further helpers here as needed.
 """
 
 from __future__ import annotations
-
+import sys
 from pathlib import Path
 
 # Computed once at import time; using resolve() to remove symlinks.
@@ -18,13 +18,16 @@ def root_dir() -> Path:
     return _project_root
 
 
-def project_root() -> Path:  # alias for readability in some contexts
-    return _project_root
-
-
 def benchmark_dir() -> Path:
     """Return the benchmark directory."""
     return _benchmark_dir
 
 
-__all__ = ["root_dir", "project_root", "benchmark_dir"]
+def include_server_modules():
+    """Add server directory to Python path to make server modules importable."""
+    server_dir = root_dir() / "server"
+    if str(server_dir) not in sys.path:
+        sys.path.insert(0, str(server_dir))
+
+
+__all__ = ["root_dir", "benchmark_dir", "include_server_modules"]

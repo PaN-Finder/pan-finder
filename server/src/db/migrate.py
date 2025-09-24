@@ -1,7 +1,7 @@
 import os
 import glob
 from datetime import datetime
-from .connection import get_db_connection
+from .connection import get_database_connection
 from psycopg import sql
 from ..utils import get_logger
 
@@ -16,7 +16,7 @@ def get_migration_files():
 
 
 def ensure_migrations_table():
-    with get_db_connection() as conn:
+    with get_database_connection() as conn:
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS migration (
@@ -29,7 +29,7 @@ def ensure_migrations_table():
 
 
 def get_applied_migrations():
-    with get_db_connection() as conn:
+    with get_database_connection() as conn:
         result = conn.execute("SELECT filename FROM migration").fetchall()
         return set(row[0] for row in result)
 
@@ -39,7 +39,7 @@ def apply_migration(filename):
     with open(filename, "r") as f:
         sql_content = f.read()
     statements = [s.strip() for s in sql_content.split(";") if s.strip()]
-    with get_db_connection() as conn:
+    with get_database_connection() as conn:
         for i, statement in enumerate(statements):
             try:
                 logger.debug(

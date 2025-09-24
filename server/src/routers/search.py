@@ -273,7 +273,7 @@ async def search_with_structured_data(
             ):
                 yield event
 
-            if len(search_results) == 0:
+            if len(search_results) > 0:
                 # Step 4: Stream explanation
                 async for event in sse_yield(StreamEvent(event="explanation_started")):
                     yield event

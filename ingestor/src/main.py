@@ -5,7 +5,7 @@ from pathlib import Path
 server_dir = Path(__file__).parent.parent.parent / "server"
 sys.path.insert(0, str(server_dir))
 
-from src.db.connection import get_db_connection
+from src.db.connection import get_database_connection
 from src.config import get_settings
 from document_ingestor import DocumentIngestor
 from chunk_ingestor import ChunkIngestor
@@ -28,25 +28,25 @@ def main():
     settings = get_settings()
 
     # 1. Store data
-    DocumentIngestor(get_db_connection).run()
+    DocumentIngestor(get_database_connection).run()
 
     # 2. Create chunks
-    ChunkIngestor(get_db_connection, settings).run()
+    ChunkIngestor(get_database_connection, settings).run()
 
     # 3. Populate filters
-    FilterIngestor(get_db_connection, settings).run()
+    FilterIngestor(get_database_connection, settings).run()
 
     # 4. Derive numeric filters
-    NumericFilterIngestor(get_db_connection, settings).run()
+    NumericFilterIngestor(get_database_connection, settings).run()
 
     # 5. Convert filter values to structured types
-    FilterValueConverter(get_db_connection).run()
+    FilterValueConverter(get_database_connection).run()
 
     # 6. Enrich filter table with derived publisher data
-    FilterEnricher(get_db_connection).run()
+    FilterEnricher(get_database_connection).run()
 
     # 7. Populate document summaries
-    SummaryIngestor(get_db_connection, settings).run()
+    SummaryIngestor(get_database_connection, settings).run()
 
     logging.info("Ingestor finished.")
 

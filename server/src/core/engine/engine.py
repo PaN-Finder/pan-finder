@@ -2,18 +2,17 @@ import json
 import time
 from functools import lru_cache
 from sentence_transformers import SentenceTransformer
-from openai import AzureOpenAI
 from psycopg.rows import dict_row
 from psycopg.sql import Composed
-from typing import Tuple, cast, Any, List, Optional, AsyncGenerator, Dict, Callable
+from typing import Tuple, cast, Any, List, Optional, AsyncGenerator, Dict
 
 from ...db.models.document import DocumentTypedDict
 from ...db.models.document_repository import DocumentRepository
 from ...db.models.search import StructuredQueryData, EnhancedSearchResult
-from ...db.connection import get_connection_pool, get_db_connection
+from ...db.connection import get_database_pool, get_database_connection
 from ..search_query_builder import SearchQueryBuilder, SearchResult
 from ..ai.prompts import AIPrompts
-from ..ai.cache import LLMResponseCache
+from ..ai.llm_client import LLMClient, LLMMessage, create_azure_openai_client
 from ...utils import get_logger
 from ...config import get_settings
 from .scoring import Scoring
@@ -32,35 +31,32 @@ class SearchEngine:
 
     def __init__(
         self,
-        openai_client: Optional[AzureOpenAI] = None,
         sentence_transformer: Optional[SentenceTransformer] = None,
         query_builder: Optional[SearchQueryBuilder] = None,
+        llm_client: Optional[LLMClient] = None,
     ):
         """
         Initialize the SearchEngine with optional dependencies.
 
         Args:
-            openai_client: Azure OpenAI client for query processing
             sentence_transformer: SentenceTransformer model for embeddings
             query_builder: SearchQueryBuilder for generating SQL queries
+            llm_client: LLM client for AI completions
         """
-        self._openai_client = openai_client
+
         self._sentence_transformer = sentence_transformer
         self._query_builder = query_builder
         self._logger = get_logger(self.__class__.__name__)
-        self._llm_cache = LLMResponseCache(logger=self._logger)
         self._knee_point = KneePoint()
 
-    @property
-    def openai_client(self) -> AzureOpenAI:
-        """Lazy-loaded OpenAI client."""
-        if self._openai_client is None:
-            self._openai_client = AzureOpenAI(
-                api_key=settings.azure_openai_api_key,
-                azure_endpoint=settings.azure_openai_endpoint,
-                api_version=settings.azure_openai_api_version,
+        # Initialize LLM client
+        if llm_client is not None:
+            self._llm_client = llm_client
+        else:
+            # Create default LLM client with hybrid cache
+            self._llm_client = create_azure_openai_client(
+                cache_type="memory",
             )
-        return self._openai_client
 
     @property
     def sentence_transformer(self) -> SentenceTransformer:
@@ -76,7 +72,7 @@ class SearchEngine:
         """Lazy-loaded search query builder."""
         if self._query_builder is None:
             self._query_builder = SearchQueryBuilder(
-                pool=get_connection_pool(),
+                pool=get_database_pool("default"),
                 sentence_transformer=self.sentence_transformer,
                 rrf_k_similarity=settings.rrf_k_similarity,
                 rrf_k_chunk=settings.rrf_k_chunk,
@@ -89,7 +85,7 @@ class SearchEngine:
 
     async def parse_query_to_structured_data(self, query: str) -> StructuredQueryData:
         """
-        Parse a natural language query into structured components using OpenAI.
+        Parse a natural language query into structured components using LLM.
 
         Args:
             query: The search query string
@@ -97,49 +93,39 @@ class SearchEngine:
         Returns:
             StructuredQueryData containing structured query information with intention, keywords, and filters
         """
-        model_name = settings.azure_openai_model_name
-
-        # Check if we have a cached response
-        cached_response = self._llm_cache.get(model_name, query)
-        if cached_response is not None:
-            self._logger.debug(f"Using cached LLM response for query: {query}")
-            return self._parse_openai_response(cached_response, query)
-
         # Short-circuit empty / whitespace-only queries to avoid unnecessary LLM calls
         if not query or not query.strip():
             return StructuredQueryData(intention="", keywords=[], filters={})
 
-        def _do_call() -> Optional[str]:
-            llm_response = self.openai_client.chat.completions.create(
-                model=model_name,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": AIPrompts.get_structured_query_extraction_prompt(),
-                    },
-                    {"role": "user", "content": query},
-                ],
+        try:
+            # Create LLM request
+            messages = [
+                LLMMessage(
+                    role="system",
+                    content=AIPrompts.get_structured_query_extraction_prompt(),
+                ),
+                LLMMessage(role="user", content=query),
+            ]
+
+            request = self._llm_client.create_request(
+                messages=messages,
                 max_tokens=500,
                 temperature=0.1,
                 response_format={"type": "json_object"},
             )
-            return llm_response.choices[0].message.content
 
-        response_content = self._retry_openai_call(
-            _do_call, context="structured_query_extraction"
-        )
+            # Get response from LLM
+            response = await self._llm_client.complete(request)
+            return self._parse_openai_response(response.content, query)
 
-        if response_content is None:
+        except Exception as e:
+            self._logger.error(f"LLM query parsing failed: {e}")
             # Fallback heuristics
             return StructuredQueryData(
                 intention=query,
                 keywords=[w for w in query.split() if w],
                 filters={},
             )
-
-        # Cache only on success
-        self._llm_cache.put(model_name, query, response_content)
-        return self._parse_openai_response(response_content, query)
 
     def _parse_openai_response(
         self, response_content: Optional[str], query: str
@@ -243,7 +229,7 @@ class SearchEngine:
         search_results = []
 
         try:
-            with get_db_connection() as conn:
+            with get_database_connection() as conn:
                 with conn.cursor(row_factory=dict_row) as cursor:
                     # Execute the search query
                     cursor.execute(cast(Any, sql_query))
@@ -356,14 +342,9 @@ class SearchEngine:
         structured_data: StructuredQueryData,
     ) -> AsyncGenerator[str, None]:
         """Stream a qualitative explanation for the ranked (knee-point filtered) results.
-
-        The method prepares a flattened list of relevant results (no grouping) and calls
-        the LLM with the updated single-section explanation prompt. Responses are cached
-        keyed on the query plus the serialized results for determinism.
+        The method prepares a flattened list of relevant results and calls
+        the LLM with the single-section explanation prompt.
         """
-        model_name = settings.azure_openai_explanation_model_name
-
-        # Prepare data (already knee-point filtered upstream)
         results_summary = {
             "total_results": len(search_results),
             "relevant": [
@@ -371,17 +352,6 @@ class SearchEngine:
                 for result in search_results
             ],
         }
-
-        # Cache key
-        results_json = json.dumps(results_summary, sort_keys=True)
-        cache_key = f"{query}||{results_json}"
-
-        cached_response = self._llm_cache.get(model_name, cache_key)
-        if cached_response is not None:
-            self._logger.debug("Using cached explanation for query: %s", query)
-            yield cached_response
-            return
-
         user_content = (
             'Original Query: "'
             + query
@@ -391,88 +361,28 @@ class SearchEngine:
             + json.dumps(results_summary["relevant"], indent=2)
             + "\n\nInstructions Recap (do NOT repeat to user): Provide markdown with a single section `## Relevant Results` (or the no-results header) and up to 3 bullets, one sentence each, qualitative only."
         )
-
-        def _start_stream():
-            return self.openai_client.chat.completions.create(
-                model=model_name,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": AIPrompts.get_result_explanation_prompt(),
-                    },
-                    {"role": "user", "content": user_content},
-                ],
-                max_tokens=800,
-                temperature=0.3,
-                stream=True,
-            )
-
-        stream = self._retry_openai_call(
-            _start_stream, context="result_explanation_stream"
-        )
-        if stream is None:
-            fallback_explanation = self._create_fallback_explanation(
-                query, len(search_results)
-            )
-            yield fallback_explanation
-            return
-
-        collected_content = ""
         try:
-            for chunk in stream:
-                if hasattr(chunk, "choices") and len(chunk.choices) > 0:
-                    content = getattr(chunk.choices[0].delta, "content", "")
-                    if content:
-                        collected_content += content
-                        yield content
-                else:
-                    self._logger.warning(
-                        "Unexpected chunk format from OpenAI during streaming: %s",
-                        chunk,
-                    )
-        except Exception as e:  # noqa: BLE001
-            self._logger.error(
-                "Streaming error from OpenAI (explanation). Yielding fallback. Error: %s",
-                e,
+            # Create LLM request
+            messages = [
+                LLMMessage(
+                    role="system", content=AIPrompts.get_result_explanation_prompt()
+                ),
+                LLMMessage(role="user", content=user_content),
+            ]
+
+            request = self._llm_client.create_request(
+                messages=messages, max_tokens=800, temperature=0.3
             )
-            if not collected_content:
-                yield self._create_fallback_explanation(query, len(search_results))
-        else:
-            self._logger.debug("OpenAI streaming completed")
-            if collected_content:
-                self._llm_cache.put(model_name, cache_key, collected_content)
 
-    def _retry_openai_call(
-        self,
-        func: Callable[[], Any],
-        attempts: int = 3,
-        base_backoff: float = 0.75,
-        context: str = "openai_call",
-    ) -> Optional[Any]:
-        """Generic retry helper for OpenAI SDK calls.
+            # Stream the response
+            async for chunk in self._llm_client.complete_stream(request):
+                yield chunk
 
-        Parameters:
-            func: Zero-arg callable performing the OpenAI SDK invocation.
-            attempts: Max attempts.
-            base_backoff: Initial backoff seconds (doubles each retry).
-            context: Log context label.
-        Returns:
-            Result of func() or None if all attempts fail.
-        """
-        backoff = base_backoff
-        for attempt in range(1, attempts + 1):
-            try:
-                return func()
-            except Exception as e:
-                self._logger.warning(
-                    f"{context} attempt {attempt}/{attempts} failed: {e}"
-                )
-                if attempt == attempts:
-                    break
-                time.sleep(backoff)
-                backoff *= 2
-        self._logger.error(f"All {attempts} attempts failed for {context}.")
-        return None
+        except Exception as e:
+            self._logger.error(f"LLM explanation failed: {e}")
+            # Fallback explanation
+            fallback = self._create_fallback_explanation(query, len(search_results))
+            yield fallback
 
     def _create_fallback_explanation(self, query: str, result_count: int) -> str:
         """
