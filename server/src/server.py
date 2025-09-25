@@ -12,6 +12,7 @@ from .db.connection import (
     cleanup_connection_pools,
 )
 from .utils import get_logger
+from .version import get_version
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -94,6 +95,7 @@ async def health_check():
         "status": "healthy",
         "message": "Pan-Finder API is running",
         "database": "unknown",
+        "version": get_version(),
     }
 
     try:

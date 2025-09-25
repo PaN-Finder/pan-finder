@@ -101,3 +101,8 @@ curl -s -X POST http://127.0.0.1:8080/feedback/submit \
 ```bash
 pytest
 ```
+
+## Release automation
+- Publishing a GitHub Release triggers the `Release server image` workflow.
+- The workflow builds `server/docker/Dockerfile.prod` and pushes the image to GitHub Container Registry at `ghcr.io/PaN-Finder/pan-finder-server`.
+- Each build embeds the release tag as `SERVER_VERSION`, exposed via the `/health` endpoint and container label.
