@@ -11,6 +11,11 @@ jobs:
   pytest:
     name: Run server pytest suite
     runs-on: ubuntu-latest
+    env:
+      AZURE_OPENAI_ENDPOINT: "https://example.openai.test"
+      AZURE_OPENAI_API_KEY: "dummy-key"
+      DATABASE_URL: "postgresql://user:pass@localhost:5432/testdb"
+      ENABLE_TURNSTILE: "false"
 
     steps:
       - name: Checkout repository
