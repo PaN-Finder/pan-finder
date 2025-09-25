@@ -46,7 +46,9 @@ class StatisticRepository:
                     stat.search_query,
                     stat.sql_query,
                     json.dumps(stat.structured_data),
-                    json.dumps(stat.results),
+                    json.dumps(
+                        stat.results.serializable_results if stat.results else None
+                    ),
                     stat.execution_time_ms,
                     stat.modified_query_id,
                 ],

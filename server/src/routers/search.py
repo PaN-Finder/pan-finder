@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 
 from ..core.engine import get_search_engine
 from ..db.models.search import EnhancedSearchResult, StructuredQueryData
-from ..db.models.statistic import Statistic
+from ..db.models.statistic import Statistic, ExtendedResults
 from ..db.models.statistic_repository import StatisticRepository
 from ..utils import get_logger
 from ..routers.session import verify_session
@@ -104,12 +104,10 @@ async def search_with_ai_stream(
                     search_query=raw_query,
                     sql_query=sql_query.as_string(),
                     structured_data=raw_structured_data,
-                    results={
-                        "relevant": [r.model_dump() for r in relevant_results],
-                        "weakly_relevant": [
-                            r.model_dump() for r in weakly_relevant_results
-                        ],
-                    },
+                    results=ExtendedResults(
+                        relevant=relevant_results,
+                        weakly_relevant=weakly_relevant_results,
+                    ),
                     execution_time_ms=0,  # Optionally measure and store real execution time
                 )
                 stat_id = StatisticRepository.insert(stat)
@@ -246,13 +244,11 @@ async def search_with_structured_data(
                     search_query=original.search_query,
                     sql_query=sql_query.as_string(),
                     structured_data=request.structured_data,
-                    results={
-                        "relevant": [r.model_dump() for r in relevant_results],
-                        "weakly_relevant": [
-                            r.model_dump() for r in weakly_relevant_results
-                        ],
-                        "knee_point": knee_point_result,
-                    },
+                    results=ExtendedResults(
+                        relevant=relevant_results,
+                        weakly_relevant=weakly_relevant_results,
+                        knee_point=knee_point_result,
+                    ),
                     execution_time_ms=0,
                     modified_query_id=request.modified_query_id,
                 )

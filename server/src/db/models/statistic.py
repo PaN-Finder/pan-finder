@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, Any, Dict, Union, Sequence, Protocol
+from typing import Optional, Any, Dict, Sequence, Protocol
 
 
 class ResultItem(Protocol):
@@ -21,6 +21,30 @@ class ExtendedResults:
         self.weakly_relevant = weakly_relevant
         self.knee_point = knee_point
 
+    @property
+    def serializable_results(self) -> Dict[str, Any]:
+        """Get results in serializable format for database storage."""
+        return self.to_dict()
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "ExtendedResults":
+        """Create ExtendedResults from dictionary data (from database)."""
+
+        class SimpleResultItem:
+            def __init__(self, data: dict):
+                self.data = data
+
+            def model_dump(self) -> Dict[str, Any]:
+                return self.data
+
+        return cls(
+            relevant=[SimpleResultItem(item) for item in data.get("relevant", [])],
+            weakly_relevant=[
+                SimpleResultItem(item) for item in data.get("weakly_relevant", [])
+            ],
+            knee_point=data.get("knee_point"),
+        )
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary format for JSON serialization."""
         result = {
@@ -30,6 +54,9 @@ class ExtendedResults:
         if self.knee_point is not None:
             result["knee_point"] = self.knee_point
         return result
+
+    def __getitem__(self, key: str) -> Any:
+        return self.to_dict()[key]
 
 
 class Statistic:
@@ -43,7 +70,7 @@ class Statistic:
         search_query: str = "",
         sql_query: str = "",  # The actual SQL query executed against the database
         structured_data: Any = None,
-        results: Union[ExtendedResults, Dict[str, Any], None] = None,
+        results: Optional[ExtendedResults] = None,
         execution_time_ms: int = 0,
         modified_query_id: Optional[str] = None,
         created_at: Optional[datetime] = None,
@@ -62,12 +89,17 @@ class Statistic:
         """
         Create a Statistic instance from a database row (dict).
         """
+        # Convert dict results back to ExtendedResults if present
+        results = None
+        if row.get("results") and isinstance(row["results"], dict):
+            results = ExtendedResults.from_dict(row["results"])
+
         return cls(
             id=str(row.get("id")),
             search_query=row["search_query"],
             sql_query=row.get("sql_query", ""),
             structured_data=row["structured_data"],
-            results=row["results"],
+            results=results,
             execution_time_ms=row["execution_time_ms"],
             modified_query_id=str(row.get("modified_query_id")),
             created_at=row.get("created_at"),
@@ -77,19 +109,12 @@ class Statistic:
         """
         Convert the Statistic instance to a dict for database operations.
         """
-        # Handle results serialization
-        results_data = None
-        if isinstance(self.results, ExtendedResults):
-            results_data = self.results.to_dict()
-        elif isinstance(self.results, dict):
-            results_data = self.results
-
         return {
             "id": self.id,
             "search_query": self.search_query,
             "sql_query": self.sql_query,
             "structured_data": self.structured_data,
-            "results": results_data,
+            "results": self.results.serializable_results if self.results else None,
             "execution_time_ms": self.execution_time_ms,
             "modified_query_id": self.modified_query_id,
             "created_at": self.created_at,

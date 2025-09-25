@@ -50,12 +50,20 @@ def submit_feedback(
             raise HTTPException(status_code=404, detail="Statistic not found.")
 
         # Check if doi is in the statistic's result data (to prevent invalid feedback)
-        if feedback_request.doi not in [
-            result.get("doi")
-            for result in (
-                statistic.results.get("relevant", [])
-                + statistic.results.get("weakly_relevant", [])
+        if statistic.results is None:
+            all_results = []
+        else:
+            all_results = list(statistic.results.relevant) + list(
+                statistic.results.weakly_relevant
             )
+
+        if feedback_request.doi not in [
+            (
+                result.model_dump().get("doi")
+                if hasattr(result, "model_dump")
+                else getattr(result, "doi", None)
+            )
+            for result in all_results
         ]:
             logger.error(
                 f"DOI {feedback_request.doi} not found in statistic results for ID {feedback_request.statistic_id}."
