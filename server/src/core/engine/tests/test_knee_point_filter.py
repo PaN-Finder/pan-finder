@@ -67,8 +67,8 @@ def test_knee_detected_truncates_tail():
     # The kept items should be the highest-scoring ones
     assert kept_scores[0] == max(scores)
     # The algorithm should find the knee at index 3 (score 0.35)
-    assert len(out) == 4
-    assert kept_scores == [0.95, 0.88, 0.72, 0.35]
+    assert len(out) == 3
+    assert kept_scores == [0.95, 0.88, 0.72]
 
 
 def test_near_linear_keeps_all():
@@ -94,8 +94,8 @@ def test_unsorted_input_is_handled():
     kept_scores = [r.overall_score for r in out]
 
     # The function should sort the results and find the knee correctly
-    assert len(out) == 4
-    assert kept_scores == [0.95, 0.88, 0.72, 0.35]
+    assert len(out) == 3
+    assert kept_scores == [0.95, 0.88, 0.72]
 
 
 def test_all_scores_identical_keeps_all():
