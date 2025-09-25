@@ -3,10 +3,13 @@ from pydantic import BaseModel, Field
 
 from ..core.session import SessionRepository
 from ..utils import verify_turnstile_token, get_logger
+from ..config import get_settings
 
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/session")
+
+settings = get_settings()
 
 
 class CreateSessionRequest(BaseModel):
@@ -23,6 +26,10 @@ async def create_session(
     request: CreateSessionRequest, fastapi_request: Request
 ) -> CreateSessionResponse:
     """Create a new session after verifying Turnstile token."""
+    if not settings.enable_turnstile:
+        raise HTTPException(
+            status_code=400, detail="Turnstile verification is disabled"
+        )
 
     # Validate Turnstile token before creating session
     client_ip = fastapi_request.client.host if fastapi_request.client else None
@@ -38,8 +45,11 @@ async def create_session(
     )
 
 
-def verify_session(session_id: str) -> None:
+def verify_session(session_id: str | None) -> None:
     """Verify that a session is valid. Raises HTTPException if not."""
+    if settings.enable_turnstile is False:
+        return  # Skip verification if Turnstile is disabled
+
     if not session_id:
         raise HTTPException(status_code=401, detail="Session ID is required")
 

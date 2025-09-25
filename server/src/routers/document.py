@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, HTTPException, Header, Path
 from ..db.models.document_repository import DocumentRepository
 from ..utils import get_logger
@@ -11,7 +12,7 @@ router = APIRouter(prefix="/document")
 @router.get("/{doi:path}")
 async def get_document_details(
     doi: str = Path(..., min_length=1, description="Document DOI"),
-    x_session_id: str = Header(..., alias="X-Session-ID"),
+    x_session_id: Optional[str] = Header(None, alias="X-Session-ID"),
 ) -> dict:
     """
     Get detailed document information by DOI.

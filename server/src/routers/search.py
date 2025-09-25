@@ -1,7 +1,7 @@
 import copy
 import json
 import asyncio
-from typing import AsyncGenerator, Dict, List
+from typing import AsyncGenerator, Dict, List, Optional
 from fastapi import APIRouter, Header
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -52,7 +52,7 @@ async def sse_yield(evt: StreamEvent):
 @router.post("")
 async def search_with_ai_stream(
     request: SearchRequest,
-    x_session_id: str = Header(..., alias="X-Session-ID"),
+    x_session_id: Optional[str] = Header(None, alias="X-Session-ID"),
 ) -> StreamingResponse:
     verify_session(x_session_id)
 
@@ -187,7 +187,7 @@ async def search_with_ai_stream(
 @router.post("/structured")
 async def search_with_structured_data(
     request: StructuredSearchRequest,
-    x_session_id: str = Header(..., alias="X-Session-ID"),
+    x_session_id: Optional[str] = Header(None, alias="X-Session-ID"),
 ) -> StreamingResponse:
     """
     Search endpoint that accepts structured search data directly, bypassing LLM analysis.
