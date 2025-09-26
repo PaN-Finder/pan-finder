@@ -18,7 +18,8 @@ Search API for scientific documents combining vector similarity (pgvector), full
 2) Create `.env` in the repo root from `.env.example` and set required variables (see `server/README.md`). Minimum required:
 	 - `DATABASE_URL`
 	 - `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`
-	 - `TURNSTILE_SECRET_KEY`
+	 - `ENABLE_TURNSTILE` (set to `false` for local dev unless you have Turnstile keys)
+	 - `TURNSTILE_SECRET_KEY` (only required when `ENABLE_TURNSTILE=true`)
 
 3) Start the stack:
 ```bash
@@ -27,6 +28,10 @@ docker compose -f docker-compose.dev.yml up
 
 ## API
 API usage (endpoints, session handling, SSE examples) is documented in `server/README.md`.
+
+Quick notes:
+- Session headers (`X-Session-ID`) are only required when `ENABLE_TURNSTILE=true`; otherwise they’re optional.
+- Core endpoints: `/search` and `/search/structured` stream Server-Sent Events, `/document/{doi}` returns metadata, `/feedback/submit` captures user feedback.
 
 ## Benchmarking
 Evaluate RRF settings and prompts using datasets in `benchmark/queries/`.
