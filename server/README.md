@@ -106,3 +106,11 @@ pytest
 - Publishing a GitHub Release triggers the `Release server image` workflow.
 - The workflow builds `server/docker/Dockerfile.prod` and pushes the image to GitHub Container Registry at `ghcr.io/PaN-Finder/pan-finder-server`.
 - Each build embeds the release tag as `SERVER_VERSION`, exposed via the `/health` endpoint and container label.
+
+## Public Docker image
+
+The server image is available at `ghcr.io/pan-finder/pan-finder-server`.
+
+```bash
+docker pull ghcr.io/pan-finder/pan-finder-server:latest
+```
