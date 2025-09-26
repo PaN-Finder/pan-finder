@@ -5,9 +5,14 @@ resources:
   - frontend-deployment.yaml
   - frontend-service.yaml
 
-patches:  
+patches:
   - path: ingress-patch.yaml
   - path: configmap-patch.yaml
+
+images:
+  - name: ghcr.io/pan-finder/pan-finder-server
+    newName: ghcr.io/pan-finder/pan-finder-server
+    newTag: v1.0.0-alpha.2
 
 labels:
   - pairs:
