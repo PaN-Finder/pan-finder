@@ -58,6 +58,30 @@ jobs:
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
+      - name: Restore cached embedding model
+        id: cache-model
+        uses: actions/cache@v4
+        with:
+          path: models/all-MiniLM-L12-v2
+          key: embedding-model-all-minilm-l12-v2
+
+      - name: Download embedding model
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git-lfs
+          git lfs install
+          mkdir -p models
+          if [ ! -d models/all-MiniLM-L12-v2 ]; then
+            git clone https://huggingface.co/sentence-transformers/all-MiniLM-L12-v2 models/all-MiniLM-L12-v2
+          fi
+
+      - name: Save embedding model to cache (if updated)
+        if: steps.cache-model.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: models/all-MiniLM-L12-v2
+          key: embedding-model-all-minilm-l12-v2
+
       - name: Build and push image
         uses: docker/build-push-action@v5
         with:
