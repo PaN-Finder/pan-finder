@@ -21,11 +21,9 @@ spec:
         app.kubernetes.io/component: database
         app.kubernetes.io/part-of: pan-finder
     spec:
-      imagePullSecrets:
-      - name: ess-gitlab-registry-credentials
       containers:
       - name: pgvector
-        image: registry.esss.lu.se/swap/pan-finder:postgresql
+        image: ghcr.io/pan-finder/pan-finder-postgresql
         ports:
         - containerPort: 5432
           name: postgres

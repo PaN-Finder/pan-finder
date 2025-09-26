@@ -19,11 +19,9 @@ spec:
         app.kubernetes.io/component: api
         app.kubernetes.io/part-of: pan-finder
     spec:
-      imagePullSecrets:
-      - name: ess-gitlab-registry-credentials
       containers:
       - name: server
-        image: registry.esss.lu.se/swap/pan-finder:server
+        image: ghcr.io/pan-finder/pan-finder-server:v1.0.0-alpha.1
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
