@@ -25,7 +25,10 @@ jobs:
           sudo swapoff -a
           sudo rm -f /swapfile
           sudo apt clean
-          docker rmi $(docker image ls -aq)
+          images=$(docker image ls -aq)
+          if [ -n "$images" ]; then
+            docker rmi -f $images || true
+          fi
           df -h
 
       - name: Set up QEMU
