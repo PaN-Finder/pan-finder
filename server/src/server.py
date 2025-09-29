@@ -127,7 +127,7 @@ async def health_check():
 # Root endpoint
 @app.get("/")
 async def root():
-    return {"message": "Welcome to Pan-Finder API"}
+    return {"message": "Welcome to Pan-Finder API", "version": get_version()}
 
 
 if __name__ == "__main__":
