@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Tuple
 import pandas as pd
 
 from helper import get_llm_client, load_system_prompt, get_sentence_transformer
-from paths import root_dir, benchmark_dir, include_server_modules
+from paths import benchmark_dir, include_server_modules
 from plotting import (
     plot_average_scores_per_dataset,
     plot_overall_changes,
@@ -38,13 +38,13 @@ extract_prompt = load_system_prompt(llm_model, system_prompt_version)
 
 
 def load_rrf_score_k_values() -> List[Dict[str, Any]]:
-    filepath = root_dir() / "benchmark" / "rrf_score_k_values_matrix.json"
+    filepath = benchmark_dir() / "rrf_score_k_values_matrix.json"
     return json.loads(filepath.read_text())
 
 
 def load_datasets() -> Dict[str, List[Dict[str, Any]]]:
     """Load all query datasets, returning parsed JSON per file name."""
-    base_dir = root_dir() / "benchmark" / "queries"
+    base_dir = benchmark_dir() / "queries" / "synthetic"
     datasets: Dict[str, List[Dict[str, Any]]] = {}
     for filepath in sorted(base_dir.glob("*.json")):
         datasets[filepath.name] = json.loads(filepath.read_text())

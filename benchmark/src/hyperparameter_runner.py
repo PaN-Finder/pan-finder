@@ -1,4 +1,3 @@
-from calendar import c
 import json
 import time
 import argparse
@@ -175,7 +174,7 @@ def compute_and_insert_run_metrics(
                     JOIN benchmarks_run_test AS b ON b.testId = a.testId
                     JOIN test_pairs AS c ON c.tpId = b.tpId
                 """
-                additional_where = "AND c.type = %s"
+                additional_where = "AND c.type = 'positive' AND c.source = %s"
                 parameters.append(test_pair_set)
 
             # Final SQL formatting with conditional parts
@@ -317,12 +316,12 @@ async def main(hyperparameters: dict):
                 "test_pair_set", "comprehensive"
             )
             query = """
-                SELECT tpId, userPrompt, targetDoi, expectedRank, promptId, expertName, groupId, type
-                FROM test_pairs
+                SELECT tpId, userPrompt, targetDoi, expectedRank, promptId, expertName, groupId, source, type
+                FROM test_pairs WHERE type = 'positive'
             """
             params = []
             if test_pairs_set in ["synthetic", "expert"]:
-                query += f" WHERE type=%s"
+                query += f" AND source = %s"
                 params.append(test_pairs_set)
             tp_cursor.execute(query, params)
 
