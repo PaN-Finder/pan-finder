@@ -20,16 +20,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Free disk space
-        run: | 
-          sudo swapoff -a
-          sudo rm -f /swapfile
-          sudo apt clean
-          images=$(docker image ls -aq)
-          if [ -n "$images" ]; then
-            docker rmi -f $images || true
-          fi
-          df -h
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # this might remove tools that are actually needed,
+          # if set to "true" but frees about 6 GB
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -84,6 +86,9 @@ jobs:
           mkdir -p models
           if [ ! -d models/all-MiniLM-L12-v2 ]; then
             git clone https://huggingface.co/sentence-transformers/all-MiniLM-L12-v2 models/all-MiniLM-L12-v2
+            rm -rf models/all-MiniLM-L12-v2/.git
+            rm -rf models/all-MiniLM-L12-v2/onnx
+            rm -rf models/all-MiniLM-L12-v2/openvino
           fi
 
       - name: Save embedding model to cache (if updated)
