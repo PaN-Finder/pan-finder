@@ -282,7 +282,7 @@ class SearchEngine:
                         doi=doi,
                         title=doc.get("title", ""),
                         facility_name=doc.get("facility_name") or "",
-                        summary=doc.get("summary") or "",
+                        abstract=doc.get("abstract") or "",
                         overall_score=float(result.get("overall_score", 0)),
                         similarity_score=float(result.get("similarity_score", 0)),
                         chunk_similarity_score=float(
@@ -313,7 +313,7 @@ class SearchEngine:
         result_dict: Dict[str, Any] = {
             "title": result.title,
             "doi": result.doi,
-            "summary": result.summary,
+            "abstract": result.abstract,
             "overall_score": result.overall_score,
         }
 

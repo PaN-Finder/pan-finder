@@ -5,7 +5,7 @@ class DocumentTypedDict(TypedDict):
     id: Optional[int]
     doi: str
     title: str
-    text: Optional[str]
+    abstract: Optional[str]
     summary: Optional[str]
     raw: Optional[str]
     facility_name: Optional[str]
@@ -21,7 +21,7 @@ class Document:
         id: Optional[int] = None,
         doi: str = "",
         title: str = "",
-        text: Optional[str] = None,
+        abstract: Optional[str] = None,
         summary: Optional[str] = None,
         raw: Optional[str] = None,
         facility_name: Optional[str] = None,
@@ -29,7 +29,7 @@ class Document:
         self.id = id
         self.doi = doi
         self.title = title
-        self.text = text
+        self.abstract = abstract
         self.summary = summary
         self.raw = raw
         self.facility_name = facility_name
@@ -43,7 +43,7 @@ class Document:
             id=row.get("id"),
             doi=row["doi"],
             title=row["title"],
-            text=row.get("text"),
+            abstract=row.get("abstract"),
             summary=row.get("summary"),
             raw=row.get("raw"),
             facility_name=row.get("facility_name"),
@@ -57,7 +57,7 @@ class Document:
             "id": self.id,
             "doi": self.doi,
             "title": self.title,
-            "text": self.text,
+            "abstract": self.abstract,
             "summary": self.summary,
             "raw": self.raw,
             "facility_name": self.facility_name,

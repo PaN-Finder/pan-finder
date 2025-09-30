@@ -234,9 +234,9 @@ class AIPrompts:
   **JSON Output:**
   `{ "intention": "CuNCN", "keywords": ["CuNCN"], "filters": { "logic": "OR", "conditions": [ { "logic": "AND", "conditions": [ { "name": "temperature", "operator": ">=", "value": 1.5, "unit": "K" }, { "name": "temperature", "operator": "<=", "value": 100, "unit": "K" } ] }, { "logic": "AND", "conditions": [ { "name": "temperature", "operator": ">", "value": 100, "unit": "K" }, { "name": "publication year", "operator": "=", "value": 2020 } ] } ] } }`
 
-- **User Query:** "Find research on chloroquine’s crystal structure where the temperature is less than 100 K."
+- **User Query:** "Find research on chloroquine's crystal structure where the temperature is less than 100 K."
   **JSON Output:**
-  `{ "intention": "chloroquine’s crystal structure", "keywords": ["chloroquine", "crystal structure"], "filters": { "logic": "AND", "conditions": [ { "name": "temperature", "operator": "<", "value": 100, "unit": "K" } ] } }`
+  `{ "intention": "chloroquine's crystal structure", "keywords": ["chloroquine", "crystal structure"], "filters": { "logic": "AND", "conditions": [ { "name": "temperature", "operator": "<", "value": 100, "unit": "K" } ] } }`
 
 - **User Query:** "Search for papers on graphene materials."
   **JSON Output:**
@@ -294,7 +294,7 @@ You receive:
 * Structured query data (intention / keywords / filters)
 * A flat ordered list `relevant` (highest relevance first)
 
-Each result object contains: `title`, `doi`, `summary`, and possibly score-related fields plus `full_match`.
+Each result object contains: `title`, `doi`, `abstract`, and possibly score-related fields plus `full_match`.
 You may use them silently to guide emphasis, but must never surface them explicitly nor use the word "score" or "filters" in the output.
 
 ---

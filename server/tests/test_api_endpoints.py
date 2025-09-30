@@ -69,8 +69,15 @@ async def test_root_endpoint(async_client: AsyncClient):
 # ----------------------------
 @pytest.mark.asyncio
 async def test_document_details_found(async_client: AsyncClient):
+    doc = {
+        "id": 1,
+        "doi": "10.1000/test",
+        "title": "Test Doc",
+        "text": "Some text",
+        "facility_name": "Facility A",
+    }
     mock_document = MagicMock()
-    mock_document.to_dict.return_value = {"id": "doc1", "doi": "10.1000/test"}
+    mock_document.to_dict.return_value = doc
 
     with patch(
         "src.routers.document.DocumentRepository.get_by_doi",
@@ -79,7 +86,47 @@ async def test_document_details_found(async_client: AsyncClient):
         response = await async_client.get("/document/10.1000/test")
 
     assert response.status_code == 200
-    assert response.json() == {"id": "doc1", "doi": "10.1000/test"}
+    assert response.json() == doc
+    mock_repo.assert_called_once_with("10.1000/test")
+
+
+@pytest.mark.asyncio
+async def test_get_raw_document_parsed(async_client: AsyncClient):
+    # raw contains valid JSON -> endpoint should return parsed JSON
+    mock_document = MagicMock()
+    mock_document.raw = '{"foo": "bar", "num": 1}'
+
+    with patch(
+        "src.routers.document.DocumentRepository.get_by_doi",
+        return_value=mock_document,
+    ) as mock_repo:
+        # When `/raw` route is declared before the catch-all details route, use an unencoded DOI
+        response = await async_client.get("/document/raw/10.1000/test")
+
+    assert response.status_code == 200
+    assert response.json() == {"foo": "bar", "num": 1}
+    mock_repo.assert_called_once_with("10.1000/test")
+
+
+@pytest.mark.asyncio
+async def test_get_raw_document_returns_raw_string_when_not_json(
+    async_client: AsyncClient,
+):
+    # raw is not valid JSON -> endpoint should return the raw string (JSON string encoded)
+    raw_text = "not a json blob"
+    mock_document = MagicMock()
+    mock_document.raw = raw_text
+
+    with patch(
+        "src.routers.document.DocumentRepository.get_by_doi",
+        return_value=mock_document,
+    ) as mock_repo:
+        # Use unencoded DOI path now that `/raw` is the more specific route
+        response = await async_client.get("/document/raw/10.1000/test")
+
+    assert response.status_code == 200
+    # FastAPI will return a JSON string for a returned Python str, so response.json() yields the original string
+    assert response.json() == raw_text
     mock_repo.assert_called_once_with("10.1000/test")
 
 
@@ -168,7 +215,7 @@ async def test_search_endpoint_logic():
             doi="10.1000/abc",
             title="Graphene Study",
             facility_name="Facility A",
-            summary="A summary",
+            abstract="An abstract about graphene.",
             overall_score=0.9,
             similarity_score=0.8,
             chunk_similarity_score=0.7,

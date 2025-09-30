@@ -13,7 +13,7 @@ class DocumentRepository:
     @staticmethod
     def get_by_doi(doi: str) -> Document:
         query = """
-            SELECT d.id, d.doi, d.title, d.text, d.summary, d.raw, f.name AS facility_name
+            SELECT d.id, d.doi, d.title, d.text as abstract, d.summary, d.raw, f.name AS facility_name
             FROM document d
             LEFT JOIN facility f ON d.facility_id = f.id
             WHERE d.doi = %s
@@ -35,7 +35,7 @@ class DocumentRepository:
             return []
 
         query = """
-            SELECT d.doi, d.title, d.summary, f.name AS facility_name
+            SELECT d.doi, d.title, d.text as abstract, f.name AS facility_name
             FROM document d
             LEFT JOIN facility f ON d.facility_id = f.id
             WHERE d.doi = ANY(%s)
