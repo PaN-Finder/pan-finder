@@ -1,44 +1,24 @@
-import importlib
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-from contextlib import asynccontextmanager
-
 import pytest
-from fastapi import FastAPI
 from httpx import AsyncClient, ASGITransport
 import pytest_asyncio
 
+# Add project to path first
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-
-# ----------------------------
-# Lifespan override (skip startup/shutdown)
-# ----------------------------
-@asynccontextmanager
-async def mock_lifespan(app: FastAPI):
-    yield
+from helpers.mock_settings import (
+    MockSettings,
+    create_common_patches,
+    reload_app_modules_with_settings,
+)
 
 
-# ----------------------------
-# Environment setup for Turnstile-enabled tests
-# ----------------------------
-@pytest.fixture(autouse=True)
-def _env_setup_with_turnstile(monkeypatch):
-    """Environment configuration with Turnstile enabled."""
-    monkeypatch.setenv("AZURE_OPENAI_ENDPOINT", "https://example.openai.test")
-    monkeypatch.setenv("AZURE_OPENAI_API_KEY", "test-key")
-    monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@localhost:5432/test")
-    monkeypatch.setenv("ENABLE_TURNSTILE", "true")
-    monkeypatch.setenv("TURNSTILE_SECRET_KEY", "test-turnstile-secret")
+# Create mock settings with Turnstile enabled for session protection tests
+mock_settings = MockSettings(enable_turnstile=True)
 
-    from src import config as config_module
-
-    config_module.get_settings.cache_clear()
-
-    yield
-
-    config_module.get_settings.cache_clear()
+# Start all common patches
+patches = create_common_patches(mock_settings)
 
 
 # ----------------------------
@@ -46,21 +26,13 @@ def _env_setup_with_turnstile(monkeypatch):
 # ----------------------------
 @pytest_asyncio.fixture
 async def async_client():
-    import src.server as server_module
+    # Reload app modules with mock settings and router injection
+    server_module = reload_app_modules_with_settings(mock_settings, reload_routers=True)
 
-    importlib.reload(server_module)
-
-    # Disable startup/shutdown events
-    server_module.app.router.lifespan_context = mock_lifespan
-
-    with (
-        patch("src.server.check_database_health", return_value=True),
-        patch("asyncio.create_task", return_value=MagicMock()),
-    ):
-        async with AsyncClient(
-            transport=ASGITransport(app=server_module.app), base_url="http://localhost"
-        ) as ac:
-            yield ac
+    async with AsyncClient(
+        transport=ASGITransport(app=server_module.app), base_url="http://localhost"
+    ) as ac:
+        yield ac
 
 
 # ----------------------------

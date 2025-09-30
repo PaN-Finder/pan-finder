@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
@@ -17,29 +18,10 @@ from .version import get_version
 settings = get_settings()
 logger = get_logger(__name__)
 
-app = FastAPI(
-    title="PaN-Finder API",
-)
 
-# Configure CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.allowed_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Include routers
-app.include_router(search.router)
-app.include_router(document.router)
-app.include_router(feedback.router)
-app.include_router(session.router)
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Initialize database connection and check connectivity on startup."""
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
     try:
         logger.info("Checking database connectivity...")
 
@@ -60,6 +42,37 @@ async def startup_event():
     except Exception as e:
         logger.error(f"Failed to initialize database during startup: {e}")
 
+    yield
+
+    # Shutdown
+    try:
+        logger.info("Shutting down application...")
+        cleanup_connection_pools()
+        logger.info("Application shutdown complete")
+    except Exception as e:
+        logger.error(f"Error during shutdown: {e}")
+
+
+app = FastAPI(
+    title="PaN-Finder API",
+    lifespan=lifespan,
+)
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include routers
+app.include_router(search.router)
+app.include_router(document.router)
+app.include_router(feedback.router)
+app.include_router(session.router)
+
 
 async def session_cleanup_task():
     """Background task to clean up expired sessions every 30 minutes."""
@@ -74,17 +87,6 @@ async def session_cleanup_task():
         except Exception as e:
             logger.error(f"Error in session cleanup task: {e}")
             await asyncio.sleep(60)  # Wait 1 minute before retrying
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Clean up resources on shutdown."""
-    try:
-        logger.info("Shutting down application...")
-        cleanup_connection_pools()
-        logger.info("Application shutdown complete")
-    except Exception as e:
-        logger.error(f"Error during shutdown: {e}")
 
 
 # Enhanced health check endpoint
