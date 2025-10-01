@@ -335,38 +335,28 @@ class SearchEngine:
 
         return result_dict
 
-    async def explain_search_results(
+    async def explain_relevancy_of_document(
         self,
         query: str,
-        search_results: List[EnhancedSearchResult],
+        document: EnhancedSearchResult,
         structured_data: StructuredQueryData,
     ) -> AsyncGenerator[str, None]:
-        """Stream a qualitative explanation for the ranked (knee-point filtered) results.
-        The method prepares a flattened list of relevant results and calls
-        the LLM with the single-section explanation prompt.
         """
-        results_summary = {
-            "total_results": len(search_results),
-            "relevant": [
-                self._build_result_dict(result, structured_data)
-                for result in search_results
-            ],
-        }
+        Generate an explanation of why the selected document was considered relevant to the query.
+        """
+        doc_dict = self._build_result_dict(document, structured_data)
         user_content = (
             'Original Query: "'
             + query
             + '"\n\nStructured Query Data (reference context only):\n'
             + json.dumps(structured_data.model_dump(), indent=2)
-            + "\n\nRanked Relevant Results (already knee-point filtered, DO NOT mention that process):\n"
-            + json.dumps(results_summary["relevant"], indent=2)
-            + "\n\nInstructions Recap (do NOT repeat to user): Provide markdown with a single section `## Relevant Results` (or the no-results header) and up to 3 bullets, one sentence each, qualitative only."
+            + "\n\nDocument:\n"
+            + json.dumps(doc_dict, indent=2)
         )
         try:
             # Create LLM request
             messages = [
-                LLMMessage(
-                    role="system", content=AIPrompts.get_result_explanation_prompt()
-                ),
+                LLMMessage(role="system", content=AIPrompts.get_explanation_prompt()),
                 LLMMessage(role="user", content=user_content),
             ]
 
@@ -380,27 +370,7 @@ class SearchEngine:
 
         except Exception as e:
             self._logger.error(f"LLM explanation failed: {e}")
-            # Fallback explanation
-            fallback = self._create_fallback_explanation(query, len(search_results))
-            yield fallback
-
-    def _create_fallback_explanation(self, query: str, result_count: int) -> str:
-        """
-        Create a fallback explanation when OpenAI processing fails.
-
-        Args:
-            query: Original query string
-            result_count: Number of results found
-
-        Returns:
-            Basic explanation string
-        """
-        if result_count == 0:
-            return f"No results were found for your search query '{query}'. You might want to try using different keywords or broader search terms."
-        elif result_count == 1:
-            return f"Found 1 result for your search query '{query}'. The result appears to be relevant to your search criteria."
-        else:
-            return f"Found {result_count} results for your search query '{query}'. The results are ranked by relevance to your search criteria, with the most relevant results appearing first."
+            yield "Could not generate explanation due to an internal error."
 
 
 @lru_cache()

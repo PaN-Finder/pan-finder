@@ -1,11 +1,7 @@
 from datetime import datetime
-from typing import Optional, Any, Dict, Sequence, Protocol
+from typing import Optional, Any, Dict, List
 
-
-class ResultItem(Protocol):
-    """Protocol for result items that can be serialized."""
-
-    def model_dump(self) -> Dict[str, Any]: ...
+from src.db.models.search import EnhancedSearchResult
 
 
 class ExtendedResults:
@@ -13,41 +9,35 @@ class ExtendedResults:
 
     def __init__(
         self,
-        relevant: Sequence[ResultItem],
-        weakly_relevant: Sequence[ResultItem],
-        knee_point: Optional[Any] = None,
+        relevant: List[EnhancedSearchResult],
+        weakly_relevant: List[EnhancedSearchResult],
+        knee_point: float | None = None,
     ):
         self.relevant = relevant
         self.weakly_relevant = weakly_relevant
         self.knee_point = knee_point
 
-    @property
-    def serializable_results(self) -> Dict[str, Any]:
-        """Get results in serializable format for database storage."""
-        return self.to_dict()
-
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ExtendedResults":
         """Create ExtendedResults from dictionary data (from database)."""
 
-        class SimpleResultItem:
-            def __init__(self, data: dict):
-                self.data = data
-
-            def model_dump(self) -> Dict[str, Any]:
-                return self.data
-
         return cls(
-            relevant=[SimpleResultItem(item) for item in data.get("relevant", [])],
+            relevant=[
+                EnhancedSearchResult(**item)
+                for item in data.get("relevant", [])
+                if item is not None
+            ],
             weakly_relevant=[
-                SimpleResultItem(item) for item in data.get("weakly_relevant", [])
+                EnhancedSearchResult(**item)
+                for item in data.get("weakly_relevant", [])
+                if item is not None
             ],
             knee_point=data.get("knee_point"),
         )
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary format for JSON serialization."""
-        result = {
+        result: Dict[str, Any] = {
             "relevant": [r.model_dump() for r in self.relevant],
             "weakly_relevant": [r.model_dump() for r in self.weakly_relevant],
         }
@@ -91,8 +81,10 @@ class Statistic:
         """
         # Convert dict results back to ExtendedResults if present
         results = None
-        if row.get("results") and isinstance(row["results"], dict):
-            results = ExtendedResults.from_dict(row["results"])
+        results_data = row.get("results")
+
+        if results_data is not None and isinstance(results_data, dict):
+            results = ExtendedResults.from_dict(results_data)
 
         return cls(
             id=str(row.get("id")),
@@ -114,7 +106,7 @@ class Statistic:
             "search_query": self.search_query,
             "sql_query": self.sql_query,
             "structured_data": self.structured_data,
-            "results": self.results.serializable_results if self.results else None,
+            "results": self.results.to_dict() if self.results else None,
             "execution_time_ms": self.execution_time_ms,
             "modified_query_id": self.modified_query_id,
             "created_at": self.created_at,

@@ -279,7 +279,6 @@ async def test_search_endpoint_logic():
         assert events_collected[1].startswith("event: analysis_completed")
         assert events_collected[2].startswith("event: data_fetching")
         assert events_collected[3].startswith("event: results")
-        assert events_collected[4].startswith("event: explanation_started")
 
         # Parse the results event to verify the data
         results_line = events_collected[3].split("\n")[1]  # Get the data line
