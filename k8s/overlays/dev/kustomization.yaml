@@ -12,7 +12,7 @@ patches:
 images:
   - name: ghcr.io/pan-finder/pan-finder-server
     newName: ghcr.io/pan-finder/pan-finder-server
-    newTag: v1.0.0-alpha.5
+    newTag: v1.0.0-alpha.6
 
 labels:
   - pairs:
