@@ -57,6 +57,15 @@ async def test_document_endpoint_requires_session(async_client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_raw_document_endpoint_requires_session(async_client: AsyncClient):
+    """Test that /document/raw requires X-Session-ID header when Turnstile is enabled."""
+    response = await async_client.get("/document/raw/10.1000/test")
+
+    assert response.status_code == 401
+    assert "Session ID is required" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
 async def test_feedback_endpoint_requires_session(async_client: AsyncClient):
     """Test that /feedback/submit requires X-Session-ID header when Turnstile is enabled."""
     response = await async_client.post(
