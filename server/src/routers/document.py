@@ -15,7 +15,7 @@ class DocumentDetailsResponseModel(BaseModel):
     id: int
     doi: str
     title: str
-    abstract: str
+    abstract: str | None
     facility_name: Optional[str]
 
 

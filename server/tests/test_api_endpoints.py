@@ -73,7 +73,7 @@ async def test_document_details_found(async_client: AsyncClient):
         "id": 1,
         "doi": "10.1000/test",
         "title": "Test Doc",
-        "text": "Some text",
+        "abstract": "Some text",
         "facility_name": "Facility A",
     }
     mock_document = MagicMock()
