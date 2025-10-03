@@ -12,6 +12,11 @@ patches:
   - path: pgvector-deployment-patch.yaml
   - path: pvc-patch.yaml
 
+images:
+  - name: ghcr.io/pan-finder/pan-finder-server
+    newName: ghcr.io/pan-finder/pan-finder-server
+    newTag: v1.0.0-alpha.6
+    
 labels:
   - pairs:
       environment: dev
