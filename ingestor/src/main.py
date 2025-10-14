@@ -43,7 +43,7 @@ def main():
     FilterValueConverter(get_database_connection).run()
 
     # 6. Enrich filter table with derived publisher data
-    FilterEnricher(get_database_connection).run()
+    FilterEnricher(get_database_connection, settings).run()
 
     # 7. Populate document summaries
     SummaryIngestor(get_database_connection, settings).run()
