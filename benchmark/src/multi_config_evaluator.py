@@ -236,6 +236,71 @@ async def process_dataset(
     return dataset_scores, dataset_runtimes, dataset_breakdowns
 
 
+async def process_rrf_config(
+    rrf_config: Dict[str, Any],
+    datasets: Dict[str, List[Dict[str, Any]]],
+    sentence_transformer,
+) -> Tuple[str, List[Dict[str, Any]], Dict[str, float], List[float]]:
+    """Process a single RRF configuration across all datasets."""
+    test_name = rrf_config.get("test_name", "unknown_test")
+    logging.info("=== Test: %s ===", test_name)
+    logging.info("RRF k-values: %s", rrf_config)
+
+    builder = SearchQueryBuilder(
+        sentence_transformer=sentence_transformer,
+        pool=get_database_pool("default"),
+        rrf_k_similarity=rrf_config.get("rrf_k_similarity", 60),
+        rrf_k_chunk=rrf_config.get("rrf_k_chunk", 60),
+        rrf_k_full_match=rrf_config.get("rrf_k_full_match", 60),
+        rrf_k_partial_match=rrf_config.get("rrf_k_partial_match", 60),
+        rrf_k_keyword=rrf_config.get("rrf_k_keyword", 60),
+        logger=logging.getLogger("search_query_builder"),
+    )
+
+    test_results: List[Dict[str, Any]] = []
+    test_all_scores: List[float] = []
+    test_all_runtimes: List[float] = []
+    test_total_queries = 0
+
+    for dataset_name, dataset in datasets.items():
+        ds_scores, ds_runtimes, ds_breakdowns = await process_dataset(
+            dataset_name, dataset, builder
+        )
+
+        # Aggregate per dataset
+        ds_total_queries = len(ds_scores)
+        ds_avg_score = (sum(ds_scores) / ds_total_queries) if ds_total_queries else 0.0
+
+        test_results.append(
+            {
+                "test_name": test_name,
+                "dataset_name": dataset_name.replace(".json", ""),
+                "avg_score": round(ds_avg_score, 4),
+                "avg_score_percent": round(ds_avg_score * 100.0, 2),
+            }
+        )
+
+        test_total_queries += ds_total_queries
+        test_all_scores.extend(ds_scores)
+        test_all_runtimes.extend(ds_runtimes)
+
+    avg_score = (
+        (sum(test_all_scores) / test_total_queries) if test_total_queries else 0.0
+    )
+    avg_runtime = (
+        (sum(test_all_runtimes) / test_total_queries) if test_total_queries else 0.0
+    )
+
+    logging.info("Overall avg score: %.4f | avg runtime: %.3fs", avg_score, avg_runtime)
+
+    test_metrics = {
+        "avg_score": avg_score * 100.0,
+        "avg_runtime": avg_runtime,
+    }
+
+    return test_name, test_results, test_metrics, test_all_scores
+
+
 async def main() -> None:
     # Basic logging setup for the benchmark script
     logging.basicConfig(
@@ -253,67 +318,18 @@ async def main() -> None:
     overall_test_metrics: Dict[str, Dict[str, float]] = {}
     all_scores_by_test_config: Dict[str, List[float]] = {}
 
-    # Run each RRF configuration across all datasets
-    for rrf_config in rrf_score_k_values:
-        test_name = rrf_config.get("test_name", "unknown_test")
-        logging.info("=== Test: %s ===", test_name)
-        logging.info("RRF k-values: %s", rrf_config)
+    # Run all RRF configurations in parallel
+    tasks = [
+        process_rrf_config(rrf_config, datasets, sentence_transformer)
+        for rrf_config in rrf_score_k_values
+    ]
 
-        builder = SearchQueryBuilder(
-            sentence_transformer=sentence_transformer,
-            pool=get_database_pool("default"),
-            rrf_k_similarity=rrf_config.get("rrf_k_similarity", 60),
-            rrf_k_chunk=rrf_config.get("rrf_k_chunk", 60),
-            rrf_k_full_match=rrf_config.get("rrf_k_full_match", 60),
-            rrf_k_partial_match=rrf_config.get("rrf_k_partial_match", 60),
-            rrf_k_keyword=rrf_config.get("rrf_k_keyword", 60),
-            logger=logging.getLogger("search_query_builder"),
-        )
+    results = await asyncio.gather(*tasks)
 
-        test_all_scores: List[float] = []
-        test_all_runtimes: List[float] = []
-        test_total_queries = 0
-
-        for dataset_name, dataset in datasets.items():
-            ds_scores, ds_runtimes, ds_breakdowns = await process_dataset(
-                dataset_name, dataset, builder
-            )
-
-            # Aggregate per dataset
-            ds_total_queries = len(ds_scores)
-            ds_avg_score = (
-                (sum(ds_scores) / ds_total_queries) if ds_total_queries else 0.0
-            )
-
-            all_test_results.append(
-                {
-                    "test_name": test_name,
-                    "dataset_name": dataset_name.replace(".json", ""),
-                    "avg_score": round(ds_avg_score, 4),
-                    "avg_score_percent": round(ds_avg_score * 100.0, 2),
-                }
-            )
-
-            test_total_queries += ds_total_queries
-            test_all_scores.extend(ds_scores)
-            test_all_runtimes.extend(ds_runtimes)
-
-        avg_score = (
-            (sum(test_all_scores) / test_total_queries) if test_total_queries else 0.0
-        )
-        avg_runtime = (
-            (sum(test_all_runtimes) / test_total_queries) if test_total_queries else 0.0
-        )
-
-        logging.info(
-            "Overall avg score: %.4f | avg runtime: %.3fs", avg_score, avg_runtime
-        )
-
-        overall_test_metrics[test_name] = {
-            "avg_score": avg_score * 100.0,
-            "avg_runtime": avg_runtime,
-        }
-
+    # Aggregate results from all configurations
+    for test_name, test_results, test_metrics, test_all_scores in results:
+        all_test_results.extend(test_results)
+        overall_test_metrics[test_name] = test_metrics
         if test_all_scores:
             all_scores_by_test_config[test_name] = test_all_scores
 
