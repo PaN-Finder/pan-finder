@@ -4,15 +4,21 @@ Unit tests for the KneePoint class.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 # Add the server directory to Python path so we can import from src
 server_path = Path(__file__).resolve().parents[4]
 if str(server_path) not in sys.path:
     sys.path.insert(0, str(server_path))
 
-from src.core.engine.knee_point import KneePoint
-from src.db.models.search import EnhancedSearchResult
+# Mock get_settings to prevent environment variable requirements
+with patch("src.config.get_settings") as mock_settings:
+    mock_settings.return_value = MagicMock(
+        enable_turnstile=False,
+        turnstile_secret_key=None,
+    )
+    from src.core.engine.knee_point import KneePoint
+    from src.db.models.search import EnhancedSearchResult
 
 
 def make_result(score: float, doi: str = "d") -> EnhancedSearchResult:
