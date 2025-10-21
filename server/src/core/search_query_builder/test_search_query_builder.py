@@ -122,6 +122,9 @@ def test_find_similar_names_found(
             [0.1, 0.2, 0.3],
             [0.1, 0.2, 0.3],
             builder._SIMILARITY_THRESHOLD_NAMES,
+            [0.1, 0.2, 0.3],
+            [0.1, 0.2, 0.3],
+            builder._SIMILARITY_THRESHOLD_NAMES,
             builder._SIMILARITY_MINIMUM_RESULTS,
         ),  # Params
     )
