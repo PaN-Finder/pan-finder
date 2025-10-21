@@ -1,0 +1,11 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-407021311",
+    "queries": [
+      {
+        "query": "Datasets from ESRF where the diamater of lens is 0.000400",
+        "min_position": 0
+      }
+    ]
+  }
+]
