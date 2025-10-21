@@ -25,13 +25,10 @@ function TurnstileSessionGate({ children, createSessionApi }) {
   const turnstileRef = useRef(null)
   const widgetIdRef = useRef(null)
 
-  // If Turnstile is disabled, render children directly without verification
-  if (!TURNSTILE_ENABLED) {
-    return <>{children}</>
-  }
-
   // Handle Turnstile token and create session
   useEffect(() => {
+    if (!TURNSTILE_ENABLED) return
+
     const handleSessionCreation = async () => {
       if (token && !sessionId && !sessionCreating && !isCreatingSession) {
         setIsCreatingSession(true)
@@ -60,6 +57,8 @@ function TurnstileSessionGate({ children, createSessionApi }) {
 
   // Render the managed widget once the script is loaded and when session is invalid
   useEffect(() => {
+    if (!TURNSTILE_ENABLED) return
+
     if (
       turnstile &&
       turnstileRef.current &&
@@ -111,12 +110,19 @@ function TurnstileSessionGate({ children, createSessionApi }) {
 
   // Cleanup on unmount
   useEffect(() => {
+    if (!TURNSTILE_ENABLED) return
+
     return () => {
       if (widgetIdRef.current) {
         removeWidget(widgetIdRef.current)
       }
     }
   }, [removeWidget])
+
+  // If Turnstile is disabled, render children directly without verification
+  if (!TURNSTILE_ENABLED) {
+    return <>{children}</>
+  }
 
   return (
     <Box sx={{ position: 'relative' }}>
