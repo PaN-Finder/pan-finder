@@ -31,7 +31,7 @@ services:
       - ./models:/code/models
     working_dir: /code/app
     env_file:
-      - ./server/.env
+      - ./server/.env.dev
     environment:
       - PYTHONPATH=/code/app
       - DEBUG_PORT=5678
@@ -40,3 +40,20 @@ services:
     depends_on:
       pgvector:
         condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ./Dockerfile.dev
+    container_name: pan-finder-frontend
+    hostname: frontend
+    ports:
+      - 3000:3000
+    volumes:
+      - ./frontend:/app # for hot reloading
+      - /app/node_modules # for caching
+    command: npm run start
+    env_file:
+      - ./frontend/.env.dev
+    depends_on:
+      - server
