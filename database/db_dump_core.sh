@@ -9,7 +9,7 @@ FUNCS_OUT="pan-finder-functions-${TS}.sql"
 
 echo "Creating dump: $OUT"
 pg_dump -h localhost -U usr -d pan-finder \
-  -Fc -t public.chunk -t public.document -t public.facility -t public.filter -t public.filter_key \
+  -Fc -t public.chunk -t public.document -t public.facility -t public.filter -t public.filter_key -t public.filter_description \
   -f "$OUT"
 
 echo "Dump created successfully: $OUT"

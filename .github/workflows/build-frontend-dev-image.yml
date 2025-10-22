@@ -1,17 +1,17 @@
-name: Release frontend image
+name: Build development frontend image
 
 on:
-  release:
-    types:
-      - published
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
   packages: write
 
 jobs:
-  build-and-push-production:
-    name: Build and push production frontend image
+  build-and-push-dev:
+    name: Build and push development frontend image
     runs-on: ubuntu-latest
     env:
       REGISTRY: ghcr.io
@@ -43,8 +43,8 @@ jobs:
         with:
           images: ${{ steps.image.outputs.image }}
           tags: |
-            type=ref,event=tag
-            type=raw,value=latest
+            type=raw,value=dev
+            type=sha,prefix=dev-
 
       - name: Build and push image
         uses: docker/build-push-action@v5
@@ -57,7 +57,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           provenance: false
           build-args: |
-            API=${{ secrets.API }}
-            PAN_FINDER_API=${{ secrets.PAN_FINDER_API }}
+            API=${{ secrets.DEV_API }}
+            PAN_FINDER_API=${{ secrets.DEV_PAN_FINDER_API }}
             ENABLE_TURNSTILE=true
-            TURNSTILE_SITE_KEY=${{ secrets.TURNSTILE_SITE_KEY }}
+            TURNSTILE_SITE_KEY=${{ secrets.DEV_TURNSTILE_SITE_KEY }}
