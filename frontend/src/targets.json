@@ -1,0 +1,19 @@
+{
+  "parameters": {
+    "documents": ["datasets"]
+  },
+  "techniques": {
+    "documents": ["datasets"]
+  },
+  "datasets": {},
+  "members": {},
+  "affiliation": {
+    "fallback": ["members"]
+  },
+  "person": {
+    "fallback": ["members"]
+  },
+  "instrument": {
+    "documents": ["datasets"]
+  }
+}
