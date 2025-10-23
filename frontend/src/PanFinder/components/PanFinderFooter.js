@@ -1,6 +1,7 @@
 import React from 'react'
 
 import { Box, Text, Flex } from '../../Primitives'
+import Version from './Version'
 
 function PanFinderFooter() {
   return (
@@ -91,7 +92,6 @@ function PanFinderFooter() {
               testing PaN-Finder
             </Text>
           </Box>
-
           <Box
             sx={{
               width: '60px',
@@ -104,6 +104,7 @@ function PanFinderFooter() {
           />
         </Flex>
       </Box>
+      <Version />
     </Box>
   )
 }
