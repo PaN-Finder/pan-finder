@@ -76,48 +76,78 @@ function SearchForm({
           aria-label="Search"
           type="submit"
           disabled={isLoading || disabled}
+          variant="buttons.base"
           sx={{
             position: 'absolute',
             top: '8px',
             right: '8px',
             minWidth: 'auto',
-            padding: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            px: '10px',
+            py: '10px',
+            bg: '#1a202c',
+            border: '1px solid #4a5568',
+            borderRadius: '6px',
+            color: '#e2e8f0',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            ':hover': {
+              bg: '#2d3748',
+              borderColor: '#646eb1',
+              color: '#e2e8f0',
+              transform: 'translateY(-1px)',
+              boxShadow: '0 2px 8px rgba(100, 110, 177, 0.3)',
+            },
+            ':active': {
+              transform: 'translateY(0)',
+            },
             '&:disabled': {
               opacity: 0.6,
               cursor: 'not-allowed',
             },
           }}
         >
-          <FiSearch size={18} />
+          <FiSearch size={14} />
         </Button>
         {handleClear && hasResults && (
           <Button
             aria-label="New Search"
-            size="small"
             type="button"
             onClick={handleClear}
             title="Clear search and reset results"
             disabled={disabled}
+            variant="buttons.base"
             sx={{
-              padding: '4px !important',
               position: 'absolute',
               bottom: '8px',
               right: '8px',
-              fontSize: '12px !important',
-              bg: 'transparent',
-              color: '#e9eaf0ff',
-              border: '0px',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: 2,
-              opacity: 0.8,
+              px: '4px',
+              py: '4px',
+              color: '#afb3b9ff',
+              fontSize: '12px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              ':hover': {
+                color: '#e2e8f0',
+                transform: 'translateY(-1px)',
+              },
+              ':active': {
+                transform: 'translateY(0)',
+              },
               '&:disabled': {
-                opacity: 0.4,
+                opacity: 0.6,
                 cursor: 'not-allowed',
               },
             }}
           >
-            <FiRotateCw size={14} />
+            <FiRotateCw size={13} />
             New Search
           </Button>
         )}
