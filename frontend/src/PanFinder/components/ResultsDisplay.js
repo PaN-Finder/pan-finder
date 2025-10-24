@@ -3,6 +3,7 @@ import { FiChevronRight } from 'react-icons/fi'
 
 import { Box, Flex, Heading, Text } from '../../Primitives'
 import ResultTableRow from './ResultTableRow'
+import ExportCSVButton from './ExportCSVButton'
 
 function ResultsDisplay({
   data,
@@ -100,6 +101,7 @@ function ResultsDisplay({
           >
             {totalResults || 0} total
           </Text>
+          <ExportCSVButton results={allResults} />
         </Flex>
       </Flex>
       {allResults && Array.isArray(allResults) && allResults.length > 0 ? (
