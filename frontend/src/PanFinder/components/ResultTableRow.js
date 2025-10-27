@@ -55,6 +55,7 @@ function ResultTableRow({
       <tr
         key={result.doi || index}
         onClick={() => onRowClick(result.doi)}
+        title="Click to expand details"
         style={{
           backgroundColor: baseRowColor,
           opacity: 0,

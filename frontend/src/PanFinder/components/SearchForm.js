@@ -30,7 +30,7 @@ function SearchForm({
   disabled = false,
 }) {
   return (
-    <Box as="form" onSubmit={handleSubmit} sx={{ mb: 2 }}>
+    <Box as="form" onSubmit={handleSubmit}>
       <Box sx={{ width: '100%', position: 'relative', mb: 3 }}>
         <Box
           sx={{
