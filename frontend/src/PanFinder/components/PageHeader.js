@@ -1,7 +1,6 @@
 import React from 'react'
 
 import { Heading, Text, Flex, Box } from '../../Primitives'
-import PanFinderLogo from './PanFinderLogo'
 
 function PageHeader() {
   return (
@@ -16,17 +15,6 @@ function PageHeader() {
           textAlign: 'center',
         }}
       >
-        <Box
-          sx={{
-            position: 'relative',
-            width: ['100px', '140px', '180px'],
-          }}
-        >
-          <PanFinderLogo
-            title="PaN-Finder"
-            style={{ width: '100%', height: '100%', display: 'block' }}
-          />
-        </Box>
         <Box sx={{ position: 'relative', display: 'inline-block' }}>
           <Heading
             as="h1"

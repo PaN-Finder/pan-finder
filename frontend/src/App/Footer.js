@@ -4,6 +4,7 @@ function Footer() {
   return (
     <Flex
       sx={{
+        fontSize: '12px',
         width: '100%',
         bg: 'middleground',
         p: [1, 2, 2, 3],
@@ -128,7 +129,7 @@ function Footer() {
                 color: 'rgb(204, 204, 204)',
               }}
             >
-              &copy; 2019, 2022 PaNOSC photon and neutron open science cloud
+              &copy; 2019, 2025 PaNOSC photon and neutron open science cloud
             </li>
           </ul>
         </Box>
