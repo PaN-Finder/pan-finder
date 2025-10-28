@@ -50,6 +50,12 @@ class DocumentIngestor:
             "record_key": "panosc",
             "text_field": "summary",
         },
+        {
+            "filename": "desy.json",
+            "facility": "DESY",
+            "record_key": "document",
+            "text_field": "abstract",
+        },
     ]
 
     def __init__(
@@ -94,8 +100,7 @@ class DocumentIngestor:
                     for ds in self.DATASETS:
                         file_path = Path("data") / ds["filename"]
                         if not file_path.exists():
-                            self.logger.warning("Data file not found: %s", file_path)
-                            continue
+                            raise FileNotFoundError(f"Data file not found: {file_path}")
 
                         with file_path.open() as f:
                             data = json.load(f)
