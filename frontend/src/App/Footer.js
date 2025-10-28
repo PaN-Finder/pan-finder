@@ -10,6 +10,7 @@ function Footer() {
         p: [1, 2, 2, 3],
         justifyContent: 'space-between',
         flexDirection: 'column',
+        alignItems: 'center',
       }}
     >
       <Box as="footer">

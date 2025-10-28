@@ -126,5 +126,10 @@
         "url": "https://scicat.hzdr.de/panosc-api"
       }
     ]
+  },
+  {
+    "name": "Deutsches Elektronen-Synchrotron",
+    "abbr": "DESY",
+    "homepage": "https://desy.de"
   }
 ]
