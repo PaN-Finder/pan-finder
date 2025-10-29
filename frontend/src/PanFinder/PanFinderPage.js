@@ -196,7 +196,9 @@ function PanFinderPage() {
         />
         <QueryDetails data={data} onStructuredSearch={handleStructuredSearch} />
 
-        <FacilitiesSection only={['ESS', 'ESRF', 'ILL', 'PSI', 'MAXIV']} />
+        <FacilitiesSection
+          only={['ESS', 'ESRF', 'ILL', 'PSI', 'MAXIV', 'DESY']}
+        />
         <PanFinderFooter />
       </Box>
     </TurnstileSessionGate>

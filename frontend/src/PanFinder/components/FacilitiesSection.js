@@ -6,7 +6,7 @@ import { Box, Link, Heading } from '../../Primitives'
  * FacilitiesSection - Displays a heading and a vertical, centered list of facility providers.
  * Accepts an optional `only` prop to restrict which facilities are shown by their abbreviation.
  */
-function FacilitiesSection({ only = ['ESS', 'ESRF', 'ILL', 'PSI', 'MAXIV'] }) {
+function FacilitiesSection({ only = [] }) {
   return (
     <Box
       sx={{
