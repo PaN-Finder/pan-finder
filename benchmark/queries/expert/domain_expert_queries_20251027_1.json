@@ -1,0 +1,135 @@
+[
+  {
+    "type": "extended presence",
+    "expert": "Max Novelli",
+    "doi": "10.5291/ILL-DATA.5-22-774",
+    "query": "Find documents where the title is the prime factorization of 12.",
+    "id": "587681ac-954e-11f0-926d-d396cc9c2e2a",
+    "group" : "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Max Novelli",
+    "doi": "10.15151/ESRF-ES-1815547789",
+    "query": "Can you find documents pertaining to scans of the human ear?",
+    "id": "607a2de0-954e-11f0-a9cf-07b400a71b6e",
+    "group": "NP"
+  },
+  {
+    "type": "positive",
+    "expert": "Max Novelli",
+    "doi": "10.16907/493c5efc-c6a8-45a7-a12f-27bfce87bd54",
+    "query": "Find datasets with a magnetic field of -100 microtesla.",
+    "id": "68b6bef6-954e-11f0-b680-cf44a516dc9c"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Max Novelli",
+    "doi": "10.16907/493c5efc-c6a8-45a7-a12f-27bfce87bd54",
+    "query": "Find datasets with a magnetic field of -100 microtesla.",
+    "id": "30ae7e6e-b348-11f0-9fec-fba8ff52f57f",
+    "group": "HR"
+  },
+  {
+    "type": "positive",
+    "expert": "Max Novelli",
+    "doi": "10.15151/ESRF-ES-1118672762",
+    "query": "Can you list datasets related to Alzeihmer disease in PaN facilities",
+    "id": "7172e6d2-954e-11f0-90a0-ffd8da3599da"
+  },
+  {
+    "type": "positive",
+    "expert": "Max Novelli",
+    "doi": "10.15151/ESRF-ES-1160643214",
+    "query": "Can you list datasets related to Alzeihmer disease in PaN facilities",
+    "id": "7be2d8a2-954e-11f0-8db4-b336c972f738"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Max Novelli",
+    "doi": "10.15151/ESRF-ES-1931738030",
+    "query": "can you find gisaxs data that I can use in ai application?",
+    "id": "b0b95194-954b-11f0-8081-931056796785",
+    "group": "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Max Novelli",
+    "doi": "10.5291/ILL-DATA.5-16-274",
+    "query": "can you find gisaxs data that I can use in ai application?",
+    "id": "c9a048de-954b-11f0-b4bb-6f91f8b34f51",
+    "group": "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Max Novelli",
+    "doi": "10.16907/3ebf3cd2-498c-4278-a652-9d24ad413c49",
+    "query": "can you find gisaxs data that I can use in ai application?",
+    "id": "d3d299a6-954b-11f0-a1a4-2b441e9068b1",
+    "group": "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Max Novelli",
+    "doi": "10.15151/ESRF-ES-1674262455",
+    "query": "sub-region of the left kidney of the body donor LADAF-2021-17",
+    "id": "dda3894a-954b-11f0-bc7d-c744f9919bb7",
+    "group": "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Max Novelli",
+    "doi": "10.5291/ILL-DATA.4-01-1563",
+    "query": "sub-region of the left kidney of the body donor LADAF-2021-17",
+    "id": "e60dd3e2-954b-11f0-9802-57dc2b985884",
+    "group": "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Max Novelli",
+    "doi": "10.16907/b97cdb87-83be-4176-87f4-2e89679ff333",
+    "query": "sub-region of the left kidney of the body donor LADAF-2021-17",
+    "id": "eeebf1ba-954b-11f0-a1ec-7fca74e5c7f6",
+    "group": "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Max Novelli",
+    "doi": "10.16907/1c2661e3-769b-4cdf-8504-4959fff59d17",
+    "query": "Give me a dataset with the energy exclusively between 4 to 5 MeV",
+    "id": "f4f69f88-954b-11f0-a616-0b3fe69e55e6",
+    "group": "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Max Novelli",
+    "doi": "10.48391/91a3a886-df6f-434a-9a1d-7304a0061e00",
+    "query": "Give me a dataset with the energy exclusively between 4 to 5 MeV",
+    "id": "ffed9496-954b-11f0-9c2f-93c87506d019",
+    "group": "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Max Novelli",
+    "doi": "10.5291/ILL-DATA.5-12-316",
+    "query": "Can you find documents with an overview of the testis of donor LADAF-2021-17 with precision at 9.595 micrometers",
+    "id": "08e3c656-954c-11f0-bcc5-6731a6346fd9",
+    "group": "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Max Novelli",
+    "doi": "10.15151/ESRF-ES-1998500102",
+    "query": "Can you find documents with an overview of the testis of donor LADAF-2021-17 with precision at 9.595 micrometers",
+    "id": "11b03918-954c-11f0-8261-bf92ef6877e9",
+    "group": "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Max Novelli",
+    "doi": "10.16907/d7582cb6-7850-42bc-ad76-e845b998e9ca",
+    "query": "Can you find documents with an overview of the testis of donor LADAF-2021-17 with precision at 9.595 micrometers",
+    "id": "1a2bc5ee-954c-11f0-a1e9-2f2d36d3063b",
+    "group": "NP"
+  }
+]

@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 from paths import benchmark_dir, include_server_modules
+import argparse
 
 include_server_modules()
 from src.db.connection import (
@@ -29,11 +30,12 @@ def insert_test_pair(
     groupId,
     source,
     type,
+    targetGroup
 ):
     cursor.execute(
         """
-        INSERT INTO test_pairs (tpId, userPrompt, targetDoi, expectedRank, promptId, expertName, groupId, source, type)
-        VALUES (%s, %s, %s, 0, %s, %s, %s, %s, %s)
+        INSERT INTO test_pairs (tpId, userPrompt, targetDoi, expectedRank, promptId, expertName, groupId, source, type, targetGroup)
+        VALUES (%s, %s, %s, 0, %s, %s, %s, %s, %s, %s)
         """,
         (
             tpId,
@@ -44,11 +46,14 @@ def insert_test_pair(
             groupId,
             source,
             type,
+            targetGroup,
         ),
     )
 
 
-def main():
+def main(
+        files: [str]
+):
     try:
         benchmarks_db_config = DatabaseConfig(
             conninfo=os.getenv(
@@ -61,21 +66,24 @@ def main():
         )
         register_database("pan-finder-benchmarks", benchmarks_db_config)
 
-        files = []
-        for folder in ["expert", "synthetic"]:
-            full_path = Path(benchmark_dir()) / "queries" / folder
-            logging.info(f"listing files from {full_path}")
+        if files:
+            logging.info(f"Importing {len(files)} test pairs files specified")
+        else:
+            files = []
+            for folder in ["expert", "synthetic"]:
+                full_path = Path(benchmark_dir()) / "queries" / folder
+                logging.info(f"listing files from {full_path}")
 
-            files += [os.path.join(full_path, f) for f in os.listdir(full_path)]
+                files += [os.path.join(full_path, f) for f in os.listdir(full_path)]
 
-        files = [f for f in files if "20250919" in f and "expanded" not in f]
+            files = [f for f in files if "20250919" in f and "expanded" not in f]
 
-        files = [
-            f
-            for f in files
-            if os.path.isfile(f) and f.endswith("json") and "expanded" not in f
-        ]
-        logging.info(f"Found {len(files)} test pairs files")
+            files = [
+                f
+                for f in files
+                if os.path.isfile(f) and f.endswith("json") and "expanded" not in f
+            ]
+            logging.info(f"Found {len(files)} test pairs files")
 
         total_test_pair = 0
 
@@ -111,6 +119,8 @@ def main():
                         tpType = (
                             test_pair["type"] if "type" in test_pair else "positive"
                         )
+                        tpGroup = test_pair["group"] if "group" in test_pair else None
+
 
                         userPrompt = test_pair["query"]
                         if userPrompt[0] == "{":
@@ -136,6 +146,7 @@ def main():
                             groupId,
                             tpSource,
                             tpType,
+                            tpGroup
                         )
                         file_test_pair += 1
                         total_test_pair += 1
@@ -151,4 +162,22 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+
+
+    # Create ArgumentParser object
+    parser = argparse.ArgumentParser(description="PaN-Finder store test pairs")
+
+    # Define command-line options and arguments
+    parser.add_argument(
+        "-f",
+        "--file",
+        dest="files",
+        action="append",
+        type=str,
+        help="Files containing the new test pairs to import",
+    )
+
+    # Parse arguments
+    args = parser.parse_args()
+
+    main(args.files)

@@ -182,7 +182,7 @@ class KneePoint:
         else:
             kept = results_sorted[
                 :knee_index
-            ]  # reults before knee point (excliding knee point)
+            ]  # results before knee point (excliding knee point)
 
         # Calculate the knee point value (score at the knee index)
         knee_point_value = (

@@ -1,0 +1,163 @@
+[
+  {
+    "type": "extended presence",
+    "expert": "Test User 4",
+    "doi": "10.16907/c4fdaf60-562b-4501-a314-a7c153d676ee",
+    "query": "X-ray reflectometry with photon energy > 2 keV",
+    "id": "54e9d63c-b336-11f0-87d5-a36d05c1bf97",
+    "group": "LR"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Test User 4",
+    "doi": "10.16907/b0e8ef2b-836a-4e29-90bb-38bfebe26685",
+    "query": "X-ray reflectometry with photon energy > 2 keV",
+    "id": "54e9476c-b336-11f0-8c42-734fa480a54c",
+    "group": "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Test User 4",
+    "doi": "10.48391/cff474da-2b3f-4a3a-9226-9c4f1d62470e",
+    "query": "X-ray reflectometry with photon energy > 2 keV",
+    "id": "54e8a37a-b336-11f0-a18f-d3e6351b5078",
+    "group": "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Test User 4",
+    "doi": "10.16907/4d7143fa-21c4-4f3c-8e62-0ffa1720b2ae",
+    "query": "X-ray reflectometry with photon energy > 2 keV",
+    "id": "54e80988-b336-11f0-af47-1fea6dd79182",
+    "group": "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Test User 4",
+    "doi": "10.16907/808de0df-a9d3-4698-8e9f-d6e091516650",
+    "query": "X-ray reflectometry with photon energy > 2 keV",
+    "id": "54e77f72-b336-11f0-a138-9729cf87d952",
+    "group": "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Test User 4",
+    "doi": "10.16907/d699e1f7-e822-4396-8c64-34ed405f07b7",
+    "query": "X-ray reflectometry with photon energy > 2 keV",
+    "id": "54e6f232-b336-11f0-ba83-ab8f03eff34a",
+    "group": "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Test User 4",
+    "doi": "10.16907/05a50450-767f-421d-9832-342b57c201af",
+    "query": "X-ray reflectometry with photon energy > 2 keV",
+    "id": "54e66894-b336-11f0-a628-07abc15e0eb6",
+    "group": "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Test User 4",
+    "doi": "10.48391/91a3a886-df6f-434a-9a1d-7304a0061e00",
+    "query": "X-ray reflectometry with photon energy > 2 keV",
+    "id": "54e5df6e-b336-11f0-99c8-7b391a7e2fc9",
+    "group": "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Test User 4",
+    "doi": "10.48391/b0c36bb8-a00c-4519-8dcc-08d5ca60a313",
+    "query": "X-ray reflectometry with photon energy > 2 keV",
+    "id": "54e546b2-b336-11f0-9db1-0be7454a4c15",
+    "group": "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Test User 4",
+    "doi": "10.16907/7eb141d3-11f1-47a6-9d0e-76f8832ed1b2",
+    "query": "X-ray reflectometry with photon energy > 2 keV",
+    "id": "54e486d2-b336-11f0-8422-2ff60461d588",
+    "group": "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Test User 4",
+    "doi": "10.16907/ef0cfe43-0525-4e80-b77e-d6c979b6acca",
+    "query": "X-ray reflectometry with photon energy > 2 keV",
+    "id": "54e3b522-b336-11f0-88cc-5bc2e68dd38b",
+    "group": "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Test User 4",
+    "doi": "10.15151/ESRF-ES-1824853946",
+    "query": "X-ray reflectometry with photon energy > 2 keV",
+    "id": "54e30046-b336-11f0-913b-3f41a84d4679",
+    "group": "HR"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Test User 4",
+    "doi": "10.15151/ESRF-ES-874830408",
+    "query": "X-ray reflectometry with photon energy > 2 keV",
+    "id": "54e273d8-b336-11f0-8880-6b6d42fe8e9a",
+    "group": "HR"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Test User 4",
+    "doi": "10.5291/ILL-DATA.INTER-463",
+    "query": "X-ray reflectometry with photon energy > 2 keV",
+    "id": "54e1f2be-b336-11f0-bc5e-c3eef3519ca3",
+    "group": "LR"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Test User 4",
+    "doi": "10.15151/ESRF-ES-789629729",
+    "query": "X-ray reflectometry with photon energy > 2 keV",
+    "id": "54e16ef2-b336-11f0-bc52-af86ff9b7c28",
+    "group": "HR"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Test User 4",
+    "doi": "10.15151/ESRF-ES-1162136801",
+    "query": "X-ray reflectometry with photon energy > 2 keV",
+    "id": "54e0d352-b336-11f0-991b-739985b843a5",
+    "group": "HR"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Test User 4",
+    "doi": "10.5291/ILL-DATA.9-13-488",
+    "query": "X-ray reflectometry with photon energy > 2 keV",
+    "id": "54e02f42-b336-11f0-8ce3-2b6694482c8b",
+    "group": "LR"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Test User 4",
+    "doi": "10.15151/ESRF-ES-1548496957",
+    "query": "X-ray reflectometry with photon energy > 2 keV",
+    "id": "54df818c-b336-11f0-ac53-2fa6dece4e2f",
+    "group": "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Test User 4",
+    "doi": "10.15151/ESRF-ES-496100225",
+    "query": "X-ray reflectometry with photon energy > 2 keV",
+    "id": "54dea550-b336-11f0-87d1-bb8d1f822d3e",
+    "group": "NP"
+  },
+  {
+    "type": "extended presence",
+    "expert": "Test User 4",
+    "doi": "10.15151/ESRF-ES-2004124768",
+    "query": "X-ray reflectometry with photon energy > 2 keV",
+    "id": "54de03b6-b336-11f0-ae4a-139fac508955",
+    "group": "HR"
+  }
+]
+
