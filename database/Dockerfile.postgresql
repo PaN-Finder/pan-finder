@@ -1,4 +1,6 @@
 FROM pgvector/pgvector:0.8.0-pg17
 
 # Install additional postgresql-unit extension (postgresql-17-unit)
-RUN apt-get update && apt-get install -y postgresql-17-unit=7.10-1.pgdg120+1
+RUN apt-get update && \
+    apt-get install -y postgresql-17-unit && \
+    rm -rf /var/lib/apt/lists/*
