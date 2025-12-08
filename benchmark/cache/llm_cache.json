@@ -4428,6 +4428,24 @@
         "temperature": 0,
         "max_tokens": 500
       }
+    },
+    "da4f3b54446ed26afcb5d73c2b00a3ca54bca760f9693b5f3046d9650ec862e4": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"magnetic field\\\",\\n        \\\"operator\\\": \\\"=\\\",\\n        \\\"value\\\": -100,\\n        \\\"unit\\\": \\\"microtesla\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 70, \"prompt_tokens\": 3427, \"total_tokens\": 3497}, \"created_at\": 1761920377.1488423}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_8.md",
+        "temperature": 0.1,
+        "max_tokens": 500
+      }
+    },
+    "b265371f699f11c21abbe9eb46d593833f43ce7c5b95d04da4165ae943049fe0": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"title\\\",\\n        \\\"operator\\\": \\\"=\\\",\\n        \\\"value\\\": \\\"the prime factorization of 12\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 65, \"prompt_tokens\": 3428, \"total_tokens\": 3493}, \"created_at\": 1762034108.508119}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_8.md",
+        "temperature": 0.1,
+        "max_tokens": 500
+      }
     }
   }
 }
