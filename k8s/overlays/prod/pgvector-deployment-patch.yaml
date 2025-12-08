@@ -3,10 +3,8 @@ kind: Deployment
 metadata:
   name: pgvector
 spec:
-  template:    
+  template:
     spec:
-      imagePullSecrets:
-      - name: ess-gitlab-registry-credentials
       containers:
       - name: pgvector
         args:

@@ -41,9 +41,7 @@ class Settings:
         self.db_max_lifetime = int(os.getenv("DB_MAX_LIFETIME", "3600"))  # 1 hour
 
         # Cloudflare Turnstile
-        self.enable_turnstile = (
-            self._get_required_env("ENABLE_TURNSTILE").lower() == "true"
-        )
+        self.enable_turnstile = os.getenv("ENABLE_TURNSTILE", "false").lower() == "true"
         if self.enable_turnstile:
             self.turnstile_secret_key = self._get_required_env("TURNSTILE_SECRET_KEY")
 

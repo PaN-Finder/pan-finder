@@ -110,9 +110,7 @@ class FilterIngestor:
             keys.append(prop)
         return filter_rows, keys
 
-    def insert_filters_and_keys(
-        self, cursor, filter_rows: List[Tuple], unique_keys: Iterable[str]
-    ) -> None:
+    def insert_filters(self, cursor, filter_rows: List[Tuple]) -> None:
         if filter_rows:
             cursor.executemany(
                 """
@@ -121,22 +119,32 @@ class FilterIngestor:
                 """,
                 filter_rows,
             )
-        # Embeddings for keys (normalized)
-        unique_keys = list(set(unique_keys))
-        if unique_keys:
-            normalized = [self.normalize_filter_key(k) for k in unique_keys]
-            vectors = self.encoder.encode(normalized)
-            if hasattr(vectors, "tolist"):
-                vectors = vectors.tolist()
-            key_embeddings = list(zip(unique_keys, vectors))
-            cursor.executemany(
-                """
-                INSERT INTO filter_key (name, name_vector)
-                VALUES (%s, %s)
-                ON CONFLICT (name) DO NOTHING
-                """,
-                key_embeddings,
-            )
+
+    def insert_filter_keys_with_embeddings(self, cursor, keys: Iterable[str]) -> None:
+        """
+        Normalize filter keys, generate embeddings, and insert into filter_key table.
+
+        Args:
+            cursor: Database cursor for executing SQL
+            keys: Iterable of filter key names to process
+        """
+        unique_keys = list(set(keys))
+        if not unique_keys:
+            return
+
+        normalized = [self.normalize_filter_key(k) for k in unique_keys]
+        vectors = self.encoder.encode(normalized)
+        if hasattr(vectors, "tolist"):
+            vectors = vectors.tolist()
+        key_embeddings = list(zip(unique_keys, vectors))
+        cursor.executemany(
+            """
+            INSERT INTO filter_key (name, name_vector)
+            VALUES (%s, %s)
+            ON CONFLICT (name) DO NOTHING
+            """,
+            key_embeddings,
+        )
 
     def process_documents(self, documents: List[Tuple[int, Dict[str, Any]]]) -> None:
         """Insert flattened metadata filters and corresponding key embeddings."""
@@ -149,7 +157,8 @@ class FilterIngestor:
                     rows, keys = self.build_filters(doc_id, raw)
                     all_rows.extend(rows)
                     all_keys.extend(keys)
-                self.insert_filters_and_keys(cursor, all_rows, all_keys)
+                self.insert_filters(cursor, all_rows)
+                self.insert_filter_keys_with_embeddings(cursor, all_keys)
             conn.commit()
 
     def run(self) -> None:

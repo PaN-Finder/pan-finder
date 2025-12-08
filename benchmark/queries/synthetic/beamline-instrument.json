@@ -1,0 +1,42 @@
+[
+  {
+    "doi": "10.15151/ESRF-ES-1122970732",
+    "queries": [
+      {
+        "query": "Datasets from ESRF beamline ID29",
+        "min_position": 0
+      },
+      {
+        "query": "Datasets from ESRF instrument ID29",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.1-04-85",
+    "queries": [
+      {
+        "query": "Datasets from ILL instrument D20",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.48391/b0c36bb8-a00c-4519-8dcc-08d5ca60a313",
+    "queries": [
+      {
+        "query": "Datasets where the beamline is BioMAX",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.16907/1add92ed-1449-4302-9627-8661914a2a1e",
+    "queries": [
+      {
+        "query": "Datasets where the beamline is TOMCAT",
+        "min_position": 0
+      }
+    ]
+  }
+]

@@ -1,0 +1,135 @@
+[
+  {
+    "name": "European Synchrotron Radiation Facility",
+    "abbr": "ESRF",
+    "url": "https://icatplus.esrf.fr/api",
+    "homepage": "https://www.esrf.eu/",
+    "services": [
+      {
+        "name": "VISA",
+        "url": "https://visa.esrf.fr"
+      },
+      {
+        "name": "Jupyter SLURM",
+        "url": "https://jupyter-slurm.esrf.fr/spawn?partition_simple=jupyter-nice&nprocs_simple=1&environment_simple=system&jupyterlab_simple=on&runtime_simple=1&partition=jupyter-nice&nprocs=1&runtime=1%3A00%3A00&default_url=%2Flab"
+      },
+      {
+        "name": "PaNdata Software Catalogue",
+        "url": "https://software.pan-data.eu/"
+      }
+    ]
+  },
+  {
+    "name": "European Spallation Source",
+    "abbr": "ESS",
+    "url": "https://search.panosc.ess.eu/api",
+    "homepage": "https://ess.eu/",
+    "services": [
+      {
+        "name": "PaNOSC Search API",
+        "url": "https://search.panosc.ess.eu/api"
+      }
+    ]
+  },
+  {
+    "name": "Institut Laue Langevin",
+    "abbr": "ILL",
+    "url": "https://fairdata.ill.fr/fairdata/api",
+    "homepage": "https://www.ill.eu/",
+    "services": [
+      {
+        "name": "PaNdata Software Catalogue",
+        "url": "https://software.pan-data.eu/"
+      }
+    ]
+  },
+  {
+    "name": "MAX IV",
+    "abbr": "MAXIV",
+    "url": "https://searchapi.maxiv.lu.se/api",
+    "homepage": "https://www.maxiv.lu.se",
+    "services": [
+      {
+        "name": "PaNdata Software Catalogue",
+        "url": "https://software.pan-data.eu/"
+      }
+    ]
+  },
+  {
+    "name": "Paul Scherrer Institut",
+    "abbr": "PSI",
+    "url": "https://dacat.psi.ch/panosc-api",
+    "homepage": "https://www.psi.ch/en",
+    "services": [
+      {
+        "name": "Remote Desktop Service",
+        "url": "https://marketplace.eosc-portal.eu/services/eosc.psi.remote_desktop_service"
+      },
+      {
+        "name": "Jupyter Hub (PSI Network only)",
+        "url": "https://jupytera.psi.ch/"
+      },
+      {
+        "name": "PaNdata Software Catalogue",
+        "url": "https://software.pan-data.eu/"
+      }
+    ]
+  },
+  {
+    "name": "Central European Research Infrastructure Consortium",
+    "abbr": "CERIC",
+    "url": "https://data.ceric-eric.eu/search-api",
+    "homepage": "https://www.ceric-eric.eu",
+    "services": [
+      {
+        "name": "PaNdata Software Catalogue",
+        "url": "https://software.pan-data.eu/"
+      }
+    ]
+  },
+  {
+    "name": "European XFEL",
+    "abbr": "EuXFEL",
+    "url": "https://in.xfel.eu/metadata/api/panosc/v1",
+    "homepage": "https://www.xfel.eu/index_eng.html",
+    "services": [
+      {
+        "name": "VISA",
+        "url": "https://visa.xfel.eu"
+      },
+      {
+        "name": "PaNdata Software Catalogue",
+        "url": "https://software.pan-data.eu/"
+      }
+    ]
+  },
+  {
+    "name": "ALBA Synchrotron",
+    "abbr": "ALBA",
+    "url": "https://data.cells.es/iws/panosc/search-api",
+    "homepage": "https://www.cells.es/en",
+    "services": [
+      {
+        "name": "PaNOSC Search API",
+        "url": "https://data.cells.es/iws/panosc/search-api"
+      }
+    ]
+  },
+  {
+    "name": "Helmholtz-Zentrum Dresden-Rossendorf",
+    "abbr": "HZDR",
+    "url": "https://scicat.hzdr.de/panosc-api",
+    "homepage": "https://www.hzdr.de/",
+    "services": [
+      {
+        "name": "PaNOSC Search API",
+        "url": "https://scicat.hzdr.de/panosc-api"
+      }
+    ]
+  },
+  {
+    "name": "Deutsches Elektronen-Synchrotron",
+    "abbr": "DESY",
+    "homepage": "https://desy.de"
+  }
+]

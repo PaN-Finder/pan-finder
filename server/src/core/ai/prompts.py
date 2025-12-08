@@ -36,7 +36,7 @@ class AIPrompts:
   - "data from beamline P03" -> `{"name": "beamline", "operator": "=", "value": "P03"}`
 
   - Facilities and Organizations → publisher filter (special rule): When the query mentions a facility/organization (case-insensitive), add a filter with `name: "publisher"` and use the facility mention as the `value` exactly as it appears in the query. This rule is an exception to the "use the exact parameter names from the query" guideline specifically for facilities.
-    - Preserve known abbreviations exactly as provided (do NOT expand abbreviations to full names). Likewise, preserve known full names as provided (do NOT abbreviate). Examples of known abbreviations include: `ESRF`, `PSI`, `ILL`, `ESS`, `MAX IV`, `MAXIV`, `PSI LMU`.
+    - Preserve known abbreviations exactly as provided (do NOT expand abbreviations to full names). Likewise, preserve known full names as provided (do NOT abbreviate). Examples of known abbreviations include: `ESRF`, `PSI`, `ILL`, `ESS`, `MAX IV`, `MAXIV`, `DESY`, `PSI LMU`.
     - "datasets from ESRF" → `{"name": "publisher", "operator": "=", "value": "ESRF"}`
     - "conducted at the European Synchrotron Radiation Facility" → `{"name": "publisher", "operator": "=", "value": "European Synchrotron Radiation Facility"}`
     - "data from PSI" → `{"name": "publisher", "operator": "=", "value": "PSI"}`
@@ -52,7 +52,8 @@ class AIPrompts:
       "PSI": "Paul Scherrer Institute",
       "ILL": "Institut Laue-Langevin",
       "ESS": "European Spallation Source",
-      "MAX IV": "MAX IV Laboratory"
+      "MAX IV": "MAX IV Laboratory",
+      "DESY": "Deutsches Elektronen-Synchrotron"
     }
     ```
 
@@ -234,9 +235,9 @@ class AIPrompts:
   **JSON Output:**
   `{ "intention": "CuNCN", "keywords": ["CuNCN"], "filters": { "logic": "OR", "conditions": [ { "logic": "AND", "conditions": [ { "name": "temperature", "operator": ">=", "value": 1.5, "unit": "K" }, { "name": "temperature", "operator": "<=", "value": 100, "unit": "K" } ] }, { "logic": "AND", "conditions": [ { "name": "temperature", "operator": ">", "value": 100, "unit": "K" }, { "name": "publication year", "operator": "=", "value": 2020 } ] } ] } }`
 
-- **User Query:** "Find research on chloroquine's crystal structure where the temperature is less than 100 K."
+- **User Query:** "Find research on chloroquine’s crystal structure where the temperature is less than 100 K."
   **JSON Output:**
-  `{ "intention": "chloroquine's crystal structure", "keywords": ["chloroquine", "crystal structure"], "filters": { "logic": "AND", "conditions": [ { "name": "temperature", "operator": "<", "value": 100, "unit": "K" } ] } }`
+  `{ "intention": "chloroquine’s crystal structure", "keywords": ["chloroquine", "crystal structure"], "filters": { "logic": "AND", "conditions": [ { "name": "temperature", "operator": "<", "value": 100, "unit": "K" } ] } }`
 
 - **User Query:** "Search for papers on graphene materials."
   **JSON Output:**

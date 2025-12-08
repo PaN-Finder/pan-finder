@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict NMyiHVaD7MHiMRibYFCUct2diP6fivuLoHRjZD9qXwAw5bUaLwQbHhJiII5FbAW
+\restrict XDCllgb7ovak2t7L0zZ2rsxcSuUejnPgHdfkpu6RJoRPCvSTUurOfhgpVNA7jFL
 
 -- Dumped from database version 17.4 (Debian 17.4-1.pgdg120+2)
 -- Dumped by pg_dump version 17.6
@@ -456,6 +456,38 @@ ALTER TABLE ONLY public.filter ALTER COLUMN value_si SET STATISTICS 1000;
 
 
 --
+-- Name: filter_description; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.filter_description (
+    id integer NOT NULL,
+    filter_key_name text NOT NULL,
+    description text NOT NULL,
+    description_vector public.vector(384)
+);
+
+
+--
+-- Name: filter_description_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.filter_description_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: filter_description_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.filter_description_id_seq OWNED BY public.filter_description.id;
+
+
+--
 -- Name: filter_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -568,6 +600,13 @@ ALTER TABLE ONLY public.filter ALTER COLUMN id SET DEFAULT nextval('public.filte
 
 
 --
+-- Name: filter_description id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.filter_description ALTER COLUMN id SET DEFAULT nextval('public.filter_description_id_seq'::regclass);
+
+
+--
 -- Name: migration id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -615,6 +654,14 @@ ALTER TABLE ONLY public.feedback
 
 
 --
+-- Name: filter_description filter_description_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.filter_description
+    ADD CONSTRAINT filter_description_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: filter filter_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -644,6 +691,14 @@ ALTER TABLE ONLY public.migration
 
 ALTER TABLE ONLY public.statistic
     ADD CONSTRAINT statistic_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: filter_description uq_filter_description_key_desc; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.filter_description
+    ADD CONSTRAINT uq_filter_description_key_desc UNIQUE (filter_key_name, description);
 
 
 --
@@ -707,6 +762,13 @@ CREATE INDEX document_to_tsvector_idx ON public.document USING gin (to_tsvector(
 --
 
 CREATE UNIQUE INDEX facility_name_idx ON public.facility USING btree (name);
+
+
+--
+-- Name: filter_description_vector_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX filter_description_vector_idx ON public.filter_description USING hnsw (description_vector public.vector_cosine_ops);
 
 
 --
@@ -805,8 +867,16 @@ ALTER TABLE ONLY public.filter
 
 
 --
+-- Name: filter_description fk_filter_description_filter_key; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.filter_description
+    ADD CONSTRAINT fk_filter_description_filter_key FOREIGN KEY (filter_key_name) REFERENCES public.filter_key(name) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
 -- PostgreSQL database dump complete
 --
 
-\unrestrict NMyiHVaD7MHiMRibYFCUct2diP6fivuLoHRjZD9qXwAw5bUaLwQbHhJiII5FbAW
+\unrestrict XDCllgb7ovak2t7L0zZ2rsxcSuUejnPgHdfkpu6RJoRPCvSTUurOfhgpVNA7jFL
 

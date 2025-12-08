@@ -349,7 +349,8 @@ class SearchQueryBuilder:
         """
         Finds similar filter names in the database using vector embeddings.
 
-        This helps correct for typos or variations in user-provided filter names.
+        This searches both filter_key.name_vector and filter_description.description_vector
+        to help correct for typos or variations in user-provided filter names.
 
         Args:
             raw_name: The user-provided filter name.
@@ -367,38 +368,50 @@ class SearchQueryBuilder:
         ):
             cursor.execute(
                 """WITH top_matches AS (
-                    SELECT name, name_vector <=> %s::vector AS distance
+                    SELECT DISTINCT name, name_vector <=> %s::vector AS distance
                     FROM filter_key
                     WHERE name_vector <=> %s::vector < %s
-                    ORDER BY distance
+                ),
+                description_matches AS (
+                    SELECT DISTINCT filter_key_name as name, description_vector <=> %s::vector AS distance
+                    FROM filter_description
+                    WHERE description_vector <=> %s::vector < %s
+                ),
+                combined_matches AS (
+                    SELECT name, distance FROM top_matches
+                    UNION
+                    SELECT name, distance FROM description_matches
                 ),
                 fallback_matches AS (
-                    SELECT name, name_vector <=> %s::vector AS distance
-                    FROM filter_key
-                    WHERE name_vector <=> %s::vector >= %s
-                    ORDER BY distance
+                    SELECT DISTINCT fk.name, fk.name_vector <=> %s::vector AS distance
+                    FROM filter_key fk
+                    WHERE fk.name_vector <=> %s::vector >= %s
+                    AND NOT EXISTS (SELECT 1 FROM combined_matches cm WHERE cm.name = fk.name)
                 )
                 (
                     (
-                        SELECT * FROM top_matches
+                        SELECT * FROM combined_matches
                         ORDER BY distance
                     )
                     UNION ALL
                     (
                         SELECT * FROM fallback_matches
                         ORDER BY distance
-                        LIMIT GREATEST(0, %s - (SELECT COUNT(*) FROM top_matches))
+                        LIMIT GREATEST(0, %s - (SELECT COUNT(*) FROM combined_matches))
                     )
                 )
                 ORDER BY distance;
                 """,
                 (
-                    query_vector,
-                    query_vector,
-                    self._SIMILARITY_THRESHOLD_NAMES,
-                    query_vector,
-                    query_vector,
-                    self._SIMILARITY_THRESHOLD_NAMES,
+                    query_vector,  # top_matches comparison
+                    query_vector,  # top_matches WHERE
+                    self._SIMILARITY_THRESHOLD_NAMES,  # top_matches threshold
+                    query_vector,  # description_matches comparison
+                    query_vector,  # description_matches WHERE
+                    self._SIMILARITY_THRESHOLD_NAMES,  # description_matches threshold
+                    query_vector,  # fallback_matches comparison
+                    query_vector,  # fallback_matches WHERE
+                    self._SIMILARITY_THRESHOLD_NAMES,  # fallback_matches threshold
                     self._SIMILARITY_MINIMUM_RESULTS,  # Ensure we always return at least this many results
                 ),
             )
