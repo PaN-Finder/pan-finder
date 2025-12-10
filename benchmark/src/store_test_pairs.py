@@ -99,7 +99,7 @@ def main(
                         tpSource = "synthetic"
                     else:
                         # data/queries/expert/domain_expert_queries_20250423_1.json
-                        groupId = "_".join(file.split(".")[-2].split("_")[-2:])
+                        groupId = "_".join(file.split(".")[-2].split("_")[3:])
                         tpSource = "expert"
 
                     # {

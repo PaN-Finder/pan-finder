@@ -8910,6 +8910,150 @@
         "temperature": 0,
         "max_tokens": 500
       }
+    },
+    "b265371f699f11c21abbe9eb46d593833f43ce7c5b95d04da4165ae943049fe0": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"title\\\",\\n        \\\"operator\\\": \\\"=\\\",\\n        \\\"value\\\": \\\"the prime factorization of 12\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 65, \"prompt_tokens\": 3428, \"total_tokens\": 3493}, \"created_at\": 1765191498.9010286}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_9.md",
+        "temperature": 0.1,
+        "max_tokens": 500
+      }
+    },
+    "7aa23486ba6a37c7f8ead8cb802f5842babd4a944c19222ab4a551f26b459100": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"scans of the human ear\\\",\\n  \\\"keywords\\\": [\\\"scans\\\", \\\"human\\\", \\\"ear\\\"],\\n  \\\"filters\\\": {}\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 35, \"prompt_tokens\": 3426, \"total_tokens\": 3461}, \"created_at\": 1765271873.04683}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_9.md",
+        "temperature": 0.1,
+        "max_tokens": 500
+      }
+    },
+    "da4f3b54446ed26afcb5d73c2b00a3ca54bca760f9693b5f3046d9650ec862e4": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"magnetic field\\\",\\n        \\\"operator\\\": \\\"=\\\",\\n        \\\"value\\\": -100,\\n        \\\"unit\\\": \\\"microtesla\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 70, \"prompt_tokens\": 3427, \"total_tokens\": 3497}, \"created_at\": 1765280501.1089551}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_9.md",
+        "temperature": 0.1,
+        "max_tokens": 500
+      }
+    },
+    "54187fb113855f787b7c5dcea51d15b1e99a041afce7ae9eb245b19a358e3bb7": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"gisaxs data\\\",\\n  \\\"keywords\\\": [\\\"gisaxs\\\", \\\"data\\\", \\\"ai\\\", \\\"application\\\"],\\n  \\\"filters\\\": {}\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 35, \"prompt_tokens\": 3428, \"total_tokens\": 3463}, \"created_at\": 1765280503.119715}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_9.md",
+        "temperature": 0.1,
+        "max_tokens": 500
+      }
+    },
+    "7ad8c686fe23a7a8516933a064af7a220b9b8d828e215bcaeaa93c8138cb63cf": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"sub-region of the left kidney of the body donor LADAF-2021-17\\\",\\n  \\\"keywords\\\": [\\n    \\\"sub-region\\\",\\n    \\\"left kidney\\\",\\n    \\\"body donor\\\",\\n    \\\"LADAF-2021-17\\\"\\n  ],\\n  \\\"filters\\\": {}\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 65, \"prompt_tokens\": 3431, \"total_tokens\": 3496}, \"created_at\": 1765280505.6684253}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_9.md",
+        "temperature": 0.1,
+        "max_tokens": 500
+      }
+    },
+    "a7202095303c5746d615dcdda0764a07d3e3f57e69eda9d8a28925c5d74933cc": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"energy\\\",\\n        \\\"operator\\\": \\\">=\\\",\\n        \\\"value\\\": 4,\\n        \\\"unit\\\": \\\"MeV\\\"\\n      },\\n      {\\n        \\\"name\\\": \\\"energy\\\",\\n        \\\"operator\\\": \\\"<=\\\",\\n        \\\"value\\\": 5,\\n        \\\"unit\\\": \\\"MeV\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 101, \"prompt_tokens\": 3430, \"total_tokens\": 3531}, \"created_at\": 1765280508.637496}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_9.md",
+        "temperature": 0.1,
+        "max_tokens": 500
+      }
+    },
+    "0abd0b7a8df18685cca6c65dc88519c9c35287f44c09a83a29b8a78f91e000ae": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"overview of the testis of donor LADAF-2021-17\\\",\\n  \\\"keywords\\\": [\\\"overview\\\", \\\"testis\\\", \\\"donor\\\", \\\"LADAF-2021-17\\\"],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"precision\\\",\\n        \\\"operator\\\": \\\"=\\\",\\n        \\\"value\\\": 9.595,\\n        \\\"unit\\\": \\\"micrometers\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 105, \"prompt_tokens\": 3444, \"total_tokens\": 3549}, \"created_at\": 1765280511.6232626}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_9.md",
+        "temperature": 0.1,
+        "max_tokens": 500
+      }
+    },
+    "8a59faacb96e347ee2bb73024ee236eb12f49eeb8c4a683d501a1883daebb917": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"X-ray reflectometry\\\",\\n  \\\"keywords\\\": [\\\"X-ray\\\", \\\"reflectometry\\\"],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"photon energy\\\",\\n        \\\"operator\\\": \\\">\\\",\\n        \\\"value\\\": 2,\\n        \\\"unit\\\": \\\"keV\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 81, \"prompt_tokens\": 3426, \"total_tokens\": 3507}, \"created_at\": 1765280515.0588834}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_9.md",
+        "temperature": 0.1,
+        "max_tokens": 500
+      }
+    },
+    "29ed57ec93e5f4507c8df22a99c721dac17f9d9bd0b487e16c5a05a2258ee186": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"magnetic diffuse scattering in CuMnO2\\\",\\n  \\\"keywords\\\": [\\n    \\\"magnetic\\\",\\n    \\\"diffuse\\\",\\n    \\\"scattering\\\",\\n    \\\"CuMnO2\\\"\\n  ],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"temperature\\\",\\n        \\\"operator\\\": \\\">=\\\",\\n        \\\"value\\\": 1.5,\\n        \\\"unit\\\": \\\"K\\\"\\n      },\\n      {\\n        \\\"name\\\": \\\"temperature\\\",\\n        \\\"operator\\\": \\\"<=\\\",\\n        \\\"value\\\": 300,\\n        \\\"unit\\\": \\\"K\\\"\\n      },\\n      {\\n        \\\"name\\\": \\\"sample mass\\\",\\n        \\\"operator\\\": \\\"=\\\",\\n        \\\"value\\\": 10000\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 161, \"prompt_tokens\": 3449, \"total_tokens\": 3610}, \"created_at\": 1765359739.1251864}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_9.md",
+        "temperature": 0.1,
+        "max_tokens": 500
+      }
+    },
+    "e85c9f8c93cb884148550bbd56d6a7cce3a042fc1d43304593d8be2ee45ed76d": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"research proposals involving the D50 T tomograph\\\",\\n  \\\"keywords\\\": [\\\"D50 T tomograph\\\"],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"sample formula\\\",\\n        \\\"operator\\\": \\\"IN\\\",\\n        \\\"value\\\": [\\\"Si\\\", \\\"O\\\", \\\"K\\\", \\\"Al\\\", \\\"Na\\\"]\\n      },\\n      {\\n        \\\"name\\\": \\\"publication year\\\",\\n        \\\"operator\\\": \\\"=\\\",\\n        \\\"value\\\": 2018\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 115, \"prompt_tokens\": 3447, \"total_tokens\": 3562}, \"created_at\": 1765361980.3693993}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_9.md",
+        "temperature": 0.1,
+        "max_tokens": 500
+      }
+    },
+    "51f782e90cb9b70646a829e5da6da30d64b4c2e77340b241140dfdf45c9987e2": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"Alzeihmer disease\\\",\\n  \\\"keywords\\\": [\\\"Alzeihmer\\\", \\\"disease\\\"],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"publisher\\\",\\n        \\\"operator\\\": \\\"=\\\",\\n        \\\"value\\\": \\\"PaN\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 75, \"prompt_tokens\": 3429, \"total_tokens\": 3504}, \"created_at\": 1765362164.7594259}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_9.md",
+        "temperature": 0.1,
+        "max_tokens": 500
+      }
+    },
+    "a54212eca35879edf6b55572983ed3de9fcac4429cab87e5defaf5b511399cfb": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"neutron reflectivity measurement of supported lipid bilayers\\\",\\n  \\\"keywords\\\": [\\n    \\\"neutron\\\",\\n    \\\"reflectivity\\\",\\n    \\\"measurement\\\",\\n    \\\"supported\\\",\\n    \\\"lipid\\\",\\n    \\\"bilayers\\\"\\n  ],\\n  \\\"filters\\\": {}\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 60, \"prompt_tokens\": 3426, \"total_tokens\": 3486}, \"created_at\": 1765362179.167081}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_9.md",
+        "temperature": 0.1,
+        "max_tokens": 500
+      }
+    },
+    "63f42ac7caf40681f4bf253b0ac535d8dd390edecae44f54030519a72abebffe": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"methane-to-hydrogen conversion technologies\\\",\\n  \\\"keywords\\\": [\\n    \\\"methane-to-hydrogen conversion technologies\\\",\\n    \\\"non-stoichiometric oxides\\\",\\n    \\\"oxygen-carrier materials\\\"\\n  ],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"publication year\\\",\\n        \\\"operator\\\": \\\"=\\\",\\n        \\\"value\\\": 2026\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 100, \"prompt_tokens\": 3445, \"total_tokens\": 3545}, \"created_at\": 1765362182.219231}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_9.md",
+        "temperature": 0.1,
+        "max_tokens": 500
+      }
+    },
+    "b28db80334124b9668840e6a74857f3333dc8441eac6726411da2075efc4ee43": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"interaction-free measurements using x-rays\\\",\\n  \\\"keywords\\\": [\\n    \\\"interaction-free\\\",\\n    \\\"measurements\\\",\\n    \\\"x-rays\\\"\\n  ],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"publication year\\\",\\n        \\\"operator\\\": \\\"=\\\",\\n        \\\"value\\\": 2025\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 85, \"prompt_tokens\": 3445, \"total_tokens\": 3530}, \"created_at\": 1765362184.3711188}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_9.md",
+        "temperature": 0.1,
+        "max_tokens": 500
+      }
+    },
+    "303ddb7a9572afcbfd1f0cbaeb1d3acac09b19d2740d7d87f76b37ad0151f121": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"Mg-based metallic glasses\\\",\\n  \\\"keywords\\\": [\\\"Mg-based\\\", \\\"metallic glasses\\\"],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"hydrogen storage capacity\\\",\\n        \\\"operator\\\": \\\"BETWEEN\\\",\\n        \\\"value\\\": [4, 5],\\n        \\\"unit\\\": \\\"wt%\\\"\\n      },\\n      {\\n        \\\"name\\\": \\\"publication year\\\",\\n        \\\"operator\\\": \\\"=\\\",\\n        \\\"value\\\": 2018\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 113, \"prompt_tokens\": 3445, \"total_tokens\": 3558}, \"created_at\": 1765362187.1102765}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_9.md",
+        "temperature": 0.1,
+        "max_tokens": 500
+      }
+    },
+    "62e270277d882d742bd326dd1e551d451f824b2501af582acb36b435555b697a": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"structural properties of polymer blends in organic solar cells\\\",\\n  \\\"keywords\\\": [\\n    \\\"structural properties\\\",\\n    \\\"polymer blends\\\",\\n    \\\"organic solar cells\\\",\\n    \\\"uniaxial tensile stretching\\\"\\n  ],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"results\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"uniaxial tensile stretching\\\"\\n      },\\n      {\\n        \\\"name\\\": \\\"results\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"uniaxial tensile stretching\\\"\\n      },\\n      {\\n        \\\"name\\\": \\\"results\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"uniaxial tensile stretching\\\"\\n      },\\n      {\\n        \\\"name\\\": \\\"results\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"uniaxial tensile stretching\\\"\\n      },\\n      {\\n        \\\"name\\\": \\\"results\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"uniaxial tensile stretching\\\"\\n      },\\n      {\\n        \\\"name\\\": \\\"results\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"uniaxial tensile stretching\\\"\\n      },\\n      {\\n        \\\"name\\\": \\\"results\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"uniaxial tensile stretching\\\"\\n      },\\n      {\\n        \\\"name\\\": \\\"results\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"uniaxial tensile stretching\\\"\\n      },\\n      {\\n        \\\"name\\\": \\\"results\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"uniaxial tensile stretching\\\"\\n      },\\n      {\\n        \\\"name\\\": \\\"results\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"uniaxial tensile stretching\\\"\\n      },\\n      {\\n        \\\"name\\\": \\\"results\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"uniaxial tensile stretching\\\"\\n      },\\n      {\\n        \\\"name\\\": \\\"results\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"uniaxial tensile stretching\\\"\\n      },\\n      {\\n        \\\"name\\\": \\\"results\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"uniaxial tensile stretching\\\"\\n      },\\n      {\\n        \\\"name\\\": \\\"results\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"uniaxial tensile stretching\\\"\\n      },\\n      {\\n        \\\"name\\\": \\\"results\\\",\\n        \\\"operator\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 500, \"prompt_tokens\": 3451, \"total_tokens\": 3951}, \"created_at\": 1765362196.6475215}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_9.md",
+        "temperature": 0.1,
+        "max_tokens": 500
+      }
     }
   }
 }

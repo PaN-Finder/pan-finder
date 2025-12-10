@@ -30,7 +30,7 @@
   },
   "test_pairs": {
     "test_pairs_set": "comprehensive",
-    "test_pairs_type": "extended presence"
+    "test_pairs_type": "all"
   },
   "metrics": {
     "test_pair_metrics": {
@@ -62,6 +62,9 @@
             "NP,NP" : 1
           }
         }
+      },
+      "comparative relative presence" : {
+        "CRP": "CRP_at_k"
       }
     },
     "run_metrics": {

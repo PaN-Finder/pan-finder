@@ -193,9 +193,10 @@ async def process_comparative_test_pair(
     logging.info("process_comparative_test_pair: end: execute search")
 
     logging.info("process_comparative_test_pair: begin: target dois %s", ",".join(dois))
-    indexes = [next((i for i, r in enumerate(results["results_set"]) if r[0] == doi), -1) for doi in dois]
+    results_set = results["results_set"]
+    indexes = [next(iter(results_set.index[results_set["DOI"] == doi]), -1) for doi in dois]
     results["ranks"] = [index + 1 for index in indexes]
-    overall_scores = [results["results_set"][index][1] if index != -1 else 0 for index in indexes]
+    overall_scores = [results_set.iloc[index, 1] if index != -1 else 0 for index in indexes]
     logging.info("process_comparative_test_pair: end: target dois")
     logging.info(f"process_comparative_test_pair: Ranks: {results["ranks"]} (Index: {indexes})")
     logging.info(f"process_comparative_test_pair: Overall Score: {overall_scores}")
@@ -266,10 +267,11 @@ async def process_extended_test_pair(
         in results["results_set"].iterrows()
     ]
     results["knee_point_results"] = knee_point_instance.filter_with_stats(knee_point_input)
+    # results["knee_point_results"] = knee_point_instance.filter_with_stats(results["results_set"])
     logging.info("process_extended_test_pair: end: computing knee point")
 
     logging.info("process_extended_test_pair: begin: target doi %s", doi)
-    hr_dois = [ r.doi for r in results["knee_point_results"]]
+    hr_dois = [ r.doi for r in results["knee_point_results"].filtered_results]
     results_set = results["results_set"]
     index = next(iter(results_set.index[results_set["DOI"] == doi]), -1)
     results["rank"] = index + 1
@@ -330,7 +332,7 @@ def compute_extended_test_pair_metrics(
 ) -> dict:
     metrics_values = {
         name: metrics_at_1k[metric["function"]](
-            ag=processed_data["actual_group"][0],
+            ag=processed_data["actual_group"],
             eg=test_pair[9],
             wm=metric["weights"],
         )
@@ -441,10 +443,20 @@ def insert_test_pair_test(
     rank = results["rank"] if "rank" in results else results["ranks"][0] if "ranks" in results else -1
     ranks = results["ranks"] if "ranks" in results else [results["rank"]] if "rank" in results else []
     actual_groups = results["actual_groups"] if "actual_groups" in results else [results["actual_group"]] if "actual_group" in results else []
-    knee_point_results = json.dumps(
-        results["knee_point_results"]
-        if "knee_point_results" in results
-        else {})
+
+    knee_point_results = results["knee_point_results"]._asdict() if "knee_point_results" in results else {}
+    if knee_point_results:
+        knee_point_results["filtered_results"] = [
+            r.model_dump_json()
+            for r
+            in knee_point_results["filtered_results"]
+        ] if knee_point_results["filtered_results"] else []
+
+    # knee_point_results = [
+    #     r.model_dump_json()
+    #     for r
+    #     in results["knee_point_results"]
+    # ] if "knee_point_results" in results else {}
 
     params = (
         test_id,
@@ -462,7 +474,7 @@ def insert_test_pair_test(
         results["results_set"].to_json(),
         ranks,
         actual_groups,
-        knee_point_results
+        json.dumps(knee_point_results)
     )
     #print([type(x) for x in params])
     #print([repr(x) for x in params])
@@ -605,7 +617,7 @@ async def main(hyperparameters: dict):
                     f"--- Running Test Pair {test_pair_counter}: {test_pair_id} ---"
                 )
 
-                if test_pair[8] == "positive" or test_pair[8] == "negative":
+                if test_pair[8] == "positive":
                     await process_simple_test_pair(
                         hyperparameters,
                         system_prompt,
@@ -624,7 +636,7 @@ async def main(hyperparameters: dict):
                         knee_point
                     )
 
-                elif test_pair[8] == "comparative":
+                elif test_pair[8] == "comparative relative presence":
                     await process_comparative_test_pair(
                         hyperparameters,
                         system_prompt,
