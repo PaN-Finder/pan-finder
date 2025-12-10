@@ -29,50 +29,83 @@
     "results_set_size": 20
   },
   "test_pairs": {
-    "test_pairs_set": "comprehensive"
+    "test_pairs_set": "comprehensive",
+    "test_pairs_type": "all"
   },
   "metrics": {
     "test_pair_metrics": {
-      "CP": "CP_at_1k",
-      "Ps": "Ps_at_1k",
-      "lzp": "lzp_at_1k",
-      "ezp": "ezp_at_1k",
-      "lep": "lep_at_1k",
-      "eep": "eep_at_1k",
-      "znDCG": "znDCG_at_1k",
-      "enDCG": "enDCG_at_1k"
+      "positive" : {
+        "CP": "CP_at_1k",
+        "Ps": "Ps_at_1k",
+        "lzp": "lzp_at_1k",
+        "ezp": "ezp_at_1k",
+        "lep": "lep_at_1k",
+        "eep": "eep_at_1k",
+        "znDCG": "znDCG_at_1k",
+        "enDCG": "enDCG_at_1k"
+      },
+      "negative" : {
+        "NP": "NP_at_1k"
+      },
+      "extended presence" : {
+        "EP": {
+          "function" : "EP_at_1k",
+          "weights" : {
+            "HR,HR" : 1,
+            "HR,LR" : 0.6,
+            "HR,NP" : 0,
+            "LR,HR" : 0.6,
+            "LR,LR" : 1,
+            "LR,NP" : 0,
+            "NP,HR" : 0,
+            "NP,LR" : 0,
+            "NP,NP" : 1
+          }
+        }
+      },
+      "comparative relative presence" : {
+        "CRP": "CRP_at_k"
+      }
     },
     "run_metrics": {
-      "MCP" : {
-        "test_pair_metric" : "CP",
+      "MCP": {
+        "test_pair_metric": "CP",
         "test_pair_set": "all_sets"
       },
-      "MPs" : {
-        "test_pair_metric" : "Ps",
+      "MPs": {
+        "test_pair_metric": "Ps",
         "test_pair_set": "all_sets"
       },
-      "Mlzp" : {
-        "test_pair_metric" : "lzp",
+      "Mlzp": {
+        "test_pair_metric": "lzp",
         "test_pair_set": "all_sets"
       },
-      "Mezp" : {
-        "test_pair_metric" : "ezp",
+      "Mezp": {
+        "test_pair_metric": "ezp",
         "test_pair_set": "all_sets"
       },
-      "Mlep" : {
-        "test_pair_metric" : "lep",
+      "Mlep": {
+        "test_pair_metric": "lep",
         "test_pair_set": "all_sets"
       },
-      "Meep" : {
-        "test_pair_metric" : "eep",
+      "Meep": {
+        "test_pair_metric": "eep",
         "test_pair_set": "all_sets"
       },
-      "MznDCG" : {
-        "test_pair_metric" : "znDCG",
+      "MznDCG": {
+        "test_pair_metric": "znDCG",
         "test_pair_set": "all_sets"
       },
-      "MenDCG" : {
-        "test_pair_metric" : "enDCG",
+      "MenDCG": {
+        "test_pair_metric": "enDCG",
+        "test_pair_set": "all_sets"
+      },
+      "MNP": {
+        "test_pair_metric": "NP",
+        "test_pair_set": "all_sets"
+      },
+      "MEP": {
+        "test_pair_metric": "EP",
         "test_pair_set": "all_sets"
       }
     }

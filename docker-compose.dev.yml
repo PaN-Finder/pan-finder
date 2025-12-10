@@ -9,6 +9,7 @@ services:
     volumes:
       - ./pgvector/data:/var/lib/postgresql/data # for persisting data
       - ./pgvector/init:/docker-entrypoint-initdb.d # for initializing db
+      - ./database/backup:/backup # for easy backup and restore
     environment:
       - POSTGRES_DB=pan-finder
       - POSTGRES_USER=usr

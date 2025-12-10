@@ -49,7 +49,7 @@ class SearchQueryBuilder:
     # Similarity threshold for document chunks vs intention
     _SIMILARITY_THRESHOLD_CHUNKS: float = 0.5
     # Final result limit
-    _FINAL_LIMIT: int = 20
+    _RESULTS_SET_SIZE: int = 20
     # Default RRF K value (can be used as a common default)
     _DEFAULT_RRF_K: int = 6
 
@@ -62,6 +62,7 @@ class SearchQueryBuilder:
         rrf_k_full_match: int = _DEFAULT_RRF_K,
         rrf_k_partial_match: int = _DEFAULT_RRF_K,
         rrf_k_keyword: int = _DEFAULT_RRF_K,
+        results_set_size: int = _RESULTS_SET_SIZE,
         logger: Logger | None = None,
         capture_similar_names: bool = False,
     ):
@@ -72,6 +73,7 @@ class SearchQueryBuilder:
         self.rrf_k_full_match = rrf_k_full_match
         self.rrf_k_partial_match = rrf_k_partial_match
         self.rrf_k_keyword = rrf_k_keyword
+        self.results_set_size = results_set_size
         self._logger = logger or getLogger(__name__)
         self._capture_similar_names = capture_similar_names
         self._similar_names = (
@@ -185,7 +187,7 @@ class SearchQueryBuilder:
             similarity_score DESC,
             chunk_similarity_score DESC,
             keyword_score DESC
-        LIMIT {_FINAL_LIMIT};
+        LIMIT {results_set_size};
         """
         ).format(
             rrf_k_similarity=self.rrf_k_similarity,
@@ -197,7 +199,7 @@ class SearchQueryBuilder:
             chunk_similarity_subquery=chunk_similarity_subquery,
             filter_subquery=filter_subquery,
             keywords_tsquery_text=keywords_tsquery_text,
-            _FINAL_LIMIT=self._FINAL_LIMIT,
+            results_set_size=self.results_set_size,
         )
 
         return search_sql
