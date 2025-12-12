@@ -76,9 +76,7 @@ class SearchQueryBuilder:
         self.results_set_size = results_set_size
         self._logger = logger or getLogger(__name__)
         self._capture_similar_names = capture_similar_names
-        self._similar_names = (
-            {}
-        )  # For debugging purposes, stores similar names found during query building
+        self._similar_names = {}  # For debugging purposes, stores similar names found during query building
 
     @property
     def similar_names(self) -> Dict[str, List[Dict[str, Any]]]:
@@ -561,13 +559,13 @@ class SearchQueryBuilder:
             # 4. Construct the filter subquery using CTEs
             # Generate parts for partial match counting and WHERE clause optimization
             partial_match_sum_expr = SQL(" + ").join(
-                [Identifier(f"has_condition_{i+1}") for i in range(flag_count)]
+                [Identifier(f"has_condition_{i + 1}") for i in range(flag_count)]
             )
 
             # Only include documents that have at least one condition met
             any_flag_match_expr = SQL(" OR ").join(
                 [
-                    SQL("{col} > 0").format(col=Identifier(f"has_condition_{i+1}"))
+                    SQL("{col} > 0").format(col=Identifier(f"has_condition_{i + 1}"))
                     for i in range(flag_count)
                 ]
             )
