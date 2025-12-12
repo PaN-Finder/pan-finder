@@ -1,0 +1,16 @@
+target-version = "py312"
+src = ["server", "ingestor", "benchmark"]
+extend-exclude = [
+  ".git",
+  ".venv",
+  "**/.venv",
+  ".ruff_cache",
+  "**/.ruff_cache",
+  "__pycache__",
+  "benchmark/cache",
+  "benchmark/database",
+  "benchmark/results",
+  "benchmark/save",
+  "ingestor/data",
+  "models",
+]
