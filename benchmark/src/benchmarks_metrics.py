@@ -1,8 +1,8 @@
 import math
 
-import numpy as np
 
-in_range = lambda k, r: k >= r > 0
+def in_range(k: int, r: int) -> bool:
+    return k >= r > 0
 
 
 def CP_at_1k(r: int, k: int, **kwargs) -> float:
@@ -119,6 +119,7 @@ def enDCG_at_1k(r: int, e: int, k: int, **kwargs) -> float:
     """
     return math.log2(e + 1) / math.log2(r + 1) if in_range(k, r) else 0.0
 
+
 def EP_at_1k(ag: str, eg: str, wm: dict, **kwargs) -> float:
     """
     Extended Presence at 1K
@@ -127,9 +128,10 @@ def EP_at_1k(ag: str, eg: str, wm: dict, **kwargs) -> float:
     eg = expected group the document should belong to. Allowed groups: HR, LR, NP
     wm = dictionary containing the weights matrix
     """
-    return wm[ag + ',' + eg]
+    return wm[ag + "," + eg]
 
-def compare_rank_for_CxP(r1,r2,k) -> int:
+
+def compare_rank_for_CxP(r1, r2, k) -> int:
     """
     compare the relative rank of two documents
 
@@ -137,7 +139,8 @@ def compare_rank_for_CxP(r1,r2,k) -> int:
     r2 = rank of less relevant document
     k = results set size
     """
-    return 1 if r1>0 and r1<=k and r2>0 and r2<=k and r1<r2 else 0
+    return 1 if r1 > 0 and r1 <= k and r2 > 0 and r2 <= k and r1 < r2 else 0
+
 
 def CRP_at_k(r: list[int], k: int, **kwargs) -> float:
     """
@@ -147,8 +150,13 @@ def CRP_at_k(r: list[int], k: int, **kwargs) -> float:
     r = list of ranks of the targeted documents in the expected order
     k = results set size
     """
-    max_i = len(r)-1
-    return 1.0*sum([compare_rank_for_CxP(r[i],r[i+1],k) for i in range(max_i)])/(max_i)
+    max_i = len(r) - 1
+    return (
+        1.0
+        * sum([compare_rank_for_CxP(r[i], r[i + 1], k) for i in range(max_i)])
+        / (max_i)
+    )
+
 
 def CAP_at_k(r: list[int], k: int, **kwargs) -> float:
     """
@@ -159,7 +167,9 @@ def CAP_at_k(r: list[int], k: int, **kwargs) -> float:
     r = list of ranks of the targeted documents in the expected order
     k = results set size
     """
-    return float(all([compare_rank_for_CxP(r[i],r[i+1],k) for i in range(len(r)-1)]))
+    return float(
+        all([compare_rank_for_CxP(r[i], r[i + 1], k) for i in range(len(r) - 1)])
+    )
 
 
 metrics_at_1k = {
@@ -183,7 +193,7 @@ metrics_at_1k = {
     "expected_normalized_Discounted_Cumulative_Gain_at_1k": enDCG_at_1k,
     "EP_at_1k": EP_at_1k,
     "extended_presence_at_1k": EP_at_1k,
-    "CRP_at_k" : CRP_at_k,
+    "CRP_at_k": CRP_at_k,
     "comparative_relative_presence_at_k": CRP_at_k,
     "CAP_at_k": CAP_at_k,
     "comparative_absolute_presence_at_k": CAP_at_k,
