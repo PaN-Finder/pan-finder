@@ -111,7 +111,7 @@ def main(
                     for test_pair in data:
                         logging.info(f"{test_pair}")
                         if not test_pair["query"]:
-                            logging.info(f"Skipping test pair. No query")
+                            logging.info("Skipping test pair. No query")
                             continue
 
                         tpId = test_pair["id"]
@@ -156,7 +156,7 @@ def main(
 
         logging.info(f"Ingested {total_test_pair} test pairs in total")
 
-    except Exception as e:
+    except Exception:
         logging.error("Error during store", exc_info=True)
         raise
 

@@ -598,10 +598,10 @@ async def main(hyperparameters: dict):
             conditions = []
             params = []
             if test_pairs_set in ["synthetic", "expert"]:
-                conditions.append(f"source = %s")
+                conditions.append("source = %s")
                 params.append(test_pairs_set)
             if test_pairs_type != "all":
-                conditions.append(f"type = %s")
+                conditions.append("type = %s")
                 params.append(test_pairs_type)
 
             if params:

@@ -197,7 +197,7 @@ class LLMClient:
         # Check cache first
         cached_response = self._cache.get(cache_key)
         if cached_response is not None:
-            self._logger.debug(f"Cache hit for streaming request")
+            self._logger.debug("Cache hit for streaming request")
 
             try:
                 cached_data = json.loads(cached_response)
@@ -218,7 +218,7 @@ class LLMClient:
                 )
 
         # Cache miss - call provider for streaming
-        self._logger.debug(f"Cache miss for streaming request, calling provider")
+        self._logger.debug("Cache miss for streaming request, calling provider")
 
         try:
             async for chunk in self._stream_completion(request, cache_key, start_time):
