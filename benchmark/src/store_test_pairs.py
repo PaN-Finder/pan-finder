@@ -3,18 +3,21 @@ Description: This script processes test paira from JSON files and stores them in
 
 """
 
-import logging
+import argparse
 import json
+import logging
 import os
 from pathlib import Path
+
 from paths import benchmark_dir, include_server_modules
-import argparse
 
 include_server_modules()
+
+# ruff: noqa: E402
 from src.db.connection import (
+    DatabaseConfig,
     get_database_connection,
     register_database,
-    DatabaseConfig,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -30,7 +33,7 @@ def insert_test_pair(
     groupId,
     source,
     type,
-    targetGroup
+    targetGroup,
 ):
     cursor.execute(
         """
@@ -51,9 +54,7 @@ def insert_test_pair(
     )
 
 
-def main(
-        files: [str]
-):
+def main(files: [str]):
     try:
         benchmarks_db_config = DatabaseConfig(
             conninfo=os.getenv(
@@ -121,7 +122,6 @@ def main(
                         )
                         tpGroup = test_pair["group"] if "group" in test_pair else None
 
-
                         userPrompt = test_pair["query"]
                         if userPrompt[0] == "{":
                             userPrompt = json.loads(userPrompt)
@@ -146,7 +146,7 @@ def main(
                             groupId,
                             tpSource,
                             tpType,
-                            tpGroup
+                            tpGroup,
                         )
                         file_test_pair += 1
                         total_test_pair += 1
@@ -162,8 +162,6 @@ def main(
 
 
 if __name__ == "__main__":
-
-
     # Create ArgumentParser object
     parser = argparse.ArgumentParser(description="PaN-Finder store test pairs")
 

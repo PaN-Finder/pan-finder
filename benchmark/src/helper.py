@@ -1,11 +1,13 @@
 import sys
-from sentence_transformers import SentenceTransformer
+
 from paths import benchmark_dir, root_dir
+from sentence_transformers import SentenceTransformer
 
 # Make server code importable without modifying server files
 server_dir = root_dir() / "server"
 sys.path.insert(0, str(server_dir))
 
+# ruff: noqa: E402
 from src.core.ai.llm_client import LLMClient
 
 CACHE_FILE_PATH = benchmark_dir() / "cache" / "llm_cache.json"

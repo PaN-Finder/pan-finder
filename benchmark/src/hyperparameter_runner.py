@@ -1,26 +1,27 @@
-import json
-import time
 import argparse
-import pandas as pd
-from datetime import datetime
-import uuid
-import os
+import json
 import logging
+import os
+import time
+import uuid
+from datetime import datetime
 
-from helper import get_sentence_transformer, load_system_prompt
-from paths import include_server_modules
-from multi_config_evaluator import get_llm_response
+import pandas as pd
 from benchmarks_metrics import metrics_at_1k
+from helper import get_sentence_transformer, load_system_prompt
+from multi_config_evaluator import get_llm_response
+from paths import include_server_modules
 
 include_server_modules()
+# ruff: noqa: E402
+from src.core.engine.knee_point import KneePoint
 from src.core.search_query_builder import SearchQueryBuilder
 from src.db.connection import (
-    get_database_pool,
-    get_database_connection,
-    register_database,
     DatabaseConfig,
+    get_database_connection,
+    get_database_pool,
+    register_database,
 )
-from src.core.engine.knee_point import KneePoint
 from src.db.models.search import EnhancedSearchResult
 
 logging.getLogger("hyperparameter_runner")
@@ -32,7 +33,6 @@ async def process_test_pair(
     user_prompt: str,
     builder: SearchQueryBuilder,
 ) -> dict:
-
     logging.info("process_test_pair: begin: extracting user prompt components")
     start_query_components_extraction = time.time()
     response = await get_llm_response(
@@ -67,7 +67,7 @@ async def process_test_pair(
         with conn.cursor() as cursor:
             cursor.execute(query)
             query_string = query.as_string(conn)
-            #query_string = cursor.mogrify(query).decode("utf-8")
+            # query_string = cursor.mogrify(query).decode("utf-8")
             results = cursor.fetchall()
     end_query_execution = time.time()
     logging.info("process_test_pair: end: query execution")
@@ -134,7 +134,9 @@ async def process_simple_test_pair(
     doi = test_pair[2]
 
     logging.info("process_simple_test_pair: begin: execute search")
-    results = await process_test_pair(hyperparameters, system_prompt, user_prompt, builder)
+    results = await process_test_pair(
+        hyperparameters, system_prompt, user_prompt, builder
+    )
     logging.info("process_simple_test_pair: end: execute search")
 
     logging.info("process_simple_test_pair: begin: target doi %s", doi)
@@ -143,16 +145,14 @@ async def process_simple_test_pair(
     results["rank"] = index + 1
     overall_score = results_set.iloc[index, 1] if index != -1 else 0
     logging.info("process_simple_test_pair: end: target doi")
-    logging.info(f"process_simple_test_pair: Rank: {results["rank"]} (Index: {index})")
+    logging.info(f"process_simple_test_pair: Rank: {results['rank']} (Index: {index})")
     logging.info(f"process_simple_test_pair: Overall Score: {overall_score}")
 
     logging.info("process_simple_test_pair: begin: insert test pair test record")
-    tp_id = insert_test_pair_test(
-        run_id,
-        test_pair[0],
-        results
+    tp_id = insert_test_pair_test(run_id, test_pair[0], results)
+    logging.info(
+        "process_simple_test_pair: end: insert test pair test record. Id: %s", tp_id
     )
-    logging.info("process_simple_test_pair: end: insert test pair test record. Id: %s", tp_id)
 
     # compute all test pair metrics
     logging.info("process_simple_test_pair: begin: compute test pair metrics")
@@ -173,6 +173,7 @@ async def process_simple_test_pair(
     )
     logging.info("process_simple_test_pair: end: insert test pair metrics")
 
+
 async def process_comparative_test_pair(
     hyperparameters: dict,
     system_prompt: str,
@@ -189,25 +190,32 @@ async def process_comparative_test_pair(
     dois = test_pair[2].split(",")
 
     logging.info("process_comparative_test_pair: begin: execute search")
-    results = await process_test_pair(hyperparameters, system_prompt, user_prompt, builder)
+    results = await process_test_pair(
+        hyperparameters, system_prompt, user_prompt, builder
+    )
     logging.info("process_comparative_test_pair: end: execute search")
 
     logging.info("process_comparative_test_pair: begin: target dois %s", ",".join(dois))
     results_set = results["results_set"]
-    indexes = [next(iter(results_set.index[results_set["DOI"] == doi]), -1) for doi in dois]
+    indexes = [
+        next(iter(results_set.index[results_set["DOI"] == doi]), -1) for doi in dois
+    ]
     results["ranks"] = [index + 1 for index in indexes]
-    overall_scores = [results_set.iloc[index, 1] if index != -1 else 0 for index in indexes]
+    overall_scores = [
+        results_set.iloc[index, 1] if index != -1 else 0 for index in indexes
+    ]
     logging.info("process_comparative_test_pair: end: target dois")
-    logging.info(f"process_comparative_test_pair: Ranks: {results["ranks"]} (Index: {indexes})")
+    logging.info(
+        f"process_comparative_test_pair: Ranks: {results['ranks']} (Index: {indexes})"
+    )
     logging.info(f"process_comparative_test_pair: Overall Score: {overall_scores}")
 
     logging.info("process_comparative_test_pair: begin: insert test pair test record")
-    tp_id = insert_test_pair_test(
-        run_id,
-        test_pair[0],
-        results
+    tp_id = insert_test_pair_test(run_id, test_pair[0], results)
+    logging.info(
+        "process_comparative_test_pair: end: insert test pair test record. Id: %s",
+        tp_id,
     )
-    logging.info("process_comparative_test_pair: end: insert test pair test record. Id: %s", tp_id)
 
     # compute all test pair metrics
     logging.info("process_comparative_test_pair: begin: compute test pair metrics")
@@ -217,7 +225,9 @@ async def process_comparative_test_pair(
         test_pair,
     )
     logging.info("process_comparative_test_pair: end: compute test pair metrics")
-    logging.info("process_comparative_test_pair: metrics: %s", json.dumps(test_pair_metrics))
+    logging.info(
+        "process_comparative_test_pair: metrics: %s", json.dumps(test_pair_metrics)
+    )
 
     # insert test metrics
     logging.info("process_comparative_test_pair: begin: insert test pair metrics")
@@ -246,7 +256,9 @@ async def process_extended_test_pair(
     doi = test_pair[2]
 
     logging.info("process_extended_test_pair: begin: execute search")
-    results = await process_test_pair(hyperparameters, system_prompt, user_prompt, builder)
+    results = await process_test_pair(
+        hyperparameters, system_prompt, user_prompt, builder
+    )
     logging.info("process_extended_test_pair: end: execute search")
 
     logging.info("process_extended_test_pair: begin: computing knee point")
@@ -263,32 +275,33 @@ async def process_extended_test_pair(
             partial_match_score=0.0,
             keyword_score=0.0,
         )
-        for i,r
-        in results["results_set"].iterrows()
+        for i, r in results["results_set"].iterrows()
     ]
-    results["knee_point_results"] = knee_point_instance.filter_with_stats(knee_point_input)
+    results["knee_point_results"] = knee_point_instance.filter_with_stats(
+        knee_point_input
+    )
     # results["knee_point_results"] = knee_point_instance.filter_with_stats(results["results_set"])
     logging.info("process_extended_test_pair: end: computing knee point")
 
     logging.info("process_extended_test_pair: begin: target doi %s", doi)
-    hr_dois = [ r.doi for r in results["knee_point_results"].filtered_results]
+    hr_dois = [r.doi for r in results["knee_point_results"].filtered_results]
     results_set = results["results_set"]
     index = next(iter(results_set.index[results_set["DOI"] == doi]), -1)
     results["rank"] = index + 1
     overall_score = results_set.iloc[index, 1] if index != -1 else 0
     results["actual_group"] = "HR" if doi in hr_dois else "LR" if index >= 0 else "NP"
     logging.info("process_extended_test_pair: end: target doi")
-    logging.info(f"process_extended_test_pair: Rank: {results["rank"]} (Index: {index})")
+    logging.info(
+        f"process_extended_test_pair: Rank: {results['rank']} (Index: {index})"
+    )
     logging.info(f"process_extended_test_pair: Overall Score: {overall_score}")
-    logging.info(f"process_extended_test_pair: Actual group: {results["actual_group"]}")
+    logging.info(f"process_extended_test_pair: Actual group: {results['actual_group']}")
 
     logging.info("process_extended_test_pair: begin: insert test pair test record")
-    tp_id = insert_test_pair_test(
-        run_id,
-        test_pair[0],
-        results
+    tp_id = insert_test_pair_test(run_id, test_pair[0], results)
+    logging.info(
+        "process_extended_test_pair: end: insert test pair test record. Id: %s", tp_id
     )
-    logging.info("process_extended_test_pair: end: insert test pair test record. Id: %s", tp_id)
 
     # compute all test pair metrics
     logging.info("process_extended_test_pair: begin: compute test pair metrics")
@@ -298,7 +311,9 @@ async def process_extended_test_pair(
         test_pair,
     )
     logging.info("process_extended_test_pair: end: compute test pair metrics")
-    logging.info("process_extended_test_pair: metrics: %s", json.dumps(test_pair_metrics))
+    logging.info(
+        "process_extended_test_pair: metrics: %s", json.dumps(test_pair_metrics)
+    )
 
     # insert test metrics
     logging.info("process_extended_test_pair: begin: insert test pair metrics")
@@ -321,9 +336,12 @@ def compute_simple_test_pair_metrics(
             k=hyperparameters["results_set"]["results_set_size"],
             e=test_pair[3] if test_pair[3] > 0 else 1,
         )
-        for name, metric in hyperparameters["metrics"]["test_pair_metrics"][test_pair[8]].items()
+        for name, metric in hyperparameters["metrics"]["test_pair_metrics"][
+            test_pair[8]
+        ].items()
     }
     return metrics_values
+
 
 def compute_extended_test_pair_metrics(
     hyperparameters: dict,
@@ -336,9 +354,12 @@ def compute_extended_test_pair_metrics(
             eg=test_pair[9],
             wm=metric["weights"],
         )
-        for name, metric in hyperparameters["metrics"]["test_pair_metrics"][test_pair[8]].items()
+        for name, metric in hyperparameters["metrics"]["test_pair_metrics"][
+            test_pair[8]
+        ].items()
     }
     return metrics_values
+
 
 def compute_comparative_test_pair_metrics(
     hyperparameters: dict,
@@ -350,7 +371,9 @@ def compute_comparative_test_pair_metrics(
             r=processed_data["ranks"],
             k=hyperparameters["results_set"]["results_set_size"],
         )
-        for name, metric in hyperparameters["metrics"]["test_pair_metrics"][test_pair[8]].items()
+        for name, metric in hyperparameters["metrics"]["test_pair_metrics"][
+            test_pair[8]
+        ].items()
     }
     return metrics_values
 
@@ -434,23 +457,41 @@ def insert_test_pair_metrics(
                 conn.commit()
 
 
-def insert_test_pair_test(
-    run_id,
-    tp_id,
-    results
-) -> str:
+def insert_test_pair_test(run_id, tp_id, results) -> str:
     test_id = str(uuid.uuid4())
-    rank = results["rank"] if "rank" in results else results["ranks"][0] if "ranks" in results else -1
-    ranks = results["ranks"] if "ranks" in results else [results["rank"]] if "rank" in results else []
-    actual_groups = results["actual_groups"] if "actual_groups" in results else [results["actual_group"]] if "actual_group" in results else []
+    rank = (
+        results["rank"]
+        if "rank" in results
+        else results["ranks"][0]
+        if "ranks" in results
+        else -1
+    )
+    ranks = (
+        results["ranks"]
+        if "ranks" in results
+        else [results["rank"]]
+        if "rank" in results
+        else []
+    )
+    actual_groups = (
+        results["actual_groups"]
+        if "actual_groups" in results
+        else [results["actual_group"]]
+        if "actual_group" in results
+        else []
+    )
 
-    knee_point_results = results["knee_point_results"]._asdict() if "knee_point_results" in results else {}
+    knee_point_results = (
+        results["knee_point_results"]._asdict()
+        if "knee_point_results" in results
+        else {}
+    )
     if knee_point_results:
-        knee_point_results["filtered_results"] = [
-            r.model_dump_json()
-            for r
-            in knee_point_results["filtered_results"]
-        ] if knee_point_results["filtered_results"] else []
+        knee_point_results["filtered_results"] = (
+            [r.model_dump_json() for r in knee_point_results["filtered_results"]]
+            if knee_point_results["filtered_results"]
+            else []
+        )
 
     # knee_point_results = [
     #     r.model_dump_json()
@@ -474,10 +515,10 @@ def insert_test_pair_test(
         results["results_set"].to_json(),
         ranks,
         actual_groups,
-        json.dumps(knee_point_results)
+        json.dumps(knee_point_results),
     )
-    #print([type(x) for x in params])
-    #print([repr(x) for x in params])
+    # print([type(x) for x in params])
+    # print([repr(x) for x in params])
 
     with get_database_connection("pan-finder-benchmarks") as conn:
         with conn.cursor() as cursor:
@@ -504,12 +545,10 @@ def insert_test_pair_test(
                 )
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
-                params
+                params,
             )
             conn.commit()
     return test_id
-
-
 
 
 async def main(hyperparameters: dict):
@@ -619,11 +658,7 @@ async def main(hyperparameters: dict):
 
                 if test_pair[8] == "positive":
                     await process_simple_test_pair(
-                        hyperparameters,
-                        system_prompt,
-                        test_pair,
-                        run_id,
-                        builder
+                        hyperparameters, system_prompt, test_pair, run_id, builder
                     )
 
                 elif test_pair[8] == "extended presence":
@@ -633,16 +668,12 @@ async def main(hyperparameters: dict):
                         test_pair,
                         run_id,
                         builder,
-                        knee_point
+                        knee_point,
                     )
 
                 elif test_pair[8] == "comparative relative presence":
                     await process_comparative_test_pair(
-                        hyperparameters,
-                        system_prompt,
-                        test_pair,
-                        run_id,
-                        builder
+                        hyperparameters, system_prompt, test_pair, run_id, builder
                     )
 
                 test_pair_counter += 1
@@ -669,7 +700,6 @@ async def main(hyperparameters: dict):
 
 
 if __name__ == "__main__":
-
     # Create ArgumentParser object
     parser = argparse.ArgumentParser(description="PaN-Finder single run benchmark")
 
