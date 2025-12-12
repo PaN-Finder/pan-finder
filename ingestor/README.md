@@ -5,12 +5,22 @@ A production‑grade ingestor service can be implemented based on this source co
 
 ## Install dependencies
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
+- Python 3.12+
+- Source of truth: `pyproject.toml` (runtime deps + dev extras). Pinned installs are generated `requirements*.txt`.
+- Create a venv and install pinned deps:
+	```bash
+	python -m venv .venv
+	source .venv/bin/activate
+	pip install -r requirements.txt
+	```
+- Server code is imported by the benchmark. Install server dependencies:
+	```bash
+	cd ../server
+	python -m venv .venv
+	source .venv/bin/activate
+	pip install -r requirements.txt
+	```
+    
 ## Configuration
 
 Create a `.env` file from `.env.example` and set the required variables.

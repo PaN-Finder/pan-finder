@@ -6,5 +6,5 @@ sentence-transformers==4.1.0
 openai==1.93.0
 debugpy==1.8.9
 pandas==2.2.3
-fastapi==0.115.14
 semantic-chunkers==0.0.10
+ruff
