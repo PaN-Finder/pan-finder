@@ -5,7 +5,7 @@
   "application" : {
     "system_prompt": {
       "model" : "gpt-4.1-mini",
-      "version" : "1_0_8.md"
+      "version" : "1_0_9.md"
     },
     "embeddings" : {
       "model": "all-MiniLM-L12-v2"

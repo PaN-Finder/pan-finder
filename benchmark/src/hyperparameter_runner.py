@@ -44,12 +44,18 @@ async def process_test_pair(
 
     if response is None:
         raise ValueError("LLM response is None")
-
-    user_prompt_components = json.loads(response)
+    try:
+        user_prompt_components = json.loads(response)
+    except:
+        logging.info("process_test_pair: unable to convert LLM response")
+        user_prompt_components = {
+            "intention": "",
+            "keywords": [],
+            "filters": {}
+        }
 
     end_query_components_extraction = time.time()
     logging.info("process_test_pair: end: extracting user prompt components")
-
     logging.info("process_test_pair: User Prompt: %s", user_prompt)
     logging.info("process_test_pair: LLM Response: %s", response)
     logging.info("process_test_pair: Formatted Data %s", user_prompt_components)
@@ -520,7 +526,7 @@ async def main(hyperparameters: dict):
             "postgresql://usr:pwd@localhost:5432/pan-finder-benchmarks",
         ),
         min_size=1,
-        max_size=3,
+        max_size=20,
         application_name="benchmark",
     )
     register_database("pan-finder-benchmarks", benchmarks_db_config)
