@@ -56,6 +56,7 @@ async def process_test_pair(
 
     end_query_components_extraction = time.time()
     logging.info("process_test_pair: end: extracting user prompt components")
+
     logging.info("process_test_pair: User Prompt: %s", user_prompt)
     logging.info("process_test_pair: LLM Response: %s", response)
     logging.info("process_test_pair: Formatted Data %s", user_prompt_components)
