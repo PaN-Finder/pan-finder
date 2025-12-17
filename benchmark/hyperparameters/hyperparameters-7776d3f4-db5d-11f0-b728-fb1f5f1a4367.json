@@ -1,11 +1,11 @@
 {
-  "id": "0ab03620-8fd6-11f0-9b02-9b2c06332f10",
-  "name": "Similarity Focus 20 v5",
-  "notes": "Assume Similarity is most precise (low k), Matches less so, Keyword least precise (high k). Prompt 1.0.9. Temperature 0",
+  "id": "7776d3f4-db5d-11f0-b728-fb1f5f1a4367",
+  "name": "Less Keywords 20 v11",
+  "notes": "Baseline k=6, but extra smoothing (k=10) for Keyword Rank. Prompt 1.0.10. Temperature 0",
   "application" : {
     "system_prompt": {
       "model" : "gpt-4.1-mini",
-      "version" : "1_0_9.md"
+      "version" : "1_0_10.md"
     },
     "embeddings" : {
       "model": "all-MiniLM-L12-v2"
@@ -19,8 +19,8 @@
     }
   },
   "score_weights": {
-    "rrf_k_similarity": 1,
-    "rrf_k_chunk": 1,
+    "rrf_k_similarity": 6,
+    "rrf_k_chunk": 6,
     "rrf_k_full_match": 6,
     "rrf_k_partial_match": 6,
     "rrf_k_keyword": 10

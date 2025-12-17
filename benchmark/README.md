@@ -103,3 +103,11 @@ The LLM response cache is stored at `cache/llm_cache.json`. Delete this file to 
 - Plotting utilities live in `src/plotting.py`.
 - Results are deterministic for fixed datasets and cache.
 
+# Extended Benchmarks
+In order to run a single benchmark, you should use the following command:
+```bash
+set -a; source .env; set +a; clear ; .venv/bin/python src/hyperparameter_runner.py -p hyperparameters/hyperparameters-0ab03620-8fd6-11f0-9b02-9b2c06332f10.json
+```
+
+where hyperparameters/hyperparameters-0ab03620-8fd6-11f0-9b02-9b2c06332f10.json if the hyperparameters file containing the app settings and the metrics configuration.
+

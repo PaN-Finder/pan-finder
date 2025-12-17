@@ -1,11 +1,11 @@
 {
-  "id": "0ab03620-8fd6-11f0-9b02-9b2c06332f10",
-  "name": "Similarity Focus 20 v5",
-  "notes": "Assume Similarity is most precise (low k), Matches less so, Keyword least precise (high k). Prompt 1.0.9. Temperature 0",
+  "id": "03b44f84-d9ee-11f0-992c-eb3b85d46601",
+  "name": "Similarity Focus 20 v6",
+  "notes": "Assume Similarity is most precise (low k), Matches less so, Keyword least precise (high k). Prompt 1.0.10. Temperature 0",
   "application" : {
     "system_prompt": {
       "model" : "gpt-4.1-mini",
-      "version" : "1_0_9.md"
+      "version" : "1_0_10.md"
     },
     "embeddings" : {
       "model": "all-MiniLM-L12-v2"
