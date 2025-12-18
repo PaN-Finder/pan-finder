@@ -1,7 +1,7 @@
 {
-  "id": "0ab03620-8fd6-11f0-9b02-9b2c06332f10",
-  "name": "Similarity Focus 20 v5",
-  "notes": "Assume Similarity is most precise (low k), Matches less so, Keyword least precise (high k). Prompt 1.0.9. Temperature 0",
+  "id": "5980f4a6-db5d-11f0-ad3d-43036e5d9b66",
+  "name": "Less Keywords 20 v10",
+  "notes": "Baseline k=6, but extra smoothing (k=10) for Keyword Rank. Prompt 1.0.9. Temperature 0",
   "application" : {
     "system_prompt": {
       "model" : "gpt-4.1-mini",
@@ -19,8 +19,8 @@
     }
   },
   "score_weights": {
-    "rrf_k_similarity": 1,
-    "rrf_k_chunk": 1,
+    "rrf_k_similarity": 6,
+    "rrf_k_chunk": 6,
     "rrf_k_full_match": 6,
     "rrf_k_partial_match": 6,
     "rrf_k_keyword": 10
@@ -32,7 +32,7 @@
     "test_pairs_set": "comprehensive",
     "test_pairs_type": "all"
   },
-  "metrics": {
+    "metrics": {
     "test_pair_metrics": {
       "positive" : {
         "CP": "CP_at_1k",
@@ -68,36 +68,36 @@
       }
     },
     "run_metrics": {
-      "MCP": {
-        "test_pair_metric": "CP",
+      "MCP" : {
+        "test_pair_metric" : "CP",
         "test_pair_set": "all_sets"
       },
-      "MPs": {
-        "test_pair_metric": "Ps",
+      "MPs" : {
+        "test_pair_metric" : "Ps",
         "test_pair_set": "all_sets"
       },
-      "Mlzp": {
-        "test_pair_metric": "lzp",
+      "Mlzp" : {
+        "test_pair_metric" : "lzp",
         "test_pair_set": "all_sets"
       },
-      "Mezp": {
-        "test_pair_metric": "ezp",
+      "Mezp" : {
+        "test_pair_metric" : "ezp",
         "test_pair_set": "all_sets"
       },
-      "Mlep": {
-        "test_pair_metric": "lep",
+      "Mlep" : {
+        "test_pair_metric" : "lep",
         "test_pair_set": "all_sets"
       },
-      "Meep": {
-        "test_pair_metric": "eep",
+      "Meep" : {
+        "test_pair_metric" : "eep",
         "test_pair_set": "all_sets"
       },
-      "MznDCG": {
-        "test_pair_metric": "znDCG",
+      "MznDCG" : {
+        "test_pair_metric" : "znDCG",
         "test_pair_set": "all_sets"
       },
-      "MenDCG": {
-        "test_pair_metric": "enDCG",
+      "MenDCG" : {
+        "test_pair_metric" : "enDCG",
         "test_pair_set": "all_sets"
       },
       "MNP": {

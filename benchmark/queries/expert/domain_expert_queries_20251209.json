@@ -1,0 +1,17 @@
+[
+  {
+    "type": "comparative relative presence",
+    "expert": "Max Novelli",
+    "doi": "10.5291/ILL-DATA.5-53-253,10.5291/ILL-DATA.INTER-267,10.5291/ILL-DATA.TEST-2184" ,
+    "query": "Look for research on magnetic diffuse scattering in CuMnO2 where the temperature is between 1.5 K and 300 K and the sample mass is 10,000",
+    "id": "0e2b0fde-d51b-11f0-93af-6ff434559cf9"
+  },
+  {
+    "type": "comparative relative presence",
+    "expert": "Max Novelli",
+    "doi": "10.5291/ILL-DATA.UGA-36,10.5291/ILL-DATA.TEST-2633,10.5291/ILL-DATA.TEST-2899,10.5291/ILL-DATA.1-02-232",
+    "query": "Look for research proposals involving the D50 T tomograph where the sample formula includes Si, O, K, Al, Na and the publication year is 2018",
+    "id": "38b88966-d51b-11f0-992c-b33730d5fe3b"
+  }
+]
+
