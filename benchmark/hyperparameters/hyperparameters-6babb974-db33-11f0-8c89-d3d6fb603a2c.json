@@ -1,5 +1,5 @@
 {
-  "id": "0ab03620-8fd6-11f0-9b02-9b2c06332f10",
+  "id": "6babb974-db33-11f0-8c89-d3d6fb603a2c",
   "name": "Similarity Focus 20 v8",
   "notes": "Assume Similarity is most precise (low k), Matches less so, Keyword least precise (high k). Prompt 1.0.10. Temperature 0.1",
   "application" : {

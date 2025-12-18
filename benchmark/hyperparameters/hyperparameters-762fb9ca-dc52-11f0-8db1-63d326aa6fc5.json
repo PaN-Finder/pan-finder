@@ -1,7 +1,7 @@
 {
-  "id": "5c2a98ca-db3e-11f0-8775-dfd96b6af257",
-  "name": "Similarity Focus 10 v9",
-  "notes": "Assume Similarity is most precise (low k), Matches less so, Keyword least precise (high k). Prompt 1.0.9. Temperature 0",
+  "id": "762fb9ca-dc52-11f0-8db1-63d326aa6fc5",
+  "name": "Standard k 6 20 v10",
+  "notes": "Baseline k=6. Prompt 1.0.9. Temperature 0",
   "application" : {
     "system_prompt": {
       "model" : "gpt-4.1-mini",
@@ -19,14 +19,14 @@
     }
   },
   "score_weights": {
-    "rrf_k_similarity": 1,
-    "rrf_k_chunk": 1,
+    "rrf_k_similarity": 6,
+    "rrf_k_chunk": 6,
     "rrf_k_full_match": 6,
     "rrf_k_partial_match": 6,
-    "rrf_k_keyword": 10
+    "rrf_k_keyword": 6
   },
   "results_set": {
-    "results_set_size": 10
+    "results_set_size": 20
   },
   "test_pairs": {
     "test_pairs_set": "comprehensive",
