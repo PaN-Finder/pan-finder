@@ -1,11 +1,11 @@
 {
-  "id": "5c2a98ca-db3e-11f0-8775-dfd96b6af257",
-  "name": "Similarity Focus 10 v9",
-  "notes": "Assume Similarity is most precise (low k), Matches less so, Keyword least precise (high k). Prompt 1.0.9. Temperature 0",
+  "id": "abc42292-dc52-11f0-a047-0be944857c5c",
+  "name": "Standard k 6 10 v17",
+  "notes": "Baseline k=6. Prompt 1.0.10. Temperature 0.1",
   "application" : {
     "system_prompt": {
       "model" : "gpt-4.1-mini",
-      "version" : "1_0_9.md"
+      "version" : "1_0_10.md"
     },
     "embeddings" : {
       "model": "all-MiniLM-L12-v2"
@@ -13,17 +13,17 @@
     "openai": {
       "model": "gpt-4.1-mini",
       "api_version": "2024-12-01-preview",
-      "temperature" : 0,
+      "temperature" : 0.1,
       "max_tokens": 500,
       "seed": 0
     }
   },
   "score_weights": {
-    "rrf_k_similarity": 1,
-    "rrf_k_chunk": 1,
+    "rrf_k_similarity": 6,
+    "rrf_k_chunk": 6,
     "rrf_k_full_match": 6,
     "rrf_k_partial_match": 6,
-    "rrf_k_keyword": 10
+    "rrf_k_keyword": 6
   },
   "results_set": {
     "results_set_size": 10
