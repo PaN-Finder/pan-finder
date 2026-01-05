@@ -938,9 +938,10 @@ def test_build_query_invalid_input(builder):
 def test_build_query_keywords_only_no_intention(builder, snapshot):
     """When only keywords are provided, intention embedding shouldn't be computed."""
     data = {"keywords": ["protein", "folding mechanism"]}
-    with patch.object(
-        builder, "_update_filter_names", side_effect=lambda d: d
-    ), patch.object(builder.sentence_transformer, "encode") as mock_encode:
+    with (
+        patch.object(builder, "_update_filter_names", side_effect=lambda d: d),
+        patch.object(builder.sentence_transformer, "encode") as mock_encode,
+    ):
         sql = builder.build_query(data).as_string()
         mock_encode.assert_not_called()
     snapshot.assert_match(sql, "build_query_keywords_only_no_intention")
@@ -957,9 +958,10 @@ def test_build_query_filters_only_no_intention(builder, snapshot):
             ],
         }
     }
-    with patch.object(
-        builder, "_find_similar_names", side_effect=lambda n: [n]
-    ), patch.object(builder.sentence_transformer, "encode") as mock_encode:
+    with (
+        patch.object(builder, "_find_similar_names", side_effect=lambda n: [n]),
+        patch.object(builder.sentence_transformer, "encode") as mock_encode,
+    ):
         sql = builder.build_query(data).as_string()
         mock_encode.assert_not_called()
     snapshot.assert_match(sql, "build_query_filters_only_no_intention")

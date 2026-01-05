@@ -1,7 +1,7 @@
 # Pan‑Finder Benchmark
 
 ## Prerequisites
-- Python 3.10+ (recommended)
+- Python 3.12+ (recommended)
 - A running Pan‑Finder database with `ghcr.io/pan-finder/pan-finder:postgresql` and data loaded
 	- Easiest local setup:
 		```bash
@@ -31,8 +31,7 @@ Evaluate search ranking quality across Reciprocal Rank Fusion (RRF) configuratio
 
 ---
 
-## Prerequisites
-- Python 3.10+ (recommended)
+- Python 3.12+ (recommended)
 - A running Pan‑Finder database with `ghcr.io/pan-finder/pan-finder:postgresql` and data loaded
 	- Easiest local setup:
 		```bash
@@ -69,13 +68,30 @@ Each file in `queries/` contains an array of documents. Every document has a tar
 
 `min_position` gives full credit if the target DOI ranks above or at that index; beyond it, score decays linearly over 20 ranks down to 0.
 
+## Dependencies
+- Source of truth: `pyproject.toml` (runtime deps + dev extras). Pinned installs are generated `requirements*.txt`.
+- Create a venv and install pinned deps:
+	```bash
+	python -m venv .venv
+	source .venv/bin/activate
+	pip install -r requirements.txt
+	```
+- Server code is imported by the benchmark. Install server dependencies:
+	```bash
+	cd ../server
+	python -m venv .venv
+	source .venv/bin/activate
+	pip install -r requirements.txt
+	```
+
 ## Quick start
 
 Use the helper script (creates a venv, installs deps, runs the benchmark):
 
 ```bash
 cd benchmark
-./run.sh
+./run_hyperparameter_runner.sh
+./run_multi_config_evaluator.sh
 ```
 
 Tip: Ensure the database is reachable (see `DATABASE_URL`) and the model exists at `models/all-MiniLM-L12-v2/` before running.

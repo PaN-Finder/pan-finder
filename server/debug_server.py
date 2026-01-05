@@ -2,6 +2,7 @@
 """
 Debug-enabled server startup script for Docker container debugging.
 """
+
 import debugpy
 import os
 

@@ -30,6 +30,22 @@ Search API for scientific documents combining vector similarity (pgvector), full
 - `ingestor/` - Document ingestion scripts
 - `benchmark/` - Evaluation tools for search performance
 
+## Python Environments
+
+- Use one virtual environment per component (`server`, `ingestor`, `benchmark`).
+- Each component has its own `pyproject.toml` (metadata/tooling) and `requirements*.txt` (pinned install lists).
+
+### Dependency strategy
+
+- Source of truth: keep intent in `pyproject.toml` per component, and generate pinned `requirements*.txt` (e.g., with `pip-compile pyproject.toml -o requirements.txt` and `pip-compile --extra dev pyproject.toml -o requirements-dev.txt`).
+
+## Tooling
+
+- Ruff is configured in `.ruff.toml` for linting/formatting.
+- Run checks: `ruff check server ingestor benchmark`
+- Run formatting: `ruff format server ingestor benchmark`
+- VS Code settings are in `.vscode/settings.json` (Ruff on save, formatter set to Ruff).
+
 ## Documentation
 
 - API usage: `server/README.md`

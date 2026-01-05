@@ -6,8 +6,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Tuple
 
 import pandas as pd
-
-from helper import get_llm_client, load_system_prompt, get_sentence_transformer
+from helper import get_llm_client, get_sentence_transformer, load_system_prompt
 from paths import benchmark_dir, include_server_modules
 from plotting import (
     plot_average_scores_per_dataset,
@@ -16,10 +15,11 @@ from plotting import (
 )
 
 include_server_modules()
-from src.core.search_query_builder import SearchQueryBuilder
-from src.core.ai.llm_client import LLMClient, LLMMessage
-from src.db.connection import get_database_pool, get_database_connection
+# ruff: noqa: E402
 from src.config import get_settings
+from src.core.ai.llm_client import LLMClient, LLMMessage
+from src.core.search_query_builder import SearchQueryBuilder
+from src.db.connection import get_database_connection, get_database_pool
 
 logging.getLogger("multi_config_evaluator")
 

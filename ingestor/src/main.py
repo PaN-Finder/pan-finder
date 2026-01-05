@@ -5,15 +5,17 @@ from pathlib import Path
 server_dir = Path(__file__).parent.parent.parent / "server"
 sys.path.insert(0, str(server_dir))
 
-from src.db.connection import get_database_connection
-from src.config import get_settings
-from document_ingestor import DocumentIngestor
+# ruff: noqa: E402
 from chunk_ingestor import ChunkIngestor
-from filter_ingestor import FilterIngestor
-from numeric_filter_ingestor import NumericFilterIngestor
-from filter_value_converter import FilterValueConverter
+from document_ingestor import DocumentIngestor
 from filter_enricher import FilterEnricher
+from filter_ingestor import FilterIngestor
+from filter_value_converter import FilterValueConverter
+from numeric_filter_ingestor import NumericFilterIngestor
 from summary_ingestor import SummaryIngestor
+
+from src.config import get_settings
+from src.db.connection import get_database_connection
 
 logging.basicConfig(
     level=logging.INFO,

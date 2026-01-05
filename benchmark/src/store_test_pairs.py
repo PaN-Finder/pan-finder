@@ -3,18 +3,21 @@ Description: This script processes test paira from JSON files and stores them in
 
 """
 
-import logging
+import argparse
 import json
+import logging
 import os
 from pathlib import Path
+
 from paths import benchmark_dir, include_server_modules
-import argparse
 
 include_server_modules()
+
+# ruff: noqa: E402
 from src.db.connection import (
+    DatabaseConfig,
     get_database_connection,
     register_database,
-    DatabaseConfig,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -30,7 +33,7 @@ def insert_test_pair(
     groupId,
     source,
     type,
-    targetGroup
+    targetGroup,
 ):
     cursor.execute(
         """
@@ -51,9 +54,7 @@ def insert_test_pair(
     )
 
 
-def main(
-        files: [str]
-):
+def main(files: [str]):
     try:
         benchmarks_db_config = DatabaseConfig(
             conninfo=os.getenv(
@@ -111,7 +112,7 @@ def main(
                     for test_pair in data:
                         logging.info(f"{test_pair}")
                         if not test_pair["query"]:
-                            logging.info(f"Skipping test pair. No query")
+                            logging.info("Skipping test pair. No query")
                             continue
 
                         tpId = test_pair["id"]
@@ -120,7 +121,6 @@ def main(
                             test_pair["type"] if "type" in test_pair else "positive"
                         )
                         tpGroup = test_pair["group"] if "group" in test_pair else None
-
 
                         userPrompt = test_pair["query"]
                         if userPrompt[0] == "{":
@@ -146,7 +146,7 @@ def main(
                             groupId,
                             tpSource,
                             tpType,
-                            tpGroup
+                            tpGroup,
                         )
                         file_test_pair += 1
                         total_test_pair += 1
@@ -156,14 +156,12 @@ def main(
 
         logging.info(f"Ingested {total_test_pair} test pairs in total")
 
-    except Exception as e:
+    except Exception:
         logging.error("Error during store", exc_info=True)
         raise
 
 
 if __name__ == "__main__":
-
-
     # Create ArgumentParser object
     parser = argparse.ArgumentParser(description="PaN-Finder store test pairs")
 

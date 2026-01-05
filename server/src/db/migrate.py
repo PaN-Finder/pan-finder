@@ -43,12 +43,12 @@ def apply_migration(filename):
         for i, statement in enumerate(statements):
             try:
                 logger.debug(
-                    f"Executing statement {i+1}/{len(statements)} in {os.path.basename(filename)}"
+                    f"Executing statement {i + 1}/{len(statements)} in {os.path.basename(filename)}"
                 )
                 conn.execute(sql.SQL(statement))  # type: ignore
             except Exception as e:
                 logger.error(
-                    f"Error executing statement {i+1} in {os.path.basename(filename)}: {e}"
+                    f"Error executing statement {i + 1} in {os.path.basename(filename)}: {e}"
                 )
                 raise
         conn.execute(

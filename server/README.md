@@ -14,6 +14,20 @@ Health check
 curl -s http://127.0.0.1:8080/health | jq
 ```
 
+## Dependencies
+- Python 3.12+
+- Source of truth: `pyproject.toml` (runtime deps + dev extras). Pinned installs are generated `requirements*.txt`.
+- Install (pinned):
+  ```bash
+  cd server
+  python -m venv .venv && source .venv/bin/activate
+  pip install -r requirements.txt
+  ```
+- Dev/tooling (editable):
+  ```bash
+  pip install -e .[dev]
+  ```
+
 ## Configuration
 Loaded by `server/src/config.py` (`get_settings()`). Required:
 - `DATABASE_URL`
