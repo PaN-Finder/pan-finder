@@ -46,13 +46,9 @@ async def process_test_pair(
         raise ValueError("LLM response is None")
     try:
         user_prompt_components = json.loads(response)
-    except:
-        logging.info("process_test_pair: unable to convert LLM response")
-        user_prompt_components = {
-            "intention": "",
-            "keywords": [],
-            "filters": {}
-        }
+    except Exception as exc:
+        logging.info("process_test_pair: unable to parse LLM response: %s", exc)
+        user_prompt_components = {"intention": "", "keywords": [], "filters": {}}
 
     end_query_components_extraction = time.time()
     logging.info("process_test_pair: end: extracting user prompt components")
