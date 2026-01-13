@@ -51,3 +51,7 @@ Search API for scientific documents combining vector similarity (pgvector), full
 - API usage: `server/README.md`
 - Database setup: `database/README.md`
 - Ingestion: `ingestor/README.md`
+
+## Local LLM Setup
+
+See [docs/LOCAL_LLM.md](docs/LOCAL_LLM.md) for instructions on setting up a local LLM server with LiteLLM and Ollama.
