@@ -33,15 +33,19 @@ Loaded by `server/src/config.py` (`get_settings()`).
 
 Required:
 - `DATABASE_URL`
-- `LLM_PROVIDER` (`azure` or `openai`)
 
 LLM provider settings:
-- If `LLM_PROVIDER=azure`: `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY` (optional: `AZURE_OPENAI_API_VERSION`)
-- If `LLM_PROVIDER=openai`: `OPENAI_BASE_URL` (optional) and `OPENAI_API_KEY` (optional; required by the official OpenAI API, but some OpenAI-compatible backends may not require it)
+- `LLM_PROVIDER` (`azure` or `openai`)
+  - `LLM_PROVIDER=azure` requires the following configurations:
+    - `AZURE_OPENAI_ENDPOINT`
+    - `AZURE_OPENAI_API_KEY`
+  - `LLM_PROVIDER=openai` might requires the following keys:
+    - `OPENAI_BASE_URL` (optional) If not provided will use the official OpenAI endpoint. Please refer to the documentation of the library for more information.
+    - `OPENAI_API_KEY`: required by the official OpenAI API. The key might be required in case of on-prem setup or if the service is provided by a third party.
 
 Model selection (applies to both providers):
-- `DEFAULT_MODEL_NAME` (default `gpt-4.1-mini`)
-- `EXPLANATION_MODEL_NAME` (default `gpt-4.1`)
+- `DEFAULT_MODEL_NAME` (optional) Please review the relevant code for the default value.
+- `EXPLANATION_MODEL_NAME`(optional). Please review the relevant code for the default value.
 
 Authentication & Security:
 - `ENABLE_TURNSTILE` - Enable Cloudflare Turnstile bot protection
