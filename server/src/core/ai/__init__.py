@@ -1,12 +1,11 @@
-from .prompts import AIPrompts
 from .llm_client import (
     LLMClient,
-    LLMMessage,
     LLMCompletionRequest,
     LLMCompletionResponse,
+    LLMMessage,
     create_llm_client,
-    create_azure_openai_client,
 )
+from .prompts import AIPrompts
 
 __all__ = [
     "AIPrompts",
@@ -15,5 +14,4 @@ __all__ = [
     "LLMCompletionRequest",
     "LLMCompletionResponse",
     "create_llm_client",
-    "create_azure_openai_client",
 ]

@@ -2,6 +2,7 @@ import os
 from functools import lru_cache
 from typing import List
 from urllib.parse import urlparse
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -12,19 +13,27 @@ class Settings:
 
     def __init__(self):
         self.allowed_origins = self._parse_cors_origins()
-        self.azure_openai_endpoint = self._get_required_env("AZURE_OPENAI_ENDPOINT")
-        self.azure_openai_api_key = self._get_required_env("AZURE_OPENAI_API_KEY")
+
+        # LLM provider selection
+        # Supported values: "azure", "openai"
+        provider = os.getenv("LLM_PROVIDER", "azure").strip().lower()
+        if provider not in {"azure", "openai"}:
+            raise ValueError("LLM_PROVIDER must be one of: azure, openai")
+        self.llm_provider = provider
+
+        # Azure OpenAI configuration (required only when llm_provider == "azure")
+        self.azure_openai_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT", "").strip()
+        self.azure_openai_api_key = os.getenv("AZURE_OPENAI_API_KEY", "").strip()
         self.azure_openai_api_version = os.getenv(
             "AZURE_OPENAI_API_VERSION", "2024-12-01-preview"
         )
-        # Model name for extracting structured data
-        self.azure_openai_model_name = os.getenv(
-            "AZURE_OPENAI_MODEL_NAME", "gpt-4.1-mini"
-        )
-        # Model name for generating explanations
-        self.azure_openai_explanation_model_name = os.getenv(
-            "AZURE_OPENAI_EXPLANATION_MODEL_NAME", "gpt-4.1"
-        )
+
+        # OpenAI configuration (required only when llm_provider == "openai")
+        self.openai_api_key = os.getenv("OPENAI_API_KEY", "").strip()
+        self.openai_base_url = os.getenv("OPENAI_BASE_URL", "").strip()
+
+        self.default_model_name = os.getenv("DEFAULT_MODEL_NAME", "gpt-4.1-mini")
+        self.explanation_model_name = os.getenv("EXPLANATION_MODEL_NAME", "gpt-4.1")
 
         self.embedding_model_path = os.getenv(
             "EMBEDDING_MODEL_PATH", "/code/models/all-MiniLM-L12-v2"

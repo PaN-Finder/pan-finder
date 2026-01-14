@@ -5,9 +5,9 @@ short summary (fallback to title if text is empty), embeds `title + summary`, an
 """
 
 import logging
-from typing import Callable, ContextManager, Any, List, Tuple
+from typing import Any, Callable, ContextManager, List, Tuple
 
-from openai import AzureOpenAI
+from openai import AzureOpenAI, OpenAI
 from sentence_transformers import SentenceTransformer
 
 
@@ -23,11 +23,17 @@ class SummaryIngestor:
     ) -> None:
         self.db_conn_factory = db_conn_factory
         self.settings = settings
-        self.llm = AzureOpenAI(
-            api_key=settings.azure_openai_api_key,
-            azure_endpoint=settings.azure_openai_endpoint,
-            api_version=settings.azure_openai_api_version,
-        )
+        if settings.llm_provider == "openai":
+            self.llm = OpenAI(
+                api_key=settings.openai_api_key,
+                base_url=settings.openai_base_url,
+            )
+        else:
+            self.llm = AzureOpenAI(
+                api_key=settings.azure_openai_api_key,
+                azure_endpoint=settings.azure_openai_endpoint,
+                api_version=settings.azure_openai_api_version,
+            )
         self.embedder = SentenceTransformer(settings.embedding_model_path, device="cpu")
 
     def fetch_documents_without_summary(self, cursor) -> List[Tuple[int, str, str]]:
@@ -49,7 +55,7 @@ class SummaryIngestor:
         )
         prompt_user = f"Title: {title}\n\nText: {text}"
         resp = self.llm.chat.completions.create(
-            model="gpt-4.1",
+            model=self.settings.default_model_name,
             messages=[
                 {"role": "system", "content": prompt_system},
                 {"role": "user", "content": prompt_user},
