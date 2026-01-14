@@ -39,7 +39,7 @@ docker run \
 
 ```env
 LLM_PROVIDER=openai
-OPENAI_API_KEY="banana"
+OPENAI_API_KEY="" # It depends on the local LLM server
 OPENAI_BASE_URL="http://host.docker.internal:4001"
 DEFAULT_MODEL_NAME=gemma3:1b
 EXPLANATION_MODEL_NAME=gemma3:1b

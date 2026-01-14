@@ -11,7 +11,10 @@ Search API for scientific documents combining vector similarity (pgvector), full
 
 2. **Configure backend**: Create `server/.env.dev` from `server/.env.example` and set:
    - `DATABASE_URL`
-   - `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`
+   - `LLM_PROVIDER` (`azure` or `openai`)
+   - If `LLM_PROVIDER=azure`: `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`
+   - If `LLM_PROVIDER=openai`: `OPENAI_BASE_URL` (optional) and `OPENAI_API_KEY` (optional; required by the official OpenAI API, but some OpenAI-compatible backends may not require it)
+   - Optional: `DEFAULT_MODEL_NAME`, `EXPLANATION_MODEL_NAME`
    - `ENABLE_TURNSTILE=false` (for local dev)
 
 3. **Configure frontend**: Create `frontend/.env.dev` from `frontend/.env.example` and set:

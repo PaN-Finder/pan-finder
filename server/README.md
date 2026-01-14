@@ -29,9 +29,19 @@ curl -s http://127.0.0.1:8080/health | jq
   ```
 
 ## Configuration
-Loaded by `server/src/config.py` (`get_settings()`). Required:
+Loaded by `server/src/config.py` (`get_settings()`).
+
+Required:
 - `DATABASE_URL`
-- `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`
+- `LLM_PROVIDER` (`azure` or `openai`)
+
+LLM provider settings:
+- If `LLM_PROVIDER=azure`: `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY` (optional: `AZURE_OPENAI_API_VERSION`)
+- If `LLM_PROVIDER=openai`: `OPENAI_BASE_URL` (optional) and `OPENAI_API_KEY` (optional; required by the official OpenAI API, but some OpenAI-compatible backends may not require it)
+
+Model selection (applies to both providers):
+- `DEFAULT_MODEL_NAME` (default `gpt-4.1-mini`)
+- `EXPLANATION_MODEL_NAME` (default `gpt-4.1`)
 
 Authentication & Security:
 - `ENABLE_TURNSTILE` - Enable Cloudflare Turnstile bot protection
@@ -40,7 +50,7 @@ Authentication & Security:
 Common options:
 - `EMBEDDING_MODEL_PATH` (default `/code/models/all-MiniLM-L12-v2`)
 - `ALLOWED_ORIGINS` (default `*`), `API_HOST` (default `0.0.0.0`), `API_PORT` (default `8080`)
-- `AZURE_OPENAI_API_VERSION`, `AZURE_OPENAI_MODEL_NAME`, `AZURE_OPENAI_EXPLANATION_MODEL_NAME`
+- `AZURE_OPENAI_API_VERSION` (only used when `LLM_PROVIDER=azure`)
 - DB pool: `DB_POOL_MIN_SIZE`, `DB_POOL_MAX_SIZE`, `DB_CONNECTION_TIMEOUT`, `DB_MAX_IDLE`, `DB_MAX_LIFETIME`
 - RRF: `RRF_K_SIMILARITY`, `RRF_K_CHUNK`, `RRF_K_FULL_MATCH`, `RRF_K_PARTIAL_MATCH`, `RRF_K_KEYWORD`
 
@@ -107,7 +117,7 @@ curl -s -X POST http://127.0.0.1:8080/feedback/submit \
 **Note**: Include `X-Session-ID` header only if `ENABLE_TURNSTILE=true`.
 
 ## How search works
-- Query parsing: `SearchEngine.parse_query_to_structured_data()` (Azure OpenAI; prompt lives in `server/src/core/ai/prompts.py`).
+- Query parsing: `SearchEngine.parse_query_to_structured_data()` (LLM provider selected via `LLM_PROVIDER`; prompt lives in `server/src/core/ai/prompts.py`).
 - Query build: `SearchQueryBuilder.build_query()` composes SQL using pgvector (document + chunk similarity), full‑text (`to_tsquery`), and structured filters; scores fused via RRF.
 - Execution: pooled connections in `server/src/db/connection.py`, enrichment via `DocumentRepository`.
 
