@@ -8,7 +8,10 @@ server_dir = root_dir() / "server"
 sys.path.insert(0, str(server_dir))
 
 # ruff: noqa: E402
+from src.config import get_settings
 from src.core.ai.llm_client import LLMClient
+
+settings = get_settings()
 
 CACHE_FILE_PATH = benchmark_dir() / "cache" / "llm_cache.json"
 
@@ -30,7 +33,7 @@ def get_llm_client(model: str) -> LLMClient:
     CACHE_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
 
     llm_client = LLMClient(
-        provider="azure_openai",
+        provider=settings.llm_provider,
         cache_config={
             "cache_type": "file",
             "cache_file": str(CACHE_FILE_PATH),

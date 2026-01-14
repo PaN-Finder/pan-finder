@@ -5,18 +5,19 @@ This module provides a unified interface for Large Language Model interactions
 with built-in caching, retry logic, and support for multiple providers.
 """
 
-import json
-import hashlib
-import time
 import asyncio
-from typing import Optional, Dict, List, Any, AsyncGenerator, Union, Callable
+import hashlib
+import json
+import time
 from dataclasses import dataclass
-from openai import AzureOpenAI
 from logging import Logger
+from typing import Any, AsyncGenerator, Callable, Dict, List, Optional, Union
 
-from .cache_interface import CacheInterface, create_cache
-from ...utils import get_logger
+from openai import AzureOpenAI, OpenAI
+
 from ...config import get_settings
+from ...utils import get_logger
+from .cache_interface import CacheInterface, create_cache
 
 settings = get_settings()
 
@@ -67,7 +68,7 @@ class LLMClient:
 
     def __init__(
         self,
-        provider: str = "azure_openai",
+        provider: Optional[str] = None,
         cache: Optional[CacheInterface] = None,
         cache_config: Optional[Dict[str, Any]] = None,
         default_model: Optional[str] = None,
@@ -78,16 +79,16 @@ class LLMClient:
         Initialize LLM client.
 
         Args:
-            provider: LLM provider ("azure_openai", "openai", etc.)
+            provider: LLM provider ("azure", "openai", etc.)
             cache: Cache instance (creates default if None)
             cache_config: Configuration for cache creation
             default_model: Default model to use
             logger: Optional logger instance
             **provider_kwargs: Provider-specific configuration
         """
-        self._provider = provider
+        self._provider = provider or settings.llm_provider
         self._logger = logger or get_logger(self.__class__.__name__)
-        self._default_model = default_model or self._get_default_model()
+        self._default_model = default_model or settings.default_model_name
 
         # Initialize cache
         if cache is not None:
@@ -99,22 +100,37 @@ class LLMClient:
         # Initialize provider client
         self._client = self._create_client(**provider_kwargs)
 
-    def _get_default_model(self) -> str:
-        """Get default model based on provider and settings."""
-        if self._provider == "azure_openai":
-            return settings.azure_openai_model_name
-        return "gpt-3.5-turbo"  # Fallback
-
     def _create_client(self, **kwargs) -> Any:
         """Create provider-specific client."""
-        if self._provider == "azure_openai":
+        if self._provider == "azure":
+            api_key = (kwargs.get("api_key") or settings.azure_openai_api_key).strip()
+            azure_endpoint = (
+                kwargs.get("azure_endpoint") or settings.azure_openai_endpoint
+            ).strip()
+            api_version = kwargs.get("api_version") or settings.azure_openai_api_version
+
+            if not api_key:
+                raise ValueError(
+                    "AZURE_OPENAI_API_KEY environment variable is required"
+                )
+            if not azure_endpoint:
+                raise ValueError(
+                    "AZURE_OPENAI_ENDPOINT environment variable is required"
+                )
+
             return AzureOpenAI(
-                api_key=kwargs.get("api_key") or settings.azure_openai_api_key,
-                azure_endpoint=kwargs.get("azure_endpoint")
-                or settings.azure_openai_endpoint,
-                api_version=kwargs.get("api_version")
-                or settings.azure_openai_api_version,
+                api_key=api_key,
+                azure_endpoint=azure_endpoint,
+                api_version=api_version,
             )
+        if self._provider == "openai":
+            api_key = (kwargs.get("api_key") or settings.openai_api_key).strip()
+            base_url = (kwargs.get("base_url") or settings.openai_base_url).strip()
+
+            # base_url is optional (useful for OpenAI-compatible endpoints)
+            if base_url:
+                return OpenAI(api_key=api_key, base_url=base_url)
+            return OpenAI(api_key=api_key)
         else:
             raise ValueError(f"Unsupported provider: {self._provider}")
 
@@ -122,7 +138,7 @@ class LLMClient:
         """Generate a unique cache key for the request."""
         # Create a hash of the key components
         key_data = {
-            "model": request.model or self._default_model,
+            "model": request.model,
             "messages": [
                 {"role": msg.role, "content": msg.content} for msg in request.messages
             ],
@@ -397,9 +413,7 @@ class LLMClient:
 
 
 # Convenience factory functions
-def create_llm_client(
-    provider: str = "azure_openai", cache_type: str = "hybrid", **kwargs
-) -> LLMClient:
+def create_llm_client(cache_type: str = "hybrid", **kwargs) -> LLMClient:
     """
     Factory function to create LLM client with common configurations.
 
@@ -416,13 +430,4 @@ def create_llm_client(
 
     cache = create_cache(**cache_config)
 
-    return LLMClient(provider=provider, cache=cache, **kwargs)
-
-
-def create_azure_openai_client(**kwargs) -> LLMClient:
-    """Create Azure OpenAI client with default configuration."""
-    return create_llm_client(
-        provider="azure_openai",
-        default_model=settings.azure_openai_model_name,
-        **kwargs,
-    )
+    return LLMClient(cache=cache, **kwargs)

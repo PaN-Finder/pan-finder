@@ -1,22 +1,23 @@
 import json
 import time
 from functools import lru_cache
-from sentence_transformers import SentenceTransformer
+from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple, cast
+
 from psycopg.rows import dict_row
 from psycopg.sql import Composed
-from typing import Tuple, cast, Any, List, Optional, AsyncGenerator, Dict
+from sentence_transformers import SentenceTransformer
 
+from ...config import get_settings
+from ...db.connection import get_database_connection, get_database_pool
 from ...db.models.document import DocumentTypedDict
 from ...db.models.document_repository import DocumentRepository
-from ...db.models.search import StructuredQueryData, EnhancedSearchResult
-from ...db.connection import get_database_pool, get_database_connection
-from ..search_query_builder import SearchQueryBuilder, SearchResult
-from ..ai.prompts import AIPrompts
-from ..ai.llm_client import LLMClient, LLMMessage, create_azure_openai_client
+from ...db.models.search import EnhancedSearchResult, StructuredQueryData
 from ...utils import get_logger
-from ...config import get_settings
-from .scoring import Scoring
+from ..ai.llm_client import LLMClient, LLMMessage, create_llm_client
+from ..ai.prompts import AIPrompts
+from ..search_query_builder import SearchQueryBuilder, SearchResult
 from .knee_point import KneePoint, KneePointResult
+from .scoring import Scoring
 
 settings = get_settings()
 
@@ -54,7 +55,7 @@ class SearchEngine:
             self._llm_client = llm_client
         else:
             # Create default LLM client with hybrid cache
-            self._llm_client = create_azure_openai_client(
+            self._llm_client = create_llm_client(
                 cache_type="memory",
             )
 
@@ -354,14 +355,17 @@ class SearchEngine:
             + json.dumps(doc_dict, indent=2)
         )
         try:
-            # Create LLM request
             messages = [
                 LLMMessage(role="system", content=AIPrompts.get_explanation_prompt()),
                 LLMMessage(role="user", content=user_content),
             ]
 
             request = self._llm_client.create_request(
-                messages=messages, max_tokens=800, temperature=0.3
+                messages=messages,
+                max_tokens=1500,
+                temperature=0.3,
+                model=settings.explanation_model_name,
+                stream=True,
             )
 
             # Stream the response

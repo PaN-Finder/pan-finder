@@ -5,17 +5,21 @@ Common mock settings and patching utilities for FastAPI async tests.
 import importlib
 from contextlib import asynccontextmanager
 from unittest.mock import MagicMock, patch
+
 from fastapi import FastAPI
 
 
 class MockSettings:
     """Shared mock settings that includes all required configuration attributes."""
 
+    llm_provider = "azure"
     azure_openai_endpoint = "https://example.openai.test"
     azure_openai_api_key = "test-key"
     azure_openai_api_version = "2024-12-01-preview"
-    azure_openai_model_name = "gpt-4.1-mini"
-    azure_openai_explanation_model_name = "gpt-4.1"
+    openai_api_key = ""
+    openai_base_url = ""
+    default_model_name = "gpt-4.1-mini"
+    explanation_model_name = "gpt-4.1"
     database_url = "postgresql://user:pass@localhost:5432/test"
     db_pool_min_size = 1
     db_pool_max_size = 20
@@ -98,10 +102,10 @@ def reload_app_modules_with_settings(mock_settings_instance, reload_routers=Fals
     """
     if reload_routers:
         # Reload router modules and inject settings
-        import src.routers.session as session_module
-        import src.routers.search as search_module
         import src.routers.document as document_module
         import src.routers.feedback as feedback_module
+        import src.routers.search as search_module
+        import src.routers.session as session_module
 
         importlib.reload(session_module)
         session_module.settings = mock_settings_instance

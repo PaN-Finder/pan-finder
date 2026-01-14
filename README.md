@@ -11,7 +11,15 @@ Search API for scientific documents combining vector similarity (pgvector), full
 
 2. **Configure backend**: Create `server/.env.dev` from `server/.env.example` and set:
    - `DATABASE_URL`
-   - `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`
+   - `LLM_PROVIDER` (`azure` or `openai`)
+     - `LLM_PROVIDER=azure` requires the following configurations:
+       - `AZURE_OPENAI_ENDPOINT`
+       - `AZURE_OPENAI_API_KEY`
+      - `LLM_PROVIDER=openai` might requires the following keys:
+        - `OPENAI_BASE_URL` (optional) If not provided will use the official OpenAI endpoint. Please refer to the documentation of the library for more information.
+        - `OPENAI_API_KEY`: required by the official OpenAI API. The key might be required in case of on-prem setup or if the service is provided by a third party.
+   - `DEFAULT_MODEL_NAME` (optional) Please review the relevant code for the default value.
+   - `EXPLANATION_MODEL_NAME`(optional). Please review the relevant code for the default value.
    - `ENABLE_TURNSTILE=false` (for local dev)
 
 3. **Configure frontend**: Create `frontend/.env.dev` from `frontend/.env.example` and set:
@@ -51,3 +59,7 @@ Search API for scientific documents combining vector similarity (pgvector), full
 - API usage: `server/README.md`
 - Database setup: `database/README.md`
 - Ingestion: `ingestor/README.md`
+
+## Local LLM Setup
+
+See [docs/LOCAL_LLM.md](docs/LOCAL_LLM.md) for instructions on setting up a local LLM server with LiteLLM and Ollama.
