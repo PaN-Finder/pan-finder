@@ -1,5 +1,4 @@
 import json
-from typing import Optional
 from fastapi import APIRouter, HTTPException, Header, Path
 from pydantic import BaseModel, JsonValue
 from ..db.models.document_repository import DocumentRepository
@@ -16,13 +15,13 @@ class DocumentDetailsResponseModel(BaseModel):
     doi: str
     title: str
     abstract: str | None
-    facility_name: Optional[str]
+    facility_name: str | None
 
 
 @router.get("/raw/{doi:path}")
 async def get_raw_document(
     doi: str = Path(..., min_length=1, description="Document DOI"),
-    x_session_id: Optional[str] = Header(None, alias="X-Session-ID"),
+    x_session_id: str | None = Header(None, alias="X-Session-ID"),
 ) -> JsonValue:
     """Get raw json document by DOI. Returns parsed JSON when possible, otherwise the raw string."""
     verify_session(x_session_id)
@@ -48,13 +47,13 @@ async def get_raw_document(
         logger.error(f"Error fetching raw document for DOI {doi}: {e}")
         raise HTTPException(
             status_code=500, detail=f"Failed to fetch raw document: {str(e)}"
-        )
+        ) from e
 
 
 @router.get("/{doi:path}")
 async def get_document_details(
     doi: str = Path(..., min_length=1, description="Document DOI"),
-    x_session_id: Optional[str] = Header(None, alias="X-Session-ID"),
+    x_session_id: str | None = Header(None, alias="X-Session-ID"),
 ) -> DocumentDetailsResponseModel:
     """
     Get detailed document information by DOI.
@@ -78,4 +77,4 @@ async def get_document_details(
         logger.error(f"Error fetching document details for DOI {doi}: {e}")
         raise HTTPException(
             status_code=500, detail=f"Failed to fetch document details: {str(e)}"
-        )
+        ) from e

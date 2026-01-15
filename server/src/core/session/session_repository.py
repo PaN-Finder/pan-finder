@@ -1,4 +1,3 @@
-from typing import Dict, Optional
 from threading import Lock
 
 from ...utils import get_logger
@@ -10,7 +9,7 @@ logger = get_logger(__name__)
 class SessionRepository:
     """In-memory session storage repository."""
 
-    _sessions: Dict[str, Session] = {}
+    _sessions: dict[str, Session] = {}
     _lock = Lock()
 
     @classmethod
@@ -25,7 +24,7 @@ class SessionRepository:
         return session
 
     @classmethod
-    def get_session(cls, session_id: str) -> Optional[Session]:
+    def get_session(cls, session_id: str) -> Session | None:
         """Retrieve session by ID."""
         with cls._lock:
             session = cls._sessions.get(session_id)

@@ -2,9 +2,11 @@
 Populate the `chunk` table based on concatenated document title and text.
 """
 
+from contextlib import AbstractContextManager
 import logging
 from pathlib import Path
-from typing import List, Tuple, Callable, ContextManager, Any
+from collections.abc import Callable
+from typing import Any
 
 from sentence_transformers import SentenceTransformer
 from semantic_chunkers.chunkers import StatisticalChunker
@@ -21,7 +23,7 @@ class ChunkIngestor:
 
     def __init__(
         self,
-        db_conn_factory: Callable[[], ContextManager[Any]],
+        db_conn_factory: Callable[[], AbstractContextManager[Any]],
         settings,
     ) -> None:
         self.db_conn_factory = db_conn_factory
@@ -36,11 +38,11 @@ class ChunkIngestor:
             enable_statistics=True,
         )
 
-    def generate_chunks(self, text: str) -> List[str]:
+    def generate_chunks(self, text: str) -> list[str]:
         """Split a document's text into chunks using the configured chunker."""
         return self.chunker.splitter(text)
 
-    def insert_chunks(self, cursor, doc_id: int, chunks: List[str]) -> None:
+    def insert_chunks(self, cursor, doc_id: int, chunks: list[str]) -> None:
         """Insert the given chunks into the chunk table with their embeddings."""
         if not chunks:
             return
@@ -48,7 +50,7 @@ class ChunkIngestor:
 
         if hasattr(vectors, "tolist"):
             vectors = vectors.tolist()
-        for idx, (chunk, vector) in enumerate(zip(chunks, vectors)):
+        for idx, (chunk, vector) in enumerate(zip(chunks, vectors, strict=True)):
             cursor.execute(
                 """
                 INSERT INTO chunk (document_id, chunk_number, text, text_vector)
@@ -57,7 +59,7 @@ class ChunkIngestor:
                 (doc_id, idx, chunk, vector),
             )
 
-    def fetch_documents_without_chunks(self, cursor) -> List[Tuple[int, str]]:
+    def fetch_documents_without_chunks(self, cursor) -> list[tuple[int, str]]:
         cursor.execute(
             """
             SELECT d.id, concat(d.title, '\n', d.text) AS text
@@ -68,7 +70,7 @@ class ChunkIngestor:
         )
         return cursor.fetchall()
 
-    def process_documents(self, documents: List[Tuple[int, str]]) -> None:
+    def process_documents(self, documents: list[tuple[int, str]]) -> None:
         """Generate and insert chunks for documents in a single transaction."""
         with self.db_conn_factory() as conn:
             with conn.cursor() as cursor:

@@ -2,9 +2,11 @@
 Populate the `filter` and `filter_key` tables from document raw metadata.
 """
 
+from contextlib import AbstractContextManager
 import logging
 import re
-from typing import Callable, ContextManager, Any, Iterable, List, Tuple, Dict
+from collections.abc import Callable, Iterable
+from typing import Any
 
 from sentence_transformers import SentenceTransformer
 
@@ -16,7 +18,7 @@ class FilterIngestor:
 
     def __init__(
         self,
-        db_conn_factory: Callable[[], ContextManager[Any]],
+        db_conn_factory: Callable[[], AbstractContextManager[Any]],
         settings,
     ) -> None:
         self.db_conn_factory = db_conn_factory
@@ -48,8 +50,8 @@ class FilterIngestor:
     @classmethod
     def flatten_json(
         cls, data: Any, parent_key: str = "", sep: str = "."
-    ) -> List[Tuple[str, Dict[str, Any]]]:
-        items: List[Tuple[str, Dict[str, Any]]] = []
+    ) -> list[tuple[str, dict[str, Any]]]:
+        items: list[tuple[str, dict[str, Any]]] = []
         if isinstance(data, dict):
             if "v" in data and "u" in data:
                 items.append((parent_key, {"value": data["v"], "unit": data["u"]}))
@@ -78,7 +80,7 @@ class FilterIngestor:
     # --- DB operations ---
     def fetch_documents_without_filters(
         self, cursor
-    ) -> List[Tuple[int, Dict[str, Any]]]:
+    ) -> list[tuple[int, dict[str, Any]]]:
         cursor.execute(
             """
             SELECT d.id, d.raw
@@ -90,8 +92,8 @@ class FilterIngestor:
         return cursor.fetchall()
 
     def build_filters(
-        self, doc_id: int, raw: Dict[str, Any]
-    ) -> Tuple[List[Tuple], List[str]]:
+        self, doc_id: int, raw: dict[str, Any]
+    ) -> tuple[list[tuple], list[str]]:
         filters = (
             self.flatten_json(raw.get("document", {}))
             + self.flatten_json(raw.get("panosc", {}))
@@ -99,8 +101,8 @@ class FilterIngestor:
             + self.flatten_json(raw.get("datacite", {}))
             + self.flatten_json(raw.get("catalogue", {}))
         )
-        filter_rows: List[Tuple] = []
-        keys: List[str] = []
+        filter_rows: list[tuple] = []
+        keys: list[str] = []
         for prop, item in filters:
             if not prop or prop.strip() == "":
                 continue
@@ -110,7 +112,7 @@ class FilterIngestor:
             keys.append(prop)
         return filter_rows, keys
 
-    def insert_filters(self, cursor, filter_rows: List[Tuple]) -> None:
+    def insert_filters(self, cursor, filter_rows: list[tuple]) -> None:
         if filter_rows:
             cursor.executemany(
                 """
@@ -136,7 +138,7 @@ class FilterIngestor:
         vectors = self.encoder.encode(normalized)
         if hasattr(vectors, "tolist"):
             vectors = vectors.tolist()
-        key_embeddings = list(zip(unique_keys, vectors))
+        key_embeddings = list(zip(unique_keys, vectors, strict=True))
         cursor.executemany(
             """
             INSERT INTO filter_key (name, name_vector)
@@ -146,12 +148,12 @@ class FilterIngestor:
             key_embeddings,
         )
 
-    def process_documents(self, documents: List[Tuple[int, Dict[str, Any]]]) -> None:
+    def process_documents(self, documents: list[tuple[int, dict[str, Any]]]) -> None:
         """Insert flattened metadata filters and corresponding key embeddings."""
         with self.db_conn_factory() as conn:
             with conn.cursor() as cursor:
-                all_rows: List[Tuple] = []
-                all_keys: List[str] = []
+                all_rows: list[tuple] = []
+                all_keys: list[str] = []
                 for doc_id, raw in documents:
                     self.logger.info("Store filters for document ID: %s", doc_id)
                     rows, keys = self.build_filters(doc_id, raw)

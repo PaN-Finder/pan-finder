@@ -4,10 +4,9 @@ Logging configuration for the Pan-Finder API application.
 
 import logging
 import os
-from typing import Optional
 
 
-def setup_logging(log_level: Optional[str] = None) -> logging.Logger:
+def setup_logging(log_level: str | None = None) -> logging.Logger:
     """
     Configure logging for the entire FastAPI application.
 

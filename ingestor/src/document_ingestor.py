@@ -2,10 +2,12 @@
 Ingest dataset records from JSON files under `data/` into a PostgreSQL database.
 """
 
+from contextlib import AbstractContextManager
 import logging
 import json
 from pathlib import Path
-from typing import Callable, ContextManager, Any
+from collections.abc import Callable
+from typing import Any
 
 
 class DocumentIngestor:
@@ -60,7 +62,7 @@ class DocumentIngestor:
 
     def __init__(
         self,
-        db_conn_factory: Callable[[], ContextManager[Any]],
+        db_conn_factory: Callable[[], AbstractContextManager[Any]],
         settings=None,
     ) -> None:
         self.db_conn_factory = db_conn_factory

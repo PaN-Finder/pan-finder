@@ -1,6 +1,15 @@
 {
     "version": "0.2.0",
     "configurations": [
+         {
+            "name":"Python Debugger: Current File (Ingestor)",
+            "type":"debugpy",
+            "request":"launch",
+            "program":"${file}",
+            "console":"integratedTerminal", 
+            "justMyCode": true,
+            "envFile": "${workspaceFolder}/ingestor/.env"
+        },
         {
             "name":"Python Debugger: Current File (Benchmark)",
             "type":"debugpy",
@@ -22,6 +31,15 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "envFile": "${workspaceFolder}/benchmark/.env"
+        },
+        {
+            "name": "Run Ingestor",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/ingestor/src/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "envFile": "${workspaceFolder}/ingestor/.env"
         },
         {
             "name": "Debug FastAPI Server (Docker)",

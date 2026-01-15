@@ -1,6 +1,5 @@
 import os
 from functools import lru_cache
-from typing import List
 from urllib.parse import urlparse
 
 from dotenv import load_dotenv
@@ -61,7 +60,7 @@ class Settings:
         self.rrf_k_partial_match = int(os.getenv("RRF_K_PARTIAL_MATCH", "6"))
         self.rrf_k_keyword = int(os.getenv("RRF_K_KEYWORD", "10"))
 
-    def _parse_cors_origins(self) -> List[str]:
+    def _parse_cors_origins(self) -> list[str]:
         """Parse CORS origins from environment variable."""
         origins_str = os.getenv("ALLOWED_ORIGINS", "*")
         if origins_str == "*":
@@ -87,12 +86,12 @@ class Settings:
             if not all([parsed.scheme, parsed.netloc]):
                 raise ValueError("Invalid DATABASE_URL format")
         except Exception:
-            raise ValueError("Invalid DATABASE_URL format")
+            raise ValueError("Invalid DATABASE_URL format") from None
 
         return url
 
 
-@lru_cache()
+@lru_cache
 def get_settings() -> Settings:
     """Return cached Settings instance."""
     return Settings()

@@ -1,5 +1,3 @@
-from typing import Dict, List
-
 from ...db.models.search import EnhancedSearchResult, StructuredQueryData
 from ...config import get_settings
 from ...utils import get_logger
@@ -34,7 +32,7 @@ class Scoring:
         return total_max_score
 
     @staticmethod
-    def components_enabled(query_data: StructuredQueryData) -> Dict[str, bool]:
+    def components_enabled(query_data: StructuredQueryData) -> dict[str, bool]:
         return {
             "similarity": bool(query_data.intention and query_data.intention.strip()),
             "chunk_similarity": bool(
@@ -47,7 +45,7 @@ class Scoring:
 
     @staticmethod
     def normalize_scores(
-        results: List[EnhancedSearchResult], query_data: StructuredQueryData
+        results: list[EnhancedSearchResult], query_data: StructuredQueryData
     ) -> None:
         if not results:
             return

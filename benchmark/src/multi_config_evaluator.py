@@ -3,7 +3,7 @@ import json
 import logging
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import pandas as pd
 from helper import get_llm_client, get_sentence_transformer, load_system_prompt
@@ -37,15 +37,15 @@ llm_client: LLMClient = get_llm_client(llm_model)
 extract_prompt = load_system_prompt(llm_model, system_prompt_version)
 
 
-def load_rrf_score_k_values() -> List[Dict[str, Any]]:
+def load_rrf_score_k_values() -> list[dict[str, Any]]:
     filepath = benchmark_dir() / "rrf_score_k_values_matrix.json"
     return json.loads(filepath.read_text())
 
 
-def load_datasets() -> Dict[str, List[Dict[str, Any]]]:
+def load_datasets() -> dict[str, list[dict[str, Any]]]:
     """Load all query datasets, returning parsed JSON per file name."""
     base_dir = benchmark_dir() / "queries" / "synthetic"
-    datasets: Dict[str, List[Dict[str, Any]]] = {}
+    datasets: dict[str, list[dict[str, Any]]] = {}
     for filepath in sorted(base_dir.glob("*.json")):
         datasets[filepath.name] = json.loads(filepath.read_text())
     return datasets
@@ -83,8 +83,8 @@ async def get_llm_response(prompt: str, query: str, **kwargs) -> str | None:
 
 
 async def process_query(
-    query_obj: Dict[str, Any], doi: str, builder: SearchQueryBuilder
-) -> Tuple[float, float, float, float, float, float, float, float]:
+    query_obj: dict[str, Any], doi: str, builder: SearchQueryBuilder
+) -> tuple[float, float, float, float, float, float, float, float]:
     query_text = query_obj.get("query", "").strip()
     if not query_text:
         raise ValueError("Query text is empty")
@@ -189,8 +189,8 @@ async def process_query(
 
 
 async def process_document(
-    doc: Dict[str, Any], builder: SearchQueryBuilder
-) -> Tuple[List[float], List[float], List[Dict[str, float]]]:
+    doc: dict[str, Any], builder: SearchQueryBuilder
+) -> tuple[list[float], list[float], list[dict[str, float]]]:
     doi = doc.get("doi", "N/A")
     scores = []
     runtimes = []
@@ -222,8 +222,8 @@ async def process_document(
 
 
 async def process_dataset(
-    dataset_name: str, dataset: List[Dict[str, Any]], builder: SearchQueryBuilder
-) -> Tuple[List[float], List[float], List[Dict[str, float]]]:
+    dataset_name: str, dataset: list[dict[str, Any]], builder: SearchQueryBuilder
+) -> tuple[list[float], list[float], list[dict[str, float]]]:
     logging.info("Dataset: %s", dataset_name)
     dataset_scores = []
     dataset_runtimes = []
@@ -237,10 +237,10 @@ async def process_dataset(
 
 
 async def process_rrf_config(
-    rrf_config: Dict[str, Any],
-    datasets: Dict[str, List[Dict[str, Any]]],
+    rrf_config: dict[str, Any],
+    datasets: dict[str, list[dict[str, Any]]],
     sentence_transformer,
-) -> Tuple[str, List[Dict[str, Any]], Dict[str, float], List[float]]:
+) -> tuple[str, list[dict[str, Any]], dict[str, float], list[float]]:
     """Process a single RRF configuration across all datasets."""
     test_name = rrf_config.get("test_name", "unknown_test")
     logging.info("=== Test: %s ===", test_name)
@@ -257,9 +257,9 @@ async def process_rrf_config(
         logger=logging.getLogger("search_query_builder"),
     )
 
-    test_results: List[Dict[str, Any]] = []
-    test_all_scores: List[float] = []
-    test_all_runtimes: List[float] = []
+    test_results: list[dict[str, Any]] = []
+    test_all_scores: list[float] = []
+    test_all_runtimes: list[float] = []
     test_total_queries = 0
 
     for dataset_name, dataset in datasets.items():
@@ -314,9 +314,9 @@ async def main() -> None:
     datasets = load_datasets()
     sentence_transformer = get_sentence_transformer()
 
-    all_test_results: List[Dict[str, Any]] = []
-    overall_test_metrics: Dict[str, Dict[str, float]] = {}
-    all_scores_by_test_config: Dict[str, List[float]] = {}
+    all_test_results: list[dict[str, Any]] = []
+    overall_test_metrics: dict[str, dict[str, float]] = {}
+    all_scores_by_test_config: dict[str, list[float]] = {}
 
     # Run all RRF configurations in parallel
     tasks = [
@@ -341,7 +341,7 @@ async def main() -> None:
     try:
         with open(raw_scores_data_path, "w") as f:
             json.dump(all_scores_by_test_config, f, indent=2)
-    except IOError as e:
+    except OSError as e:
         logging.info("Error saving raw scores data: %s", e)
 
     plot_score_distribution_boxplot(

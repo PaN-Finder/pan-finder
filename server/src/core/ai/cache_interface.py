@@ -11,7 +11,7 @@ import json
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional, Dict, Any, Union
+from typing import Any
 from logging import Logger
 from ...utils import get_logger
 
@@ -20,14 +20,12 @@ class CacheInterface(ABC):
     """Abstract interface for LLM response caching."""
 
     @abstractmethod
-    def get(self, key: str) -> Optional[str]:
+    def get(self, key: str) -> str | None:
         """Retrieve a cached response."""
         pass
 
     @abstractmethod
-    def put(
-        self, key: str, value: str, metadata: Optional[Dict[str, Any]] = None
-    ) -> bool:
+    def put(self, key: str, value: str, metadata: dict[str, Any] | None = None) -> bool:
         """Store a response in cache."""
         pass
 
@@ -49,7 +47,7 @@ class MemoryCache(CacheInterface):
         self,
         max_entries: int = 1000,
         max_memory_mb: int = 100,
-        logger: Optional[Logger] = None,
+        logger: Logger | None = None,
     ):
         """
         Initialize memory cache.
@@ -59,14 +57,14 @@ class MemoryCache(CacheInterface):
             max_memory_mb: Maximum memory usage in MB
             logger: Optional logger instance
         """
-        self._cache: Dict[str, Dict[str, Any]] = {}
-        self._access_order: Dict[str, float] = {}  # key -> timestamp
+        self._cache: dict[str, dict[str, Any]] = {}
+        self._access_order: dict[str, float] = {}  # key -> timestamp
         self._max_entries = max_entries
         self._max_memory_bytes = max_memory_mb * 1024 * 1024
         self._current_memory_bytes = 0
         self._logger = logger or get_logger(self.__class__.__name__)
 
-    def get(self, key: str) -> Optional[str]:
+    def get(self, key: str) -> str | None:
         """Retrieve cached response and update access time."""
         if key in self._cache:
             self._access_order[key] = time.time()
@@ -74,9 +72,7 @@ class MemoryCache(CacheInterface):
             return self._cache[key]["response"]
         return None
 
-    def put(
-        self, key: str, value: str, metadata: Optional[Dict[str, Any]] = None
-    ) -> bool:
+    def put(self, key: str, value: str, metadata: dict[str, Any] | None = None) -> bool:
         """Store response in memory cache with LRU eviction."""
         entry_size = len(key.encode("utf-8")) + len(value.encode("utf-8"))
         if metadata:
@@ -148,8 +144,8 @@ class FileCache(CacheInterface):
 
     def __init__(
         self,
-        cache_file: Union[str, Path] = "./llm_cache.json",
-        logger: Optional[Logger] = None,
+        cache_file: str | Path = "./llm_cache.json",
+        logger: Logger | None = None,
     ):
         """
         Initialize file cache.
@@ -163,14 +159,14 @@ class FileCache(CacheInterface):
         self._logger = logger or get_logger(self.__class__.__name__)
 
         # In-memory cache for performance
-        self._cache: Dict[str, Dict[str, Any]] = {}
+        self._cache: dict[str, dict[str, Any]] = {}
         self._load_cache()
 
     def _load_cache(self) -> None:
         """Load cache from disk."""
         try:
             if self._cache_file.exists():
-                with open(self._cache_file, "r", encoding="utf-8") as f:
+                with open(self._cache_file, encoding="utf-8") as f:
                     data = json.load(f)
                     self._cache = data.get("entries", {})
 
@@ -201,7 +197,7 @@ class FileCache(CacheInterface):
         except Exception as e:
             self._logger.error(f"Failed to save cache to {self._cache_file}: {e}")
 
-    def get(self, key: str) -> Optional[str]:
+    def get(self, key: str) -> str | None:
         """Retrieve cached response from file."""
         entry = self._cache.get(key)
         if entry is None:
@@ -210,9 +206,7 @@ class FileCache(CacheInterface):
         self._logger.debug(f"File cache hit for key: {key[:20]}...")
         return entry.get("response")
 
-    def put(
-        self, key: str, value: str, metadata: Optional[Dict[str, Any]] = None
-    ) -> bool:
+    def put(self, key: str, value: str, metadata: dict[str, Any] | None = None) -> bool:
         """Store response in file cache."""
         try:
             # Store the entry
@@ -250,9 +244,9 @@ class HybridCache(CacheInterface):
 
     def __init__(
         self,
-        memory_cache: Optional[MemoryCache] = None,
-        file_cache: Optional[FileCache] = None,
-        logger: Optional[Logger] = None,
+        memory_cache: MemoryCache | None = None,
+        file_cache: FileCache | None = None,
+        logger: Logger | None = None,
     ):
         """
         Initialize hybrid cache.
@@ -266,7 +260,7 @@ class HybridCache(CacheInterface):
         self._file = file_cache or FileCache()
         self._logger = logger or get_logger(self.__class__.__name__)
 
-    def get(self, key: str) -> Optional[str]:
+    def get(self, key: str) -> str | None:
         """Try memory cache first, then file cache."""
         # Try memory first
         result = self._memory.get(key)
@@ -282,9 +276,7 @@ class HybridCache(CacheInterface):
 
         return result
 
-    def put(
-        self, key: str, value: str, metadata: Optional[Dict[str, Any]] = None
-    ) -> bool:
+    def put(self, key: str, value: str, metadata: dict[str, Any] | None = None) -> bool:
         """Store in both memory and file cache."""
         memory_success = self._memory.put(key, value, metadata)
         file_success = self._file.put(key, value, metadata)
@@ -305,7 +297,7 @@ class HybridCache(CacheInterface):
 
 def create_cache(
     cache_type: str = "hybrid",
-    cache_file: Optional[str] = None,
+    cache_file: str | None = None,
     max_memory_mb: int = 100,
     **kwargs,
 ) -> CacheInterface:

@@ -11,8 +11,10 @@ This module provides the class `FilterEnricher`, which:
     (e.g., instrument.name, instrumentName, instrumentGroup) for ESRF, PSI, and MAX IV.
 """
 
+from contextlib import AbstractContextManager
 import logging
-from typing import Callable, ContextManager, Any
+from collections.abc import Callable
+from typing import Any
 
 from filter_ingestor import FilterIngestor
 
@@ -22,7 +24,7 @@ class FilterEnricher:
 
     def __init__(
         self,
-        db_conn_factory: Callable[[], ContextManager[Any]],
+        db_conn_factory: Callable[[], AbstractContextManager[Any]],
         settings,
     ) -> None:
         self.db_conn_factory = db_conn_factory

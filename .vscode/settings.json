@@ -1,6 +1,5 @@
 {
     "python-envs.pythonProjects": [],
-    "python.defaultInterpreterPath": "./.venv/bin/python",
     "python.terminal.activateEnvironment": true,
     "python.analysis.extraPaths": [
         "./server",
@@ -20,7 +19,6 @@
     "python.analysis.diagnosticMode": "workspace",
     "ruff.enable": true,
     "editor.codeActionsOnSave": {
-        "source.organizeImports.ruff": "explicit",
         "source.fixAll.ruff": "explicit"
     },
     "[python]": {

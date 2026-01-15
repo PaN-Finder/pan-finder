@@ -4,8 +4,10 @@ and a SentenceTransformer. Fetches documents with `summary IS NULL`, generates a
 short summary (fallback to title if text is empty), embeds `title + summary`, and updates the row.
 """
 
+from contextlib import AbstractContextManager
 import logging
-from typing import Any, Callable, ContextManager, List, Tuple
+from collections.abc import Callable
+from typing import Any
 
 from openai import AzureOpenAI, OpenAI
 from sentence_transformers import SentenceTransformer
@@ -18,7 +20,7 @@ class SummaryIngestor:
 
     def __init__(
         self,
-        db_conn_factory: Callable[[], ContextManager[Any]],
+        db_conn_factory: Callable[[], AbstractContextManager[Any]],
         settings,
     ) -> None:
         self.db_conn_factory = db_conn_factory
@@ -36,7 +38,7 @@ class SummaryIngestor:
             )
         self.embedder = SentenceTransformer(settings.embedding_model_path, device="cpu")
 
-    def fetch_documents_without_summary(self, cursor) -> List[Tuple[int, str, str]]:
+    def fetch_documents_without_summary(self, cursor) -> list[tuple[int, str, str]]:
         """Return `(id, title, text)` for rows where `summary IS NULL`."""
         cursor.execute(
             """
@@ -65,7 +67,7 @@ class SummaryIngestor:
         content = resp.choices[0].message.content if resp and resp.choices else None
         return content or title
 
-    def process_documents(self, documents: List[Tuple[int, str, str]]) -> None:
+    def process_documents(self, documents: list[tuple[int, str, str]]) -> None:
         """Summarize, embed, and persist updates in a single transaction."""
         with self.db_conn_factory() as conn:
             with conn.cursor() as cursor:

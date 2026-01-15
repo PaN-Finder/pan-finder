@@ -1,4 +1,3 @@
-from typing import Optional
 from fastapi import APIRouter, HTTPException, Header
 from pydantic import Field, BaseModel
 
@@ -28,7 +27,7 @@ class FeedbackRequest(BaseModel):
 @router.post("/submit")
 def submit_feedback(
     feedback_request: FeedbackRequest,
-    x_session_id: Optional[str] = Header(None, alias="X-Session-ID"),
+    x_session_id: str | None = Header(None, alias="X-Session-ID"),
 ) -> dict:
     """
     Submit feedback for a statistic.
@@ -109,4 +108,4 @@ def submit_feedback(
         )
         raise HTTPException(
             status_code=500, detail=f"Failed to submit feedback: {str(e)}"
-        )
+        ) from e

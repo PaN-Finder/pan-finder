@@ -1,7 +1,8 @@
 import json
 import time
 from functools import lru_cache
-from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple, cast
+from typing import Any, cast
+from collections.abc import AsyncGenerator
 
 from psycopg.rows import dict_row
 from psycopg.sql import Composed
@@ -32,9 +33,9 @@ class SearchEngine:
 
     def __init__(
         self,
-        sentence_transformer: Optional[SentenceTransformer] = None,
-        query_builder: Optional[SearchQueryBuilder] = None,
-        llm_client: Optional[LLMClient] = None,
+        sentence_transformer: SentenceTransformer | None = None,
+        query_builder: SearchQueryBuilder | None = None,
+        llm_client: LLMClient | None = None,
     ):
         """
         Initialize the SearchEngine with optional dependencies.
@@ -129,7 +130,7 @@ class SearchEngine:
             )
 
     def _parse_openai_response(
-        self, response_content: Optional[str], query: str
+        self, response_content: str | None, query: str
     ) -> StructuredQueryData:
         """
         Parse the OpenAI response content into structured query data.
@@ -175,7 +176,7 @@ class SearchEngine:
 
     async def execute_search(
         self, search_data: StructuredQueryData
-    ) -> Tuple[List[EnhancedSearchResult], Composed, Optional[KneePointResult]]:
+    ) -> tuple[list[EnhancedSearchResult], Composed, KneePointResult | None]:
         """
         Execute the search using the structured query data.
 
@@ -217,7 +218,7 @@ class SearchEngine:
 
     def _execute_database_query(
         self, sql_query: Composed
-    ) -> List[EnhancedSearchResult]:
+    ) -> list[EnhancedSearchResult]:
         """
         Execute the database query and process results.
 
@@ -234,8 +235,8 @@ class SearchEngine:
                 with conn.cursor(row_factory=dict_row) as cursor:
                     # Execute the search query
                     cursor.execute(cast(Any, sql_query))
-                    raw_results: List[SearchResult] = cast(
-                        List[SearchResult], cursor.fetchall()
+                    raw_results: list[SearchResult] = cast(
+                        list[SearchResult], cursor.fetchall()
                     )
 
                     self._logger.debug(f"Raw search results count: {len(raw_results)}")
@@ -257,8 +258,8 @@ class SearchEngine:
         return search_results
 
     def _process_search_results(
-        self, raw_results: List[SearchResult], document_details: List[DocumentTypedDict]
-    ) -> List[EnhancedSearchResult]:
+        self, raw_results: list[SearchResult], document_details: list[DocumentTypedDict]
+    ) -> list[EnhancedSearchResult]:
         """
         Process and combine search results with document details.
 
@@ -311,7 +312,7 @@ class SearchEngine:
         Returns:
             Dictionary with relevant score fields based on query components
         """
-        result_dict: Dict[str, Any] = {
+        result_dict: dict[str, Any] = {
             "title": result.title,
             "doi": result.doi,
             "abstract": result.abstract,
@@ -377,7 +378,7 @@ class SearchEngine:
             yield "Could not generate explanation due to an internal error."
 
 
-@lru_cache()
+@lru_cache
 def get_search_engine() -> SearchEngine:
     """Get a cached SearchEngine instance."""
     return SearchEngine()

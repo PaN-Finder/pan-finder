@@ -1,6 +1,5 @@
 from psycopg_pool import ConnectionPool
 from contextlib import contextmanager
-from typing import Dict
 import time
 from psycopg import OperationalError
 from ..utils import get_logger
@@ -36,8 +35,8 @@ class DatabaseManager:
     """
 
     def __init__(self):
-        self._pools: Dict[str, ConnectionPool] = {}
-        self._configs: Dict[str, DatabaseConfig] = {}
+        self._pools: dict[str, ConnectionPool] = {}
+        self._configs: dict[str, DatabaseConfig] = {}
 
     def register_database(self, name: str, config: DatabaseConfig) -> None:
         """

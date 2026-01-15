@@ -91,7 +91,7 @@ def main(files: [str]):
         with get_database_connection("pan-finder-benchmarks") as conn:
             with conn.cursor() as cursor:
                 for file in files:
-                    with open(file, "r") as fh:
+                    with open(file) as fh:
                         data = json.load(fh)
 
                     if "synthetic" in file:

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, LiteralString, Union, TypedDict, Tuple, Set, cast
+from typing import Any, LiteralString, TypedDict, cast
 from datetime import datetime
 from psycopg.sql import SQL, Composed, Identifier, Literal, Composable
 from psycopg.rows import dict_row
@@ -79,7 +79,7 @@ class SearchQueryBuilder:
         self._similar_names = {}  # For debugging purposes, stores similar names found during query building
 
     @property
-    def similar_names(self) -> Dict[str, List[Dict[str, Any]]]:
+    def similar_names(self) -> dict[str, list[dict[str, Any]]]:
         """
         Returns the dictionary of similar names found during query building.
         Only populated if capture_similar_names was set to True in the constructor.
@@ -87,7 +87,7 @@ class SearchQueryBuilder:
         return self._similar_names
 
     # --- Public Methods ---
-    def build_query(self, params: Dict[str, Any]) -> Composed:
+    def build_query(self, params: dict[str, Any]) -> Composed:
         """
         Constructs the final SQL search query based on the input data.
 
@@ -202,7 +202,7 @@ class SearchQueryBuilder:
 
         return search_sql
 
-    def _build_similarity_query(self, intention_vector: List | None) -> Composed | SQL:
+    def _build_similarity_query(self, intention_vector: list | None) -> Composed | SQL:
         """
         Builds the subquery for document similarity search.
 
@@ -236,7 +236,7 @@ class SearchQueryBuilder:
         )
 
     def _build_chunk_similarity_query(
-        self, intention_vector: List | None
+        self, intention_vector: list | None
     ) -> Composed | SQL:
         """
         Builds the subquery for chunk-based similarity search.
@@ -321,7 +321,7 @@ class SearchQueryBuilder:
 
         return None
 
-    def _build_keywords_tsquery_text(self, keywords: List[str]) -> str:
+    def _build_keywords_tsquery_text(self, keywords: list[str]) -> str:
         """
         Formats keywords for PostgreSQL full-text search ts_query (OR logic).
 
@@ -425,7 +425,7 @@ class SearchQueryBuilder:
 
             return [row["name"] for row in result]
 
-    def _update_filter_names_recursive(self, filter_node: Dict) -> Union[Dict, None]:
+    def _update_filter_names_recursive(self, filter_node: dict) -> dict | None:
         """
         Recursively finds and replaces 'name' in filter conditions with similar names.
 
@@ -473,7 +473,7 @@ class SearchQueryBuilder:
             )
             return None  # Invalid condition structure
 
-    def _update_filter_names(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _update_filter_names(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Updates the 'filters' part of the data by replacing names with similar ones.
 
@@ -505,7 +505,7 @@ class SearchQueryBuilder:
         return data
 
     # --- Filter Subquery Construction ---
-    def _build_filter_subquery(self, filters: Union[Dict, None]) -> Composed | SQL:
+    def _build_filter_subquery(self, filters: dict | None) -> Composed | SQL:
         """
         Builds the SQL subquery for filtering documents based on the filter object.
 
@@ -541,7 +541,7 @@ class SearchQueryBuilder:
             flag_select_list = SQL(",\n                    ").join(flag_definitions)
 
             # 2. Collect unique keys
-            filter_key_names: Set[str] = set()
+            filter_key_names: set[str] = set()
             self._collect_keys_recursive(filters, filter_key_names)
             if not filter_key_names:
                 self._logger.info("No filter keys found in the provided structure.")
@@ -645,9 +645,9 @@ class SearchQueryBuilder:
     def _build_flags_recursive(
         self,
         condition: dict,
-        flag_counter: List[int],
-        all_flags: List[Composable],
-        valid_condition_ids: Set[int],
+        flag_counter: list[int],
+        all_flags: list[Composable],
+        valid_condition_ids: set[int],
     ) -> None:
         """
         Recursively traverses the filter structure to generate SQL 'flag' expressions.
@@ -976,7 +976,7 @@ class SearchQueryBuilder:
 
     def _generate_filter_flags(
         self, filt: dict
-    ) -> Tuple[List[Composable], int, Set[int]]:
+    ) -> tuple[list[Composable], int, set[int]]:
         """
         Generates all filter flag expressions for a given filter structure.
 
@@ -988,8 +988,8 @@ class SearchQueryBuilder:
             and the set of IDs for valid conditions.
         """
         flag_counter = [0]
-        all_flags: List[Composable] = []
-        valid_condition_ids: Set[int] = set()
+        all_flags: list[Composable] = []
+        valid_condition_ids: set[int] = set()
         try:
             self._build_flags_recursive(
                 filt, flag_counter, all_flags, valid_condition_ids
@@ -1001,7 +1001,7 @@ class SearchQueryBuilder:
 
     # --- Filter Logic Combination ---
     def _build_filter_logic(
-        self, filters: Dict, valid_condition_ids: Set[int]
+        self, filters: dict, valid_condition_ids: set[int]
     ) -> SQL | Composed:
         """
         Builds the final boolean logic expression from the filter structure.
@@ -1021,7 +1021,7 @@ class SearchQueryBuilder:
             filters, logic_flag_counter, valid_condition_ids
         )
 
-    def _collect_keys_recursive(self, condition: dict, all_keys: Set[str]) -> None:
+    def _collect_keys_recursive(self, condition: dict, all_keys: set[str]) -> None:
         """
         Recursively collects all unique filter key names from the filter structure.
 
@@ -1043,8 +1043,8 @@ class SearchQueryBuilder:
     def _build_logic_recursive(
         self,
         condition: dict,
-        flag_idx_counter: List[int],
-        valid_condition_ids: Set[int],
+        flag_idx_counter: list[int],
+        valid_condition_ids: set[int],
     ) -> SQL | Composed:
         """
         Recursively builds the SQL logic expression (e.g., (has_condition_1 > 0 AND has_condition_2 > 0)).
@@ -1059,7 +1059,7 @@ class SearchQueryBuilder:
                 )
                 return SQL("FALSE")
 
-            logic_parts: List[Composable] = []
+            logic_parts: list[Composable] = []
             for sub_condition in nested_conditions:
                 if isinstance(sub_condition, dict):
                     part = self._build_logic_recursive(
@@ -1092,7 +1092,7 @@ class SearchQueryBuilder:
 
             op = condition.get("logic", "AND").upper()
             # Interleave parts with the operator and wrap in parentheses
-            interleaved: List[Composable] = []
+            interleaved: list[Composable] = []
             for idx, part in enumerate(logic_parts):
                 if idx > 0:
                     interleaved.append(SQL(cast(LiteralString, f" {op} ")))

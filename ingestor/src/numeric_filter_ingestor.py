@@ -18,8 +18,10 @@ What it does:
         table as (name, name_vector).
 """
 
+from contextlib import AbstractContextManager
 import logging
-from typing import Callable, ContextManager, Any, List, Tuple
+from collections.abc import Callable
+from typing import Any
 
 from sentence_transformers import SentenceTransformer
 
@@ -31,7 +33,7 @@ class NumericFilterIngestor:
 
     def __init__(
         self,
-        db_conn_factory: Callable[[], ContextManager[Any]],
+        db_conn_factory: Callable[[], AbstractContextManager[Any]],
         settings,
     ) -> None:
         self.db_conn_factory = db_conn_factory
@@ -121,16 +123,16 @@ class NumericFilterIngestor:
                             GROUP BY key
                         """
                     )
-                    min_max_keys: List[Tuple[str, str]] = cursor.fetchall()
+                    min_max_keys: list[tuple[str, str]] = cursor.fetchall()
 
-                    keys_flat: List[str] = [k for pair in min_max_keys for k in pair]
+                    keys_flat: list[str] = [k for pair in min_max_keys for k in pair]
                     if keys_flat:
                         # Replace dot with space for embedding, as before
                         texts = [k.replace(".", " ") for k in keys_flat]
                         vectors = self.encoder.encode(texts)
                         if hasattr(vectors, "tolist"):
                             vectors = vectors.tolist()
-                        key_embeddings = list(zip(keys_flat, vectors))
+                        key_embeddings = list(zip(keys_flat, vectors, strict=True))
                         cursor.executemany(
                             """
                             INSERT INTO filter_key (name, name_vector)
