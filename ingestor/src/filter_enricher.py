@@ -123,12 +123,11 @@ class FilterEnricher:
         }
 
         try:
-            with self.db_conn_factory() as conn:
-                with conn.cursor() as cursor:
-                    # loop through the mapping and update the filter table
-                    for key, value in mapping.items():
-                        cursor.execute(
-                            """
+            with self.db_conn_factory() as conn, conn.cursor() as cursor:
+                # loop through the mapping and update the filter table
+                for key, value in mapping.items():
+                    cursor.execute(
+                        """
                             INSERT INTO filter (document_id, key, value, type)
                                 SELECT f.document_id, 'publisher', %s, 'DERIVED'::filter_type
                                 FROM filter f
@@ -141,9 +140,9 @@ class FilterEnricher:
                                     AND f2.value = %s
                                 )
                             """,
-                            (value, key, value),
-                        )
-                    conn.commit()
+                        (value, key, value),
+                    )
+                conn.commit()
         except Exception:
             self.logger.exception("Error enriching publisher filters", exc_info=True)
             raise

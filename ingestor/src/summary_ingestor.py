@@ -89,9 +89,8 @@ class SummaryIngestor:
     def run(self) -> None:
         """Fetch documents and process them with basic error handling."""
         try:
-            with self.db_conn_factory() as conn:
-                with conn.cursor() as cursor:
-                    documents = self.fetch_documents_without_summary(cursor)
+            with self.db_conn_factory() as conn, conn.cursor() as cursor:
+                documents = self.fetch_documents_without_summary(cursor)
             self.process_documents(documents)
         except Exception:
             self.logger.exception("Error during populate_summary", exc_info=True)

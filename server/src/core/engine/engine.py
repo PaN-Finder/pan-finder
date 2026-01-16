@@ -231,26 +231,26 @@ class SearchEngine:
         search_results = []
 
         try:
-            with get_database_connection() as conn:
-                with conn.cursor(row_factory=dict_row) as cursor:
-                    # Execute the search query
-                    cursor.execute(cast(Any, sql_query))
-                    raw_results: list[SearchResult] = cast(
-                        list[SearchResult], cursor.fetchall()
+            with (
+                get_database_connection() as conn,
+                conn.cursor(row_factory=dict_row) as cursor,
+            ):
+                # Execute the search query
+                cursor.execute(cast(Any, sql_query))
+                raw_results: list[SearchResult] = cast(
+                    list[SearchResult], cursor.fetchall()
+                )
+
+                self._logger.debug(f"Raw search results count: {len(raw_results)}")
+
+                # Get document details if we have results
+                if raw_results:
+                    document_details = DocumentRepository.get_document_details_by_dois(
+                        dois=[result["doi"] for result in raw_results]
                     )
-
-                    self._logger.debug(f"Raw search results count: {len(raw_results)}")
-
-                    # Get document details if we have results
-                    if raw_results:
-                        document_details = (
-                            DocumentRepository.get_document_details_by_dois(
-                                dois=[result["doi"] for result in raw_results]
-                            )
-                        )
-                        search_results = self._process_search_results(
-                            raw_results, document_details
-                        )
+                    search_results = self._process_search_results(
+                        raw_results, document_details
+                    )
 
         except Exception as e:
             self._logger.error(f"Database query error: {e}")

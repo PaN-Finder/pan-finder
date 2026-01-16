@@ -165,9 +165,8 @@ class FilterIngestor:
 
     def run(self) -> None:
         try:
-            with self.db_conn_factory() as conn:
-                with conn.cursor() as cursor:
-                    documents = self.fetch_documents_without_filters(cursor)
+            with self.db_conn_factory() as conn, conn.cursor() as cursor:
+                documents = self.fetch_documents_without_filters(cursor)
             self.process_documents(documents)
         except Exception as e:
             self.logger.exception("Error during populating filter table: %s", e)

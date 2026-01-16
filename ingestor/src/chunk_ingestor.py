@@ -88,9 +88,8 @@ class ChunkIngestor:
     def run(self) -> None:
         """Retrieve documents without chunks and process them."""
         try:
-            with self.db_conn_factory() as conn:
-                with conn.cursor() as cursor:
-                    docs = self.fetch_documents_without_chunks(cursor)
+            with self.db_conn_factory() as conn, conn.cursor() as cursor:
+                docs = self.fetch_documents_without_chunks(cursor)
             self.process_documents(docs)
         except Exception:
             self.logger.exception("Error during populate_chunk", exc_info=True)
