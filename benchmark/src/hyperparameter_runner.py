@@ -527,20 +527,20 @@ def insert_test_pair_test(run_id, tp_id, results) -> str:
         with conn.cursor() as cursor:
             cursor.execute(
                 """
-                INSERT INTO benchmarks_run_test 
+                INSERT INTO benchmarks_run_test
                 (
-                    testId, 
-                    runId, 
-                    tpId,  
-                    intention, 
-                    keywords, 
-                    filters, 
-                    rank, 
-                    runTime, 
-                    extractionTime, 
-                    buildingTime, 
-                    queryTime, 
-                    sqlQuery, 
+                    testId,
+                    runId,
+                    tpId,
+                    intention,
+                    keywords,
+                    filters,
+                    rank,
+                    runTime,
+                    extractionTime,
+                    buildingTime,
+                    queryTime,
+                    sqlQuery,
                     resultsSet,
                     ranks,
                     actualGroups,
@@ -624,16 +624,16 @@ async def main(hyperparameters: dict):
             )
 
             query = """
-                SELECT 
-                    tpId, 
-                    userPrompt, 
-                    targetDoi, 
-                    expectedRank, 
-                    promptId, 
-                    expertName, 
-                    groupId, 
-                    source, 
-                    type, 
+                SELECT
+                    tpId,
+                    userPrompt,
+                    targetDoi,
+                    expectedRank,
+                    promptId,
+                    expertName,
+                    groupId,
+                    source,
+                    type,
                     targetGroup
                 FROM test_pairs
             """

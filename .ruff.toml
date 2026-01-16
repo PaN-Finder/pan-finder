@@ -15,7 +15,14 @@ extend-exclude = [
   "models",
 ]
 [lint]
-select = ["E", "F", "B", "UP", "I"]
+select = [
+  "E",    # pycodestyle errors
+  "F",    # Pyflakes
+  "B",    # flake8-bugbear
+  "UP",   # pyupgrade
+  "I",    # isort
+  "W",    # pycodestyle warnings
+]
 ignore = [
   "E501",   # line too long (handled by formatter)
 ]

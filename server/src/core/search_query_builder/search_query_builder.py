@@ -172,7 +172,7 @@ class SearchQueryBuilder:
                 FROM document d
                 WHERE
                     {keywords_tsquery_text} != '' -- Avoid error if keywords are empty
-                    AND title_text_search_vector @@ to_tsquery('english', {keywords_tsquery_text})                    
+                    AND title_text_search_vector @@ to_tsquery('english', {keywords_tsquery_text})
                 -- NO ORDER BY here, as we will use the rank to calculate the score
                 -- NO LIMIT here: we want all DOIs with at least one keyword match
             )
@@ -848,7 +848,7 @@ class SearchQueryBuilder:
             ) is None:  # Ensure we don't treat timestamps as strings
                 # Aggregated priority: 2 if any value has prefix match, else 1 if any value contains, else 0
                 flag_sql_to_add = SQL(
-                    """MAX(CASE 
+                    """MAX(CASE
                         WHEN {key_in_clause} AND f.value ILIKE {prefix} THEN 2
                         WHEN {key_in_clause} AND f.value ILIKE {contains} THEN 1
                         ELSE 0

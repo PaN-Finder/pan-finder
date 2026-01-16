@@ -78,8 +78,8 @@ class NumericFilterIngestor:
                     # Insert the minimum values
                     cursor.execute(
                         """
-                        INSERT INTO filter (document_id, key, value, unit, type)                    
-                            SELECT 
+                        INSERT INTO filter (document_id, key, value, unit, type)
+                            SELECT
                                 document_id, CONCAT(key, '.min'), value_unit[1], value_unit[3], 'DERIVED'::filter_type
                             FROM (
                                 SELECT document_id, key,
@@ -96,8 +96,8 @@ class NumericFilterIngestor:
                     # Insert the maximum values
                     cursor.execute(
                         """
-                        INSERT INTO filter (document_id, key, value, unit, type)                    
-                            SELECT 
+                        INSERT INTO filter (document_id, key, value, unit, type)
+                            SELECT
                                 document_id, CONCAT(key, '.max'), value_unit[2], value_unit[3], 'DERIVED'::filter_type
                             FROM (
                                 SELECT document_id, key,
@@ -116,7 +116,7 @@ class NumericFilterIngestor:
                         """
                             SELECT CONCAT(key, '.min') as min, CONCAT(key, '.max') as max
                             FROM filter
-                            WHERE 
+                            WHERE
                                 not regexp_like(key, 'sampleName', 'i')
                                 AND
                                 regexp_like(value, '^(-?\\d*\\.?\\d+)-(-?\\d*\\.?\\d+)([a-zA-Z]+)$')
