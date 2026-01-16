@@ -1,17 +1,18 @@
+import asyncio
 import copy
 import json
-import asyncio
 from collections.abc import AsyncGenerator
-from fastapi import APIRouter, HTTPException, Header
+
+from fastapi import APIRouter, Header, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from ..core.engine import get_search_engine
 from ..db.models.search import EnhancedSearchResult, StructuredQueryData
-from ..db.models.statistic import Statistic, ExtendedResults
+from ..db.models.statistic import ExtendedResults, Statistic
 from ..db.models.statistic_repository import StatisticRepository
-from ..utils import get_logger
 from ..routers.session import verify_session
+from ..utils import get_logger
 
 logger = get_logger(__name__)
 

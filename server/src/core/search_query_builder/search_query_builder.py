@@ -1,10 +1,11 @@
-from typing import Any, LiteralString, TypedDict, cast
 from datetime import datetime
-from psycopg.sql import SQL, Composed, Identifier, Literal, Composable
+from logging import Logger, getLogger
+from typing import Any, LiteralString, TypedDict, cast
+
 from psycopg.rows import dict_row
+from psycopg.sql import SQL, Composable, Composed, Identifier, Literal
 from psycopg_pool import ConnectionPool
 from sentence_transformers import SentenceTransformer
-from logging import Logger, getLogger
 
 NUMBER_TYPES = (int, float)
 

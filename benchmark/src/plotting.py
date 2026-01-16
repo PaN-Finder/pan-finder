@@ -1,10 +1,11 @@
-import matplotlib.pyplot as plt
+import json
 from pathlib import Path
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib.container import BarContainer
-import json
 import seaborn as sns
+from matplotlib.container import BarContainer
 
 
 def plot_scores(

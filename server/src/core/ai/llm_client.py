@@ -9,10 +9,10 @@ import asyncio
 import hashlib
 import json
 import time
+from collections.abc import AsyncGenerator, Callable
 from dataclasses import dataclass
 from logging import Logger
 from typing import Any
-from collections.abc import AsyncGenerator, Callable
 
 from openai import AzureOpenAI, OpenAI
 
@@ -27,7 +27,7 @@ settings = get_settings()
 class LLMMessage:
     """Represents a single message in a conversation."""
 
-    role: str  # "system", "user", "assistant"
+    role: str
     content: str
 
 
@@ -41,7 +41,7 @@ class LLMCompletionRequest:
     temperature: float = 0.3
     stream: bool = False
     response_format: dict[str, str] | None = None
-    cache_metadata: dict[str, Any] | None = None  # For storing additional metadata
+    cache_metadata: dict[str, Any] | None = None
 
 
 @dataclass

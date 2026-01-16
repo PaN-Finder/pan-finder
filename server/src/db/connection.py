@@ -1,10 +1,12 @@
-from psycopg_pool import ConnectionPool
-from contextlib import contextmanager
 import time
-from psycopg import OperationalError
-from ..utils import get_logger
-from ..config import get_settings
+from contextlib import contextmanager
 from dataclasses import dataclass
+
+from psycopg import OperationalError
+from psycopg_pool import ConnectionPool
+
+from ..config import get_settings
+from ..utils import get_logger
 
 settings = get_settings()
 logger = get_logger(__name__)

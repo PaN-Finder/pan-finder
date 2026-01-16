@@ -4,9 +4,9 @@ and a SentenceTransformer. Fetches documents with `summary IS NULL`, generates a
 short summary (fallback to title if text is empty), embeds `title + summary`, and updates the row.
 """
 
-from contextlib import AbstractContextManager
 import logging
 from collections.abc import Callable
+from contextlib import AbstractContextManager
 from typing import Any
 
 from openai import AzureOpenAI, OpenAI

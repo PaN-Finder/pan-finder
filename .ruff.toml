@@ -15,7 +15,7 @@ extend-exclude = [
   "models",
 ]
 [lint]
-select = ["E", "F", "B", "UP"]
+select = ["E", "F", "B", "UP", "I"]
 ignore = [
   "E501",   # line too long (handled by formatter)
 ]

@@ -1,17 +1,15 @@
+import asyncio
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-import asyncio
 
 from .config import get_settings
-from .routers import search
-from .routers import document
-from .routers import feedback
-from .routers import session
 from .db.connection import (
     check_database_health,
     cleanup_connection_pools,
 )
+from .routers import document, feedback, search, session
 from .utils import get_logger
 from .version import get_version
 

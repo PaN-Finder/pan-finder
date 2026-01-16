@@ -2,11 +2,11 @@
 Ingest dataset records from JSON files under `data/` into a PostgreSQL database.
 """
 
-from contextlib import AbstractContextManager
-import logging
 import json
-from pathlib import Path
+import logging
 from collections.abc import Callable
+from contextlib import AbstractContextManager
+from pathlib import Path
 from typing import Any
 
 

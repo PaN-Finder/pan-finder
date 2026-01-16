@@ -1,5 +1,5 @@
-from ...db.models.search import EnhancedSearchResult, StructuredQueryData
 from ...config import get_settings
+from ...db.models.search import EnhancedSearchResult, StructuredQueryData
 from ...utils import get_logger
 
 settings = get_settings()

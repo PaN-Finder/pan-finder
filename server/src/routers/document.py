@@ -1,9 +1,11 @@
 import json
-from fastapi import APIRouter, HTTPException, Header, Path
+
+from fastapi import APIRouter, Header, HTTPException, Path
 from pydantic import BaseModel, JsonValue
+
 from ..db.models.document_repository import DocumentRepository
-from ..utils import get_logger
 from ..routers.session import verify_session
+from ..utils import get_logger
 
 logger = get_logger(__name__)
 

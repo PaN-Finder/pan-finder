@@ -2,15 +2,15 @@
 Populate the `chunk` table based on concatenated document title and text.
 """
 
-from contextlib import AbstractContextManager
 import logging
-from pathlib import Path
 from collections.abc import Callable
+from contextlib import AbstractContextManager
+from pathlib import Path
 from typing import Any
 
-from sentence_transformers import SentenceTransformer
 from semantic_chunkers.chunkers import StatisticalChunker
 from semantic_router.encoders import HuggingFaceEncoder
+from sentence_transformers import SentenceTransformer
 
 
 class ChunkIngestor:

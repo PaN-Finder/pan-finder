@@ -9,9 +9,9 @@ casting helpers to populate the following derived columns when possible:
 - `value_si` via `to_unit(value_numeric, unit)` when `unit` is valid and `value_numeric` is not NULL
 """
 
-from contextlib import AbstractContextManager
 import logging
 from collections.abc import Callable
+from contextlib import AbstractContextManager
 from typing import Any
 
 

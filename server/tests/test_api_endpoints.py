@@ -3,19 +3,20 @@ import json
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
 import pytest
-from httpx import AsyncClient, ASGITransport
 import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.db.models.search import EnhancedSearchResult, StructuredQueryData
 from helpers.mock_settings import (
     MockSettings,
     create_common_patches,
     reload_app_modules_with_settings,
 )
 
+from src.db.models.search import EnhancedSearchResult, StructuredQueryData
 
 # Create mock settings with Turnstile disabled for API endpoint tests
 mock_settings = MockSettings(enable_turnstile=False)

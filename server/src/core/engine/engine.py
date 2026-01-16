@@ -1,8 +1,8 @@
 import json
 import time
+from collections.abc import AsyncGenerator
 from functools import lru_cache
 from typing import Any, cast
-from collections.abc import AsyncGenerator
 
 from psycopg.rows import dict_row
 from psycopg.sql import Composed

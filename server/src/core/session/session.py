@@ -1,7 +1,8 @@
-from datetime import datetime, timedelta, UTC
-from pydantic import BaseModel
 import time
 import uuid
+from datetime import UTC, datetime, timedelta
+
+from pydantic import BaseModel
 
 
 class Session(BaseModel):

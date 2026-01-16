@@ -2,10 +2,10 @@
 Populate the `filter` and `filter_key` tables from document raw metadata.
 """
 
-from contextlib import AbstractContextManager
 import logging
 import re
 from collections.abc import Callable, Iterable
+from contextlib import AbstractContextManager
 from typing import Any
 
 from sentence_transformers import SentenceTransformer

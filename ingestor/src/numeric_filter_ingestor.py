@@ -18,9 +18,9 @@ What it does:
         table as (name, name_vector).
 """
 
-from contextlib import AbstractContextManager
 import logging
 from collections.abc import Callable
+from contextlib import AbstractContextManager
 from typing import Any
 
 from sentence_transformers import SentenceTransformer

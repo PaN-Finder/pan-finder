@@ -5,7 +5,7 @@ This module provides functionality to filter out weakly-relevant results from a 
 of search results using a simple knee (elbow) detection algorithm.
 """
 
-from typing import TypeVar, Protocol, NamedTuple
+from typing import NamedTuple, Protocol, TypeVar
 
 from ...db.models.search import EnhancedSearchResult
 

@@ -1,9 +1,11 @@
-import os
 import glob
+import os
 from datetime import datetime
-from .connection import get_database_connection
+
 from psycopg import sql
+
 from ..utils import get_logger
+from .connection import get_database_connection
 
 logger = get_logger(__name__)
 
