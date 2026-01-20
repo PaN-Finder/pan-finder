@@ -1,7 +1,8 @@
 import importlib.util
 from pathlib import Path
+from unittest.mock import ANY, MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, ANY
 from psycopg.sql import Composable
 
 # --- Dynamic Import ---

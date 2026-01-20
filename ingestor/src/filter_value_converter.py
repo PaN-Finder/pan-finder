@@ -10,7 +10,9 @@ casting helpers to populate the following derived columns when possible:
 """
 
 import logging
-from typing import Callable, ContextManager, Any
+from collections.abc import Callable
+from contextlib import AbstractContextManager
+from typing import Any
 
 
 class FilterValueConverter:
@@ -18,7 +20,9 @@ class FilterValueConverter:
 
     logger = logging.getLogger("FilterValueConverter")
 
-    def __init__(self, db_conn_factory: Callable[[], ContextManager[Any]]) -> None:
+    def __init__(
+        self, db_conn_factory: Callable[[], AbstractContextManager[Any]]
+    ) -> None:
         self.db_conn_factory = db_conn_factory
 
     def run(self) -> None:

@@ -1,12 +1,11 @@
-from typing import Optional
-from fastapi import APIRouter, HTTPException, Header
-from pydantic import Field, BaseModel
+from fastapi import APIRouter, Header, HTTPException
+from pydantic import BaseModel, Field
 
-from ..utils import get_logger
 from ..db.models.feedback import Feedback
 from ..db.models.feedback_repository import FeedbackRepository
 from ..db.models.statistic_repository import StatisticRepository
 from ..routers.session import verify_session
+from ..utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -28,7 +27,7 @@ class FeedbackRequest(BaseModel):
 @router.post("/submit")
 def submit_feedback(
     feedback_request: FeedbackRequest,
-    x_session_id: Optional[str] = Header(None, alias="X-Session-ID"),
+    x_session_id: str | None = Header(None, alias="X-Session-ID"),
 ) -> dict:
     """
     Submit feedback for a statistic.
@@ -109,4 +108,4 @@ def submit_feedback(
         )
         raise HTTPException(
             status_code=500, detail=f"Failed to submit feedback: {str(e)}"
-        )
+        ) from e

@@ -1,10 +1,11 @@
-import matplotlib.pyplot as plt
+import json
 from pathlib import Path
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib.container import BarContainer
-import json
 import seaborn as sns
+from matplotlib.container import BarContainer
 
 
 def plot_scores(
@@ -271,7 +272,7 @@ def plot_score_distribution_boxplot(
     Plots a box plot of the score distribution for multiple tests.
     """
     try:
-        with open(raw_scores_by_test_config_path, "r") as f:
+        with open(raw_scores_by_test_config_path) as f:
             all_scores_by_test = json.load(f)
     except FileNotFoundError:
         print(f"Error: The file {raw_scores_by_test_config_path} was not found.")
@@ -338,7 +339,7 @@ def plot_score_distribution_stripplot(
     Plots a strip plot of the score distribution for multiple tests.
     """
     try:
-        with open(raw_scores_by_test_config_path, "r") as f:
+        with open(raw_scores_by_test_config_path) as f:
             all_scores_by_test = json.load(f)
     except FileNotFoundError:
         print(f"Error: The file {raw_scores_by_test_config_path} was not found.")
@@ -415,7 +416,7 @@ def plot_knee_point_distribution(knee_data_path: Path, output_path: Path):
         output_path: Path to save the generated plot
     """
     try:
-        with open(knee_data_path, "r") as f:
+        with open(knee_data_path) as f:
             knee_data = json.load(f)
     except FileNotFoundError:
         print(f"Error: The file {knee_data_path} was not found.")

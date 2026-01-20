@@ -1,17 +1,18 @@
+import asyncio
 import copy
 import json
-import asyncio
-from typing import AsyncGenerator, Dict, List, Optional
-from fastapi import APIRouter, HTTPException, Header
+from collections.abc import AsyncGenerator
+
+from fastapi import APIRouter, Header, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from ..core.engine import get_search_engine
 from ..db.models.search import EnhancedSearchResult, StructuredQueryData
-from ..db.models.statistic import Statistic, ExtendedResults
+from ..db.models.statistic import ExtendedResults, Statistic
 from ..db.models.statistic_repository import StatisticRepository
-from ..utils import get_logger
 from ..routers.session import verify_session
+from ..utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -25,8 +26,8 @@ class SearchRequest(BaseModel):
 class SearchResponse(BaseModel):
     id: str | None
     raw_structured_data: dict
-    relevant_results: List[EnhancedSearchResult] = []
-    weakly_relevant_results: List[EnhancedSearchResult] = []
+    relevant_results: list[EnhancedSearchResult] = []
+    weakly_relevant_results: list[EnhancedSearchResult] = []
     total_results: int
 
 
@@ -34,7 +35,7 @@ class StructuredSearchRequest(BaseModel):
     modified_query_id: str = Field(
         ..., description="ID of the modified query (required)"
     )
-    structured_data: Dict = Field(..., description="Structured search data")
+    structured_data: dict = Field(..., description="Structured search data")
 
 
 class StreamEvent(BaseModel):
@@ -59,7 +60,7 @@ async def sse_yield(evt: StreamEvent):
 @router.post("")
 async def search_with_ai_stream(
     request: SearchRequest,
-    x_session_id: Optional[str] = Header(None, alias="X-Session-ID"),
+    x_session_id: str | None = Header(None, alias="X-Session-ID"),
 ) -> StreamingResponse:
     verify_session(x_session_id)
 
@@ -93,12 +94,12 @@ async def search_with_ai_stream(
                 search_data
             )
 
-            relevant_results: List[EnhancedSearchResult] = (
+            relevant_results: list[EnhancedSearchResult] = (
                 knee_point_result.filtered_results
                 if knee_point_result
                 else search_results
             )
-            weakly_relevant_results: List[EnhancedSearchResult] = (
+            weakly_relevant_results: list[EnhancedSearchResult] = (
                 [r for r in search_results if r not in relevant_results]
                 if knee_point_result
                 else []
@@ -170,7 +171,7 @@ async def search_with_ai_stream(
 @router.post("/explain")
 async def explain_search_result(
     request: ExplainRequest,
-    x_session_id: Optional[str] = Header(None, alias="X-Session-ID"),
+    x_session_id: str | None = Header(None, alias="X-Session-ID"),
 ) -> StreamingResponse:
     """
     Endpoint to explain why a specific document was returned for a given search query.
@@ -279,7 +280,7 @@ async def explain_search_result(
 @router.post("/structured")
 async def search_with_structured_data(
     request: StructuredSearchRequest,
-    x_session_id: Optional[str] = Header(None, alias="X-Session-ID"),
+    x_session_id: str | None = Header(None, alias="X-Session-ID"),
 ) -> StreamingResponse:
     """
     Search endpoint that accepts structured search data directly, bypassing LLM analysis.
@@ -321,10 +322,10 @@ async def search_with_structured_data(
                 structured_data
             )
 
-            relevant_results: List[EnhancedSearchResult] = (
+            relevant_results: list[EnhancedSearchResult] = (
                 knee_point_result.filtered_results if knee_point_result else []
             )
-            weakly_relevant_results: List[EnhancedSearchResult] = (
+            weakly_relevant_results: list[EnhancedSearchResult] = (
                 [r for r in search_results if r not in relevant_results]
                 if knee_point_result
                 else search_results

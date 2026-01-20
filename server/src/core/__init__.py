@@ -8,27 +8,16 @@ This package contains the main business logic components:
 - Session management
 """
 
-# Main search functionality
-from .engine import get_search_engine
-
-# AI components (high-level only)
 from .ai import AIPrompts
-
-# Search query building
+from .engine import get_search_engine
 from .search_query_builder import SearchQueryBuilder, SearchResult
-
-# Session management
 from .session import Session, SessionRepository
 
 __all__ = [
-    # Engine
     "get_search_engine",
-    # AI
     "AIPrompts",
-    # Query Builder
     "SearchQueryBuilder",
     "SearchResult",
-    # Session
     "Session",
     "SessionRepository",
 ]

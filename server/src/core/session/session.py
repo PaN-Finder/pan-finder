@@ -1,7 +1,8 @@
-from datetime import datetime, timedelta, timezone
-from pydantic import BaseModel
 import time
 import uuid
+from datetime import UTC, datetime, timedelta
+
+from pydantic import BaseModel
 
 
 class Session(BaseModel):
@@ -14,7 +15,7 @@ class Session(BaseModel):
     @classmethod
     def create_new(cls, duration_hours: int = 1) -> "Session":
         """Create a new session with specified duration."""
-        now = datetime.fromtimestamp(time.time(), tz=timezone.utc)
+        now = datetime.fromtimestamp(time.time(), tz=UTC)
         return cls(
             id=str(uuid.uuid4()),
             created_at=now,
@@ -23,4 +24,4 @@ class Session(BaseModel):
 
     def is_valid(self) -> bool:
         """Check if session is still valid (not expired and active)."""
-        return datetime.fromtimestamp(time.time(), tz=timezone.utc) < self.expires_at
+        return datetime.fromtimestamp(time.time(), tz=UTC) < self.expires_at

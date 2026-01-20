@@ -1,9 +1,11 @@
-import os
 import glob
+import os
 from datetime import datetime
-from .connection import get_database_connection
+
 from psycopg import sql
+
 from ..utils import get_logger
+from .connection import get_database_connection
 
 logger = get_logger(__name__)
 
@@ -36,7 +38,7 @@ def get_applied_migrations():
 
 def apply_migration(filename):
     logger.info(f"Applying migration file: {os.path.basename(filename)}")
-    with open(filename, "r") as f:
+    with open(filename) as f:
         sql_content = f.read()
     statements = [s.strip() for s in sql_content.split(";") if s.strip()]
     with get_database_connection() as conn:

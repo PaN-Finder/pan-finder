@@ -19,7 +19,9 @@ What it does:
 """
 
 import logging
-from typing import Callable, ContextManager, Any, List, Tuple
+from collections.abc import Callable
+from contextlib import AbstractContextManager
+from typing import Any
 
 from sentence_transformers import SentenceTransformer
 
@@ -31,7 +33,7 @@ class NumericFilterIngestor:
 
     def __init__(
         self,
-        db_conn_factory: Callable[[], ContextManager[Any]],
+        db_conn_factory: Callable[[], AbstractContextManager[Any]],
         settings,
     ) -> None:
         self.db_conn_factory = db_conn_factory
@@ -71,13 +73,12 @@ class NumericFilterIngestor:
         Normalise filter values with min-max ranges like '10-20 K', '5-15 mm', etc.
         """
         try:
-            with self.db_conn_factory() as conn:
-                with conn.cursor() as cursor:
-                    # Insert the minimum values
-                    cursor.execute(
-                        """
-                        INSERT INTO filter (document_id, key, value, unit, type)                    
-                            SELECT 
+            with self.db_conn_factory() as conn, conn.cursor() as cursor:
+                # Insert the minimum values
+                cursor.execute(
+                    """
+                        INSERT INTO filter (document_id, key, value, unit, type)
+                            SELECT
                                 document_id, CONCAT(key, '.min'), value_unit[1], value_unit[3], 'DERIVED'::filter_type
                             FROM (
                                 SELECT document_id, key,
@@ -89,13 +90,13 @@ class NumericFilterIngestor:
                                     regexp_like(value, '^(-?\\d*\\.?\\d+)-(-?\\d*\\.?\\d+)([a-zA-Z]+)$')
                             ) AS subquery
                         """
-                    )
+                )
 
-                    # Insert the maximum values
-                    cursor.execute(
-                        """
-                        INSERT INTO filter (document_id, key, value, unit, type)                    
-                            SELECT 
+                # Insert the maximum values
+                cursor.execute(
+                    """
+                        INSERT INTO filter (document_id, key, value, unit, type)
+                            SELECT
                                 document_id, CONCAT(key, '.max'), value_unit[2], value_unit[3], 'DERIVED'::filter_type
                             FROM (
                                 SELECT document_id, key,
@@ -107,39 +108,39 @@ class NumericFilterIngestor:
                                     regexp_like(value, '^(-?\\d*\\.?\\d+)-(-?\\d*\\.?\\d+)([a-zA-Z]+)$')
                             ) AS subquery
                         """
-                    )
-                    conn.commit()
+                )
+                conn.commit()
 
-                    cursor.execute(
-                        """
+                cursor.execute(
+                    """
                             SELECT CONCAT(key, '.min') as min, CONCAT(key, '.max') as max
                             FROM filter
-                            WHERE 
+                            WHERE
                                 not regexp_like(key, 'sampleName', 'i')
                                 AND
                                 regexp_like(value, '^(-?\\d*\\.?\\d+)-(-?\\d*\\.?\\d+)([a-zA-Z]+)$')
                             GROUP BY key
                         """
-                    )
-                    min_max_keys: List[Tuple[str, str]] = cursor.fetchall()
+                )
+                min_max_keys: list[tuple[str, str]] = cursor.fetchall()
 
-                    keys_flat: List[str] = [k for pair in min_max_keys for k in pair]
-                    if keys_flat:
-                        # Replace dot with space for embedding, as before
-                        texts = [k.replace(".", " ") for k in keys_flat]
-                        vectors = self.encoder.encode(texts)
-                        if hasattr(vectors, "tolist"):
-                            vectors = vectors.tolist()
-                        key_embeddings = list(zip(keys_flat, vectors))
-                        cursor.executemany(
-                            """
+                keys_flat: list[str] = [k for pair in min_max_keys for k in pair]
+                if keys_flat:
+                    # Replace dot with space for embedding, as before
+                    texts = [k.replace(".", " ") for k in keys_flat]
+                    vectors = self.encoder.encode(texts)
+                    if hasattr(vectors, "tolist"):
+                        vectors = vectors.tolist()
+                    key_embeddings = list(zip(keys_flat, vectors, strict=True))
+                    cursor.executemany(
+                        """
                             INSERT INTO filter_key (name, name_vector)
                             VALUES (%s, %s)
                             ON CONFLICT (name) DO NOTHING
                             """,
-                            key_embeddings,
-                        )
-                    conn.commit()
+                        key_embeddings,
+                    )
+                conn.commit()
 
             self.logger.info("Filter min-max normalisation completed successfully")
         except Exception:

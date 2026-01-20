@@ -9,9 +9,10 @@ import asyncio
 import hashlib
 import json
 import time
+from collections.abc import AsyncGenerator, Callable
 from dataclasses import dataclass
 from logging import Logger
-from typing import Any, AsyncGenerator, Callable, Dict, List, Optional, Union
+from typing import Any
 
 from openai import AzureOpenAI, OpenAI
 
@@ -26,7 +27,7 @@ settings = get_settings()
 class LLMMessage:
     """Represents a single message in a conversation."""
 
-    role: str  # "system", "user", "assistant"
+    role: str
     content: str
 
 
@@ -34,13 +35,13 @@ class LLMMessage:
 class LLMCompletionRequest:
     """Request configuration for LLM completion."""
 
-    messages: List[LLMMessage]
-    model: Optional[str] = None
-    max_tokens: Optional[int] = None
+    messages: list[LLMMessage]
+    model: str | None = None
+    max_tokens: int | None = None
     temperature: float = 0.3
     stream: bool = False
-    response_format: Optional[Dict[str, str]] = None
-    cache_metadata: Optional[Dict[str, Any]] = None  # For storing additional metadata
+    response_format: dict[str, str] | None = None
+    cache_metadata: dict[str, Any] | None = None
 
 
 @dataclass
@@ -49,7 +50,7 @@ class LLMCompletionResponse:
 
     content: str
     model: str
-    usage: Optional[Dict[str, int]] = None
+    usage: dict[str, int] | None = None
     cached: bool = False
     response_time_ms: int = 0
 
@@ -68,11 +69,11 @@ class LLMClient:
 
     def __init__(
         self,
-        provider: Optional[str] = None,
-        cache: Optional[CacheInterface] = None,
-        cache_config: Optional[Dict[str, Any]] = None,
-        default_model: Optional[str] = None,
-        logger: Optional[Logger] = None,
+        provider: str | None = None,
+        cache: CacheInterface | None = None,
+        cache_config: dict[str, Any] | None = None,
+        default_model: str | None = None,
+        logger: Logger | None = None,
         **provider_kwargs,
     ):
         """
@@ -379,7 +380,7 @@ class LLMClient:
             raise RuntimeError("Retry logic failed without exception")
 
     def create_request(
-        self, messages: Union[List[LLMMessage], List[Dict[str, str]]], **kwargs
+        self, messages: list[LLMMessage] | list[dict[str, str]], **kwargs
     ) -> LLMCompletionRequest:
         """
         Convenience method to create completion request.
@@ -392,7 +393,7 @@ class LLMClient:
             LLMCompletionRequest object
         """
         # Convert dict messages to LLMMessage objects if needed
-        converted_messages: List[LLMMessage] = []
+        converted_messages: list[LLMMessage] = []
 
         for msg in messages:
             if isinstance(msg, LLMMessage):

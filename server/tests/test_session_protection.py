@@ -1,8 +1,9 @@
 import sys
 from pathlib import Path
+
 import pytest
-from httpx import AsyncClient, ASGITransport
 import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
 
 # Add project to path first
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -12,7 +13,6 @@ from helpers.mock_settings import (
     create_common_patches,
     reload_app_modules_with_settings,
 )
-
 
 # Create mock settings with Turnstile enabled for session protection tests
 mock_settings = MockSettings(enable_turnstile=True)

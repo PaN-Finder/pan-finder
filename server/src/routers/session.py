@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from ..core.session import SessionRepository
-from ..utils import verify_turnstile_token, get_logger
 from ..config import get_settings
+from ..core.session import SessionRepository
+from ..utils import get_logger, verify_turnstile_token
 
 logger = get_logger(__name__)
 

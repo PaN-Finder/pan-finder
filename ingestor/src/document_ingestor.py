@@ -2,10 +2,12 @@
 Ingest dataset records from JSON files under `data/` into a PostgreSQL database.
 """
 
-import logging
 import json
+import logging
+from collections.abc import Callable
+from contextlib import AbstractContextManager
 from pathlib import Path
-from typing import Callable, ContextManager, Any
+from typing import Any
 
 
 class DocumentIngestor:
@@ -60,7 +62,7 @@ class DocumentIngestor:
 
     def __init__(
         self,
-        db_conn_factory: Callable[[], ContextManager[Any]],
+        db_conn_factory: Callable[[], AbstractContextManager[Any]],
         settings=None,
     ) -> None:
         self.db_conn_factory = db_conn_factory
@@ -95,36 +97,33 @@ class DocumentIngestor:
     def run(self) -> None:
         """Store data from JSON files into the database."""
         try:
-            with self.db_conn_factory() as conn:
-                with conn.cursor() as cursor:
-                    for ds in self.DATASETS:
-                        file_path = Path("data") / ds["filename"]
-                        if not file_path.exists():
-                            raise FileNotFoundError(f"Data file not found: {file_path}")
+            with self.db_conn_factory() as conn, conn.cursor() as cursor:
+                for ds in self.DATASETS:
+                    file_path = Path("data") / ds["filename"]
+                    if not file_path.exists():
+                        raise FileNotFoundError(f"Data file not found: {file_path}")
 
-                        with file_path.open() as f:
-                            data = json.load(f)
+                    with file_path.open() as f:
+                        data = json.load(f)
 
-                        facility_id = self.get_or_create_facility(
-                            cursor, ds["facility"]
-                        )
-                        for record in data:
-                            doc = record[ds["record_key"]]
-                            doi = (doc.get("doi") or "").strip()
-                            if not doi:
-                                self.logger.warning(
-                                    "Skipping record without DOI: %s", record
-                                )
-                                continue
-
-                            self.insert_document(
-                                cursor, doc, record, facility_id, ds["text_field"]
+                    facility_id = self.get_or_create_facility(cursor, ds["facility"])
+                    for record in data:
+                        doc = record[ds["record_key"]]
+                        doi = (doc.get("doi") or "").strip()
+                        if not doi:
+                            self.logger.warning(
+                                "Skipping record without DOI: %s", record
                             )
+                            continue
 
-                        conn.commit()
-                        self.logger.info(
-                            "Processed %d records from %s", len(data), ds["filename"]
+                        self.insert_document(
+                            cursor, doc, record, facility_id, ds["text_field"]
                         )
+
+                    conn.commit()
+                    self.logger.info(
+                        "Processed %d records from %s", len(data), ds["filename"]
+                    )
         except Exception:
             self.logger.error("Error during store", exc_info=True)
             raise

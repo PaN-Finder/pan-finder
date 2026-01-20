@@ -66,12 +66,11 @@ async def process_test_pair(
 
     logging.info("process_test_pair: begin: query execution")
     start_query_execution = time.time()
-    with get_database_connection() as conn:
-        with conn.cursor() as cursor:
-            cursor.execute(query)
-            query_string = query.as_string(conn)
-            # query_string = cursor.mogrify(query).decode("utf-8")
-            results = cursor.fetchall()
+    with get_database_connection() as conn, conn.cursor() as cursor:
+        cursor.execute(query)
+        query_string = query.as_string(conn)
+        # query_string = cursor.mogrify(query).decode("utf-8")
+        results = cursor.fetchall()
     end_query_execution = time.time()
     logging.info("process_test_pair: end: query execution")
 
@@ -430,10 +429,12 @@ def compute_and_insert_run_metrics(
             # Final SQL formatting with conditional parts
             final_sql = sql.format(joins=joins, additional_where=additional_where)
 
-            with get_database_connection("pan-finder-benchmarks") as conn:
-                with conn.cursor() as cursor:
-                    cursor.execute(final_sql, parameters)
-                    conn.commit()
+            with (
+                get_database_connection("pan-finder-benchmarks") as conn,
+                conn.cursor() as cursor,
+            ):
+                cursor.execute(final_sql, parameters)
+                conn.commit()
 
 
 def insert_test_pair_metrics(
@@ -442,22 +443,24 @@ def insert_test_pair_metrics(
     test_pair_metrics: dict,
 ):
     for metric in test_pair_metrics:
-        with get_database_connection("pan-finder-benchmarks") as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    """
+        with (
+            get_database_connection("pan-finder-benchmarks") as conn,
+            conn.cursor() as cursor,
+        ):
+            cursor.execute(
+                """
                     INSERT INTO test_pair_metrics_values (id, runId, testId, metric, value)
                         VALUES (%s, %s, %s, %s, %s)
                     """,
-                    (
-                        str(uuid.uuid4()),
-                        run_id,
-                        test_id,
-                        metric,
-                        test_pair_metrics[metric],
-                    ),
-                )
-                conn.commit()
+                (
+                    str(uuid.uuid4()),
+                    run_id,
+                    test_id,
+                    metric,
+                    test_pair_metrics[metric],
+                ),
+            )
+            conn.commit()
 
 
 def insert_test_pair_test(run_id, tp_id, results) -> str:
@@ -523,24 +526,26 @@ def insert_test_pair_test(run_id, tp_id, results) -> str:
     # print([type(x) for x in params])
     # print([repr(x) for x in params])
 
-    with get_database_connection("pan-finder-benchmarks") as conn:
-        with conn.cursor() as cursor:
-            cursor.execute(
-                """
-                INSERT INTO benchmarks_run_test 
+    with (
+        get_database_connection("pan-finder-benchmarks") as conn,
+        conn.cursor() as cursor,
+    ):
+        cursor.execute(
+            """
+                INSERT INTO benchmarks_run_test
                 (
-                    testId, 
-                    runId, 
-                    tpId,  
-                    intention, 
-                    keywords, 
-                    filters, 
-                    rank, 
-                    runTime, 
-                    extractionTime, 
-                    buildingTime, 
-                    queryTime, 
-                    sqlQuery, 
+                    testId,
+                    runId,
+                    tpId,
+                    intention,
+                    keywords,
+                    filters,
+                    rank,
+                    runTime,
+                    extractionTime,
+                    buildingTime,
+                    queryTime,
+                    sqlQuery,
                     resultsSet,
                     ranks,
                     actualGroups,
@@ -548,9 +553,9 @@ def insert_test_pair_test(run_id, tp_id, results) -> str:
                 )
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
-                params,
-            )
-            conn.commit()
+            params,
+        )
+        conn.commit()
     return test_id
 
 
@@ -624,16 +629,16 @@ async def main(hyperparameters: dict):
             )
 
             query = """
-                SELECT 
-                    tpId, 
-                    userPrompt, 
-                    targetDoi, 
-                    expectedRank, 
-                    promptId, 
-                    expertName, 
-                    groupId, 
-                    source, 
-                    type, 
+                SELECT
+                    tpId,
+                    userPrompt,
+                    targetDoi,
+                    expectedRank,
+                    promptId,
+                    expertName,
+                    groupId,
+                    source,
+                    type,
                     targetGroup
                 FROM test_pairs
             """
