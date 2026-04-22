@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 # Add the server directory to Python path so we can import from src
 server_path = Path(__file__).resolve().parents[4]
 if str(server_path) not in sys.path:
@@ -24,6 +26,15 @@ with patch("src.config.get_settings") as mock_settings:
 def make_result(score: float, doi: str = "d") -> EnhancedSearchResult:
     """Helper to create a mocked search result object with a given score."""
     return MagicMock(overall_score=score, doi=f"{doi}:{score:.3f}")
+
+
+def run_filter(scores: list[float], **filter_kwargs):
+    """Run the filter and return both stats and kept score values."""
+    filter_ = KneePoint(**filter_kwargs)
+    results = [make_result(score, doi=f"r{i}") for i, score in enumerate(scores)]
+    stats = filter_.filter_with_stats(results)
+    kept_scores = [result.overall_score for result in stats.filtered_results]
+    return stats, kept_scores
 
 
 def test_empty_results_returns_empty():
@@ -46,49 +57,65 @@ def test_low_top_score_drops_all():
     assert out == []
 
 
-def test_small_n_kept_as_is():
-    """Test that if there are fewer results than the minimum, all are kept."""
-    filter = KneePoint(min_top_score=0.25, min_results=3)
-    high_score = 0.5  # Above the threshold
-    # Create 2 results, which is less than the min_results of 3
-    results = [make_result(high_score), make_result(high_score * 0.9)]
-    out = filter.filter(results)
-    assert len(out) == len(results)
-    assert [r.overall_score for r in out] == sorted(
-        [r.overall_score for r in results], reverse=True
-    )
+@pytest.mark.parametrize(
+    ("scores", "expected_kept"),
+    [
+        ([0.8], [0.8]),
+        ([0.8, 0.6], [0.8, 0.6]),
+    ],
+)
+def test_small_n_kept_as_is(scores: list[float], expected_kept: list[float]):
+    """Test that results below the min_results threshold are kept as-is."""
+    stats, kept_scores = run_filter(scores, min_top_score=0.25, min_results=3)
+
+    assert stats.min_results_threshold_met is False
+    assert kept_scores == expected_kept
+
+
+def test_small_n_below_top_score_still_drops_all():
+    """Test that the top-score threshold still applies when result count is small."""
+    stats, kept_scores = run_filter([0.1], min_top_score=0.25, min_results=3)
+
+    assert stats.min_top_score_threshold_met is False
+    assert kept_scores == []
 
 
 def test_knee_detected_truncates_tail():
     """Test that a clear knee point correctly truncates the tail of the results."""
-    filter = KneePoint(min_top_score=0.25, min_results=3, linearity_epsilon=0.02)
-    # A clear knee exists after the third item
     scores = [0.95, 0.88, 0.72, 0.35, 0.34, 0.33, 0.30, 0.29]
-    results = [make_result(s, doi=f"k{i}") for i, s in enumerate(scores)]
-    out = filter.filter(results)
-    kept_scores = [r.overall_score for r in out]
+    stats, kept_scores = run_filter(
+        scores,
+        min_top_score=0.25,
+        min_results=3,
+        linearity_epsilon=0.02,
+    )
+    out = stats.filtered_results
 
     # We expect to trim some, but not all, results
-    assert 1 <= len(out) < len(results)
+    assert 1 <= len(out) < len(scores)
     # The kept items should be the highest-scoring ones
     assert kept_scores[0] == max(scores)
-    # The algorithm should find the knee at index 3 (score 0.35)
+    # The algorithm finds the knee at index 3 with knee_point_value 0.35.
+    # Since 0.35 is lower than the previous score (0.72), it marks the start
+    # of the drop and is excluded from the filtered results.
+    assert stats.knee_index == 3
+    assert stats.knee_point_value == 0.35
     assert len(out) == 3
     assert kept_scores == [0.95, 0.88, 0.72]
 
 
 def test_near_linear_keeps_all():
     """Test that a near-linear decay in scores results in keeping all items."""
-    filter = KneePoint(min_top_score=0.25, min_results=3, linearity_epsilon=0.02)
-
-    # Scores with a perfectly linear decay
     scores = [0.90, 0.80, 0.70, 0.60, 0.50]
-    results = [make_result(s, doi=f"l{i}") for i, s in enumerate(scores)]
-    out = filter.filter(results)
+    _, kept_scores = run_filter(
+        scores,
+        min_top_score=0.25,
+        min_results=3,
+        linearity_epsilon=0.02,
+    )
 
     # No clear knee, so all results should be kept
-    assert len(out) == len(results)
-    assert [r.overall_score for r in out] == sorted(scores, reverse=True)
+    assert kept_scores == sorted(scores, reverse=True)
 
 
 def test_unsorted_input_is_handled():
@@ -99,66 +126,63 @@ def test_unsorted_input_is_handled():
     out = filter.filter(results)
     kept_scores = [r.overall_score for r in out]
 
-    # The function should sort the results and find the knee correctly
+    # The function should sort the results and find the knee correctly.
+    # 0.35 marks the start of the drop and is excluded.
     assert len(out) == 3
     assert kept_scores == [0.95, 0.88, 0.72]
 
 
 def test_all_scores_identical_keeps_all():
     """Test that if all scores are identical, all results are kept."""
-    filter = KneePoint(min_top_score=0.25, min_results=3, linearity_epsilon=0.02)
     scores = [0.8] * 5
-    results = [make_result(s, doi=f"i{i}") for i, s in enumerate(scores)]
-    out = filter.filter(results)
-
-    # With identical scores, the line is flat, so all should be kept
-    assert len(out) == len(results)
-    assert [r.overall_score for r in out] == scores
-
-
-def test_custom_parameters():
-    """Test that custom parameters work correctly."""
-    # Test with more restrictive parameters
-    filter = KneePoint(
-        min_top_score=0.5,  # Higher threshold
-        min_results=5,  # More results needed
-        linearity_epsilon=0.001,  # Very strict linearity
+    _, kept_scores = run_filter(
+        scores,
+        min_top_score=0.25,
+        min_results=3,
+        linearity_epsilon=0.02,
     )
 
-    # Test that higher threshold drops results
-    scores = [0.4, 0.3, 0.2]  # All below 0.5 threshold
-    results = [make_result(s, doi=f"c{i}") for i, s in enumerate(scores)]
-    out = filter.filter(results)
-    assert out == []
-
-    # Test that minimum results requirement works
-    scores = [0.9, 0.8, 0.7, 0.6]  # 4 results, less than min_results=5
-    results = [make_result(s, doi=f"c{i}") for i, s in enumerate(scores)]
-    out = filter.filter(results)
-    assert len(out) == len(results)  # All kept because below minimum
+    # With identical scores, the line is flat, so all should be kept
+    assert kept_scores == scores
 
 
-def test_edge_case_single_result():
-    """Test behavior with a single result."""
-    filter = KneePoint(min_top_score=0.25, min_results=3)
+@pytest.mark.parametrize(
+    ("scores", "expected_knee_value", "expected_kept"),
+    [
+        ([1.0] * 6 + [0.4375] * 5, 1.0, [1.0] * 6),
+        ([1.0, 0.8, 0.8, 0.8, 0.8, 0.3, 0.3], 0.8, [1.0, 0.8, 0.8, 0.8, 0.8]),
+        ([1.0, 0.3, 0.3, 0.3, 0.3], 0.3, [1.0, 0.3, 0.3, 0.3, 0.3]),
+    ],
+)
+def test_plateau_boundary_keeps_all_ties(
+    scores: list[float],
+    expected_knee_value: float,
+    expected_kept: list[float],
+):
+    """Test that all items sharing the knee-score plateau stay together."""
+    stats, kept_scores = run_filter(
+        scores,
+        min_top_score=0.25,
+        min_results=3,
+        linearity_epsilon=0.02,
+    )
 
-    # Single result above threshold
-    results = [make_result(0.8)]
-    out = filter.filter(results)
-    assert len(out) == 1
-    assert out[0].overall_score == 0.8
-
-    # Single result below threshold
-    results = [make_result(0.1)]
-    out = filter.filter(results)
-    assert out == []
+    assert stats.knee_point_value == expected_knee_value
+    assert kept_scores == expected_kept
 
 
-def test_edge_case_two_results():
-    """Test behavior with exactly two results."""
-    filter = KneePoint(min_top_score=0.25, min_results=3)
+def test_nearly_equal_scores_are_treated_as_same_plateau():
+    """Test that tiny floating-point differences do not split a tied plateau."""
+    scores = [1.0, 0.4375000000001, 0.4375, 0.4375, 0.2]
+    stats, kept_scores = run_filter(
+        scores,
+        min_top_score=0.25,
+        min_results=3,
+        linearity_epsilon=0.02,
+    )
 
-    results = [make_result(0.8), make_result(0.6)]
-    out = filter.filter(results)
-    assert len(out) == 2  # Both kept because below min_results
-    assert [r.overall_score for r in out] == [0.8, 0.6]
+    # The knee point is effectively the 0.4375 plateau, despite tiny float noise.
+    assert stats.knee_point_value == scores[1]
+    assert len(kept_scores) == 4
+    assert kept_scores[-1] == 0.4375
+    assert 0.2 not in kept_scores

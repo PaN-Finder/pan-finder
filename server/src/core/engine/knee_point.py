@@ -5,6 +5,7 @@ This module provides functionality to filter out weakly-relevant results from a 
 of search results using a simple knee (elbow) detection algorithm.
 """
 
+import math
 from typing import NamedTuple, Protocol, TypeVar
 
 from ...db.models.search import EnhancedSearchResult
@@ -64,6 +65,11 @@ class KneePoint:
         self.min_top_score = min_top_score
         self.min_results = min_results
         self.linearity_epsilon = linearity_epsilon
+
+    @staticmethod
+    def _scores_match(left: float, right: float) -> bool:
+        """Treat near-identical normalized scores as belonging to the same plateau."""
+        return math.isclose(left, right, rel_tol=1e-9, abs_tol=1e-12)
 
     def filter(self, results: list[EnhancedSearchResult]) -> list[EnhancedSearchResult]:
         """
@@ -180,9 +186,26 @@ class KneePoint:
             # Almost linear decay -> no clear knee -> keep all
             kept = results_sorted
         else:
-            kept = results_sorted[
-                :knee_index
-            ]  # results before knee point (excliding knee point)
+            knee_score = results_sorted[knee_index].overall_score
+            plateau_start = knee_index
+            while plateau_start > 0 and self._scores_match(
+                results_sorted[plateau_start - 1].overall_score,
+                knee_score,
+            ):
+                plateau_start -= 1
+
+            plateau_end = knee_index
+            while plateau_end + 1 < n and self._scores_match(
+                results_sorted[plateau_end + 1].overall_score,
+                knee_score,
+            ):
+                plateau_end += 1
+
+            if plateau_start != plateau_end:
+                kept = results_sorted[: plateau_end + 1]
+            else:
+                # Knee is the first item of a score drop — exclude it.
+                kept = results_sorted[:knee_index]
 
         # Calculate the knee point value (score at the knee index)
         knee_point_value = (
