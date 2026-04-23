@@ -157,14 +157,14 @@ function DocumentDetails({ details, isLoading, doi, statisticId }) {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `raw-data-${details.doi.replace(/\//g, '-')}.json`
+    link.download = `metadata-${details.doi.replace(/\//g, '-')}.json`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
   }
 
-  // Safely stringify and truncate large raw data
+  // Safely stringify and truncate large metadata
   const getRawDataDisplay = () => {
     if (!rawData) return null
 
@@ -191,7 +191,7 @@ function DocumentDetails({ details, isLoading, doi, statisticId }) {
       }
     } catch (error) {
       return {
-        content: 'Error: Unable to display raw data',
+        content: 'Error: Unable to display metadata',
         isTruncated: false,
         originalLength: 0,
       }
@@ -300,7 +300,7 @@ function DocumentDetails({ details, isLoading, doi, statisticId }) {
                   alignItems: 'center',
                   gap: 2,
                 }}
-                title="Show Raw Data"
+                title="Show Metadata"
                 onClick={handleFetchRawData}
                 disabled={rawDataLoading}
               >
@@ -322,22 +322,22 @@ function DocumentDetails({ details, isLoading, doi, statisticId }) {
                 ) : (
                   <>
                     <FiEye size={14} />
-                    Show Raw Data
+                    Show Metadata
                   </>
                 )}
               </Button>
             )}
             {rawDataError && (
-              <DocumentField label="Raw Data">
+              <DocumentField label="Metadata">
                 <Box sx={{ bg: '#742a2a', p: 3, borderRadius: '4px' }}>
                   <Text sx={{ color: '#fed7d7', fontSize: '13px' }}>
-                    Error loading raw data: {rawDataError}
+                    Error loading metadata: {rawDataError}
                   </Text>
                 </Box>
               </DocumentField>
             )}
             {rawData && (
-              <DocumentField label="Raw Data">
+              <DocumentField label="Metadata">
                 <RawDataViewer
                   rawData={rawData}
                   rawDataDisplay={rawDataDisplay}

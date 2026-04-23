@@ -57,7 +57,7 @@ function RawDataViewer({ rawData, rawDataDisplay, onDownload }) {
               padding: '4px 8px',
               fontSize: '12px',
             }}
-            title="Download full raw data as JSON"
+            title="Download full metadata as JSON"
           >
             <FiDownload size={14} />
             Download
