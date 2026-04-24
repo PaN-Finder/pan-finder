@@ -85,8 +85,8 @@ function QueryDetails({ data, onStructuredSearch }) {
               <Flex
                 sx={{
                   alignItems: 'center',
-                  justifyContent: 'space-between',
                   mb: 2,
+                  gap: 2,
                 }}
               >
                 <Text
@@ -100,42 +100,7 @@ function QueryDetails({ data, onStructuredSearch }) {
                 >
                   Structured Data
                 </Text>
-                {isEditing ? (
-                  <Flex sx={{ gap: 1 }}>
-                    <Button
-                      variant="action"
-                      onClick={handleSearch}
-                      sx={{
-                        p: 1,
-                        ml: 0,
-                        fontSize: '12px',
-                        color: '#48bb78',
-                        ':hover': {
-                          color: '#68d391',
-                        },
-                      }}
-                      title="Save and search"
-                    >
-                      <FiSearch size={14} />
-                    </Button>
-                    <Button
-                      variant="action"
-                      onClick={handleCancel}
-                      sx={{
-                        p: 1,
-                        ml: 0,
-                        fontSize: '12px',
-                        color: '#f56565',
-                        ':hover': {
-                          color: '#fc8181',
-                        },
-                      }}
-                      title="Cancel"
-                    >
-                      <FiX size={14} />
-                    </Button>
-                  </Flex>
-                ) : (
+                {!isEditing && (
                   <Button
                     variant="action"
                     onClick={handleEditStart}
@@ -144,6 +109,9 @@ function QueryDetails({ data, onStructuredSearch }) {
                       ml: 0,
                       fontSize: '12px',
                       color: '#a0aec0',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 1,
                       ':hover': {
                         color: '#e2e8f0',
                       },
@@ -151,7 +119,21 @@ function QueryDetails({ data, onStructuredSearch }) {
                     title="Edit structured data"
                   >
                     <FiEdit3 size={14} />
+                    Edit JSON
                   </Button>
+                )}
+                {isEditing && (
+                  <Text
+                    sx={{
+                      fontSize: '11px',
+                      fontWeight: '600',
+                      color: '#68d391',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                    }}
+                  >
+                    Editing
+                  </Text>
                 )}
               </Flex>
               <Box
@@ -176,24 +158,74 @@ function QueryDetails({ data, onStructuredSearch }) {
                   </Text>
                 )}
                 {isEditing ? (
-                  <textarea
-                    value={editedData}
-                    onChange={(e) => setEditedData(e.target.value)}
-                    aria-label="Edit structured data JSON"
-                    style={{
-                      width: '100%',
-                      minHeight: '200px',
-                      padding: '8px',
-                      fontSize: '12px',
-                      fontFamily: 'monospace',
-                      color: '#d1d5db',
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #374151',
-                      borderRadius: '2px',
-                      outline: 'none',
-                      resize: 'vertical',
-                    }}
-                  />
+                  <>
+                    <textarea
+                      value={editedData}
+                      onChange={(e) => setEditedData(e.target.value)}
+                      aria-label="Edit structured data JSON"
+                      style={{
+                        width: '100%',
+                        minHeight: '200px',
+                        padding: '8px',
+                        fontSize: '12px',
+                        fontFamily: 'monospace',
+                        color: '#d1d5db',
+                        backgroundColor: '#1f2937',
+                        border: '1px solid #374151',
+                        borderRadius: '2px',
+                        outline: 'none',
+                        resize: 'vertical',
+                      }}
+                    />
+                    <Flex
+                      sx={{
+                        justifyContent: 'flex-end',
+                        gap: 2,
+                        mt: 2,
+                      }}
+                    >
+                      <Button
+                        variant="action"
+                        onClick={handleCancel}
+                        sx={{
+                          p: 1,
+                          ml: 0,
+                          fontSize: '12px',
+                          color: '#f56565',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          ':hover': {
+                            color: '#fc8181',
+                          },
+                        }}
+                        title="Cancel"
+                      >
+                        <FiX size={14} />
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="action"
+                        onClick={handleSearch}
+                        sx={{
+                          p: 1,
+                          ml: 0,
+                          fontSize: '12px',
+                          color: '#48bb78',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          ':hover': {
+                            color: '#68d391',
+                          },
+                        }}
+                        title="Save and search"
+                      >
+                        <FiSearch size={14} />
+                        Save and Search
+                      </Button>
+                    </Flex>
+                  </>
                 ) : (
                   <pre
                     style={{

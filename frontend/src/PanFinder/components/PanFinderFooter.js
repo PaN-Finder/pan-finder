@@ -53,20 +53,6 @@ function PanFinderFooter() {
               as="p"
               sx={{
                 m: 0,
-                fontSize: 1,
-                lineHeight: 1.6,
-                color: 'text',
-                opacity: 0.85,
-                fontWeight: 'medium',
-                letterSpacing: '0.01em',
-              }}
-            >
-              This application is currently in active development.
-            </Text>
-            <Text
-              as="p"
-              sx={{
-                m: 0,
                 mt: 1,
                 fontSize: 1,
                 lineHeight: 1.6,
@@ -76,32 +62,7 @@ function PanFinderFooter() {
             >
               Please verify the results returned.
             </Text>
-            <Text
-              as="p"
-              sx={{
-                m: 0,
-                mt: 1,
-                fontSize: 1,
-                lineHeight: 1.5,
-                color: 'text',
-                opacity: 0.7,
-                fontStyle: 'italic',
-              }}
-            >
-              Your constructive feedback helps us improve • Thank you for
-              testing PaN-Finder
-            </Text>
           </Box>
-          <Box
-            sx={{
-              width: '60px',
-              height: '2px',
-              borderRadius: '1px',
-              background:
-                'linear-gradient(90deg, transparent 0%, #2472b3 20%, #646eb1 50%, #bb4677 80%, transparent 100%)',
-              opacity: 0.4,
-            }}
-          />
         </Flex>
       </Box>
       <Version />

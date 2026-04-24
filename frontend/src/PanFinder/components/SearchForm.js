@@ -18,6 +18,8 @@ const exampleQueries = [
   'Look for research about Crystal structure where the publication year is 2025.',
 ]
 
+const feedbackMailbox = ['pan-finder', 'ess.eu']
+
 function SearchForm({
   inputValue,
   handleInputChange,
@@ -29,6 +31,12 @@ function SearchForm({
   hasResults = false,
   disabled = false,
 }) {
+  const feedbackEmail = `${feedbackMailbox[0]}@${feedbackMailbox[1]}`
+
+  const handleFeedbackClick = () => {
+    window.location.href = `mailto:${feedbackEmail}`
+  }
+
   return (
     <Box as="form" onSubmit={handleSubmit}>
       <Box sx={{ width: '100%', position: 'relative', mb: 3 }}>
@@ -152,6 +160,59 @@ function SearchForm({
           </Button>
         )}
       </Box>
+
+      <Flex
+        as="p"
+        sx={{
+          mt: -1,
+          mb: 3,
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 2,
+          flexWrap: 'wrap',
+          textAlign: 'center',
+          fontSize: 0,
+          color: 'muted',
+          opacity: disabled ? 0.6 : 0.8,
+        }}
+      >
+        <Text as="span" sx={{ color: 'inherit' }}>
+          Any feedback?
+        </Text>
+        <Box
+          as="button"
+          type="button"
+          onClick={handleFeedbackClick}
+          disabled={disabled}
+          sx={{
+            appearance: 'none',
+            border: '1px solid',
+            borderColor: 'rgba(100, 110, 177, 0.35)',
+            borderRadius: '999px',
+            bg: 'rgba(100, 110, 177, 0.08)',
+            color: 'inherit',
+            fontSize: 'inherit',
+            lineHeight: 1.2,
+            px: 3,
+            py: 1,
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            transition: 'all 0.2s ease',
+            ':hover': disabled
+              ? undefined
+              : {
+                  bg: 'rgba(100, 110, 177, 0.16)',
+                  borderColor: 'rgba(100, 110, 177, 0.6)',
+                },
+            '&:disabled': {
+              opacity: 0.6,
+            },
+          }}
+        >
+          {feedbackMailbox[0]}
+          <span aria-hidden="true"> [at] </span>
+          {feedbackMailbox[1]}
+        </Box>
+      </Flex>
 
       {/* Example queries */}
       <Box

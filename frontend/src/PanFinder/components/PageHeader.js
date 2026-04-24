@@ -48,45 +48,6 @@ function PageHeader() {
           >
             PaN-Finder
           </Heading>
-          <Box
-            as="span"
-            aria-label="Beta - early preview"
-            title="Beta - early preview"
-            sx={{
-              position: 'absolute',
-              top: ['-0.55rem', '-0.5rem', '0rem'],
-              right: ['-0.75rem', '-0.85rem', '0rem'],
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '2px',
-              fontSize: ['9px', '10px', '11px'],
-              lineHeight: 1,
-              fontWeight: 'semibold',
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: 'textInverted',
-              px: ['6px', '7px', '8px'],
-              py: ['3px', '3px', '4px'],
-              borderRadius: '999px',
-              background: (theme) =>
-                `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.secondary} 45%, ${theme.colors.ternary} 100%)`,
-              boxShadow:
-                '0 2px 4px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.15), 0 0 10px -2px rgba(100,110,177,0.65)',
-              backdropFilter: 'blur(6px)',
-              WebkitBackdropFilter: 'blur(6px)',
-              cursor: 'default',
-              transition: 'transform 0.25s ease, box-shadow 0.25s ease',
-              ':hover': {
-                transform: 'translateY(-1px) scale(1.06)',
-                boxShadow:
-                  '0 4px 10px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.25), 0 0 18px -2px rgba(100,110,177,0.85)',
-              },
-              ':active': { transform: 'translateY(0) scale(0.97)' },
-            }}
-          >
-            BETA
-          </Box>
         </Box>
       </Flex>
       <Text
