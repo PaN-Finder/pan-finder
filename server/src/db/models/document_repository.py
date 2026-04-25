@@ -10,10 +10,103 @@ class DocumentRepository:
     Repository for CRUD operations on the document table.
     """
 
+    DETAIL_FILTER_KEYS_BY_FIELD = {
+        "publication_year": {
+            1: ["metadata.publicationYear"],
+            2: ["publicationYear"],
+            3: ["publicationYear"],
+            4: ["publicationYear"],
+            5: ["publicationYear"],
+            6: ["publicationYear"],
+        },
+        "instrument_name": {
+            1: ["instruments.name"], # ILL
+            2: ["creationLocation"], # ESS
+            3: ["beamline"], # PSI
+            4: ["creationLocation"], # MAX IV
+            5: ["beamline"], # ESRF
+            6: ["scientificMetadata.instrument.name"], # DESY
+        },
+        "authors": {
+            1: ["metadata.authors.name"],
+            2: ["creator", "authors"],
+            3: ["creator"],
+            4: ["creator"],
+            5: ["creators.name"],
+            6: ["creator"],
+        },
+    }
+
+    @classmethod
+    def _get_detail_filter_keys(
+        cls, field_name: str, facility_id: int | None
+    ) -> list[str]:
+        field_mappings: dict[int, list[str]] = cls.DETAIL_FILTER_KEYS_BY_FIELD.get(
+            field_name, {}
+        )
+        if facility_id is not None and facility_id in field_mappings:
+            return field_mappings[facility_id]
+        return []
+
+    @classmethod
+    def _get_detail_field_values(
+        cls, conn, document_id: int | None, field_names: list[str], facility_id: int | None
+    ) -> dict[str, str | None]:
+        filter_keys_by_field = {
+            field_name: cls._get_detail_filter_keys(field_name, facility_id)
+            for field_name in field_names
+        }
+        all_filter_keys: list[str] = []
+        for filter_keys in filter_keys_by_field.values():
+            for filter_key in filter_keys:
+                if filter_key not in all_filter_keys:
+                    all_filter_keys.append(filter_key)
+
+        if document_id is None or not all_filter_keys:
+            return {field_name: None for field_name in field_names}
+
+        filter_query = """
+            SELECT key, value
+            FROM filter
+            WHERE document_id = %s
+              AND key = ANY(%s)
+              AND value IS NOT NULL
+              AND value != ''
+            ORDER BY array_position(%s::text[], key), id ASC
+        """
+        
+        filter_cursor = conn.execute(
+            filter_query, [document_id, all_filter_keys, all_filter_keys]
+        )
+        rows = filter_cursor.fetchall()
+
+        detail_values: dict[str, str | None] = {}
+        for field_name, filter_keys in filter_keys_by_field.items():
+            values: list[str] = []
+            seen_values: set[str] = set()
+            valid_keys = set(filter_keys)
+
+            for key, value in rows:
+                if key not in valid_keys:
+                    continue
+                normalized_value = value.strip()
+                if not normalized_value:
+                    continue
+                dedupe_key = normalized_value.casefold()
+                if dedupe_key in seen_values:
+                    continue
+                seen_values.add(dedupe_key)
+                values.append(normalized_value)
+
+            detail_values[field_name] = " - ".join(values) if values else None
+
+        return detail_values
+
     @staticmethod
     def get_by_doi(doi: str) -> Document:
         query = """
-            SELECT d.id, d.doi, d.title, d.text as abstract, d.summary, d.raw, f.name AS facility_name
+            SELECT d.id, d.doi, d.title, d.text as abstract, d.summary, d.raw,
+                   d.facility_id, f.name AS facility_name
             FROM document d
             LEFT JOIN facility f ON d.facility_id = f.id
             WHERE d.doi = %s
@@ -24,7 +117,17 @@ class DocumentRepository:
             if row:
                 if cur.description:
                     columns = [desc[0] for desc in cur.description]
-                    return Document.from_row(dict(zip(columns, row)))
+                    row_data = dict(zip(columns, row))
+                    facility_id = row_data.get("facility_id")
+                    row_data.update(
+                        DocumentRepository._get_detail_field_values(
+                            conn,
+                            row_data.get("id"),
+                            ["instrument_name", "publication_year", "authors"],
+                            facility_id,
+                        )
+                    )
+                    return Document.from_row(row_data)
                 else:
                     raise RuntimeError("Database query returned no column information")
             raise RuntimeError(f"Document with doi {doi} not found.")

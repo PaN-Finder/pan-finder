@@ -16,6 +16,7 @@ from helpers.mock_settings import (
     reload_app_modules_with_settings,
 )
 
+from src.db.models.document_repository import DocumentRepository
 from src.db.models.search import EnhancedSearchResult, StructuredQueryData
 
 # Create mock settings with Turnstile disabled for API endpoint tests
@@ -76,6 +77,9 @@ async def test_document_details_found(async_client: AsyncClient):
         "title": "Test Doc",
         "abstract": "Some text",
         "facility_name": "Facility A",
+        "publication_year": "2024",
+        "instrument_name": "Instrument A",
+        "authors": "Ada Lovelace",
     }
     mock_document = MagicMock()
     mock_document.to_dict.return_value = doc
@@ -89,6 +93,248 @@ async def test_document_details_found(async_client: AsyncClient):
     assert response.status_code == 200
     assert response.json() == doc
     mock_repo.assert_called_once_with("10.1000/test")
+
+
+def test_document_repository_get_by_doi_loads_mapped_detail_fields():
+    document_cursor = MagicMock()
+    document_cursor.fetchone.return_value = (
+        1,
+        "10.1000/test",
+        "Test Doc",
+        "Some text",
+        None,
+        None,
+        1,
+        "Facility A",
+    )
+    document_cursor.description = [
+        ("id",),
+        ("doi",),
+        ("title",),
+        ("abstract",),
+        ("summary",),
+        ("raw",),
+        ("facility_id",),
+        ("facility_name",),
+    ]
+
+    detail_cursor = MagicMock()
+    detail_cursor.fetchall.return_value = [
+        ("instruments.name", "Instrument A"),
+        ("metadata.publicationYear", "2024"),
+        ("metadata.authors.name", "Ada Lovelace"),
+    ]
+
+    conn = MagicMock()
+    conn.execute.side_effect = [document_cursor, detail_cursor]
+
+    context_manager = MagicMock()
+    context_manager.__enter__.return_value = conn
+    context_manager.__exit__.return_value = None
+
+    with patch(
+        "src.db.models.document_repository.get_database_connection",
+        return_value=context_manager,
+    ):
+        document = DocumentRepository.get_by_doi("10.1000/test")
+
+    assert document.instrument_name == "Instrument A"
+    assert document.publication_year == "2024"
+    assert document.authors == "Ada Lovelace"
+    assert document.facility_name == "Facility A"
+    assert conn.execute.call_args_list[1].args[1] == [
+        1,
+        ["instruments.name", "metadata.publicationYear", "metadata.authors.name"],
+        ["instruments.name", "metadata.publicationYear", "metadata.authors.name"],
+    ]
+
+
+def test_document_repository_get_by_doi_deduplicates_multi_row_author_values():
+    document_cursor = MagicMock()
+    document_cursor.fetchone.return_value = (
+        2,
+        "10.1000/test-creator",
+        "Test Doc Creator",
+        "Some text",
+        None,
+        None,
+        2,
+        "Facility B",
+    )
+    document_cursor.description = [
+        ("id",),
+        ("doi",),
+        ("title",),
+        ("abstract",),
+        ("summary",),
+        ("raw",),
+        ("facility_id",),
+        ("facility_name",),
+    ]
+
+    detail_cursor = MagicMock()
+    detail_cursor.fetchall.return_value = [
+        ("creationLocation", "Instrument B"),
+        ("publicationYear", "2023"),
+        ("creator", "Ada Lovelace"),
+        ("creator", "Alan Turing"),
+        ("authors", "Ada Lovelace"),
+        ("authors", " alan turing "),
+    ]
+
+    conn = MagicMock()
+    conn.execute.side_effect = [document_cursor, detail_cursor]
+
+    context_manager = MagicMock()
+    context_manager.__enter__.return_value = conn
+    context_manager.__exit__.return_value = None
+
+    with patch(
+        "src.db.models.document_repository.get_database_connection",
+        return_value=context_manager,
+    ):
+        document = DocumentRepository.get_by_doi("10.1000/test-creator")
+
+    assert document.instrument_name == "Instrument B"
+    assert document.publication_year == "2023"
+    assert document.authors == "Ada Lovelace - Alan Turing"
+
+
+def test_document_repository_get_by_doi_deduplicates_multi_row_instrument_values():
+    document_cursor = MagicMock()
+    document_cursor.fetchone.return_value = (
+        3,
+        "10.1000/test-instrument",
+        "Test Doc Instrument",
+        "Some text",
+        None,
+        None,
+        5,
+        "Facility C",
+    )
+    document_cursor.description = [
+        ("id",),
+        ("doi",),
+        ("title",),
+        ("abstract",),
+        ("summary",),
+        ("raw",),
+        ("facility_id",),
+        ("facility_name",),
+    ]
+
+    detail_cursor = MagicMock()
+    detail_cursor.fetchall.return_value = [
+        ("beamline", "ID01"),
+        ("beamline", "ID02"),
+        ("beamline", " id01 "),
+        ("publicationYear", "2022"),
+    ]
+
+    conn = MagicMock()
+    conn.execute.side_effect = [document_cursor, detail_cursor]
+
+    context_manager = MagicMock()
+    context_manager.__enter__.return_value = conn
+    context_manager.__exit__.return_value = None
+
+    with patch(
+        "src.db.models.document_repository.get_database_connection",
+        return_value=context_manager,
+    ):
+        document = DocumentRepository.get_by_doi("10.1000/test-instrument")
+
+    assert document.instrument_name == "ID01 - ID02"
+    assert document.publication_year == "2022"
+    assert document.authors is None
+
+
+def test_document_repository_get_by_doi_loads_publication_year_for_mapped_facility():
+    document_cursor = MagicMock()
+    document_cursor.fetchone.return_value = (
+        4,
+        "10.1000/test-year",
+        "Test Doc Year",
+        "Some text",
+        None,
+        None,
+        2,
+        "Facility D",
+    )
+    document_cursor.description = [
+        ("id",),
+        ("doi",),
+        ("title",),
+        ("abstract",),
+        ("summary",),
+        ("raw",),
+        ("facility_id",),
+        ("facility_name",),
+    ]
+
+    detail_cursor = MagicMock()
+    detail_cursor.fetchall.return_value = [
+        ("publicationYear", "2021"),
+    ]
+
+    conn = MagicMock()
+    conn.execute.side_effect = [document_cursor, detail_cursor]
+
+    context_manager = MagicMock()
+    context_manager.__enter__.return_value = conn
+    context_manager.__exit__.return_value = None
+
+    with patch(
+        "src.db.models.document_repository.get_database_connection",
+        return_value=context_manager,
+    ):
+        document = DocumentRepository.get_by_doi("10.1000/test-year")
+
+    assert document.instrument_name is None
+    assert document.publication_year == "2021"
+    assert document.authors is None
+
+
+def test_document_repository_get_by_doi_returns_no_optional_fields_for_unmapped_facility():
+    document_cursor = MagicMock()
+    document_cursor.fetchone.return_value = (
+        2,
+        "10.1000/test-2",
+        "Test Doc 2",
+        "Some text",
+        None,
+        None,
+        99,
+        "Facility B",
+    )
+    document_cursor.description = [
+        ("id",),
+        ("doi",),
+        ("title",),
+        ("abstract",),
+        ("summary",),
+        ("raw",),
+        ("facility_id",),
+        ("facility_name",),
+    ]
+
+    conn = MagicMock()
+    conn.execute.return_value = document_cursor
+
+    context_manager = MagicMock()
+    context_manager.__enter__.return_value = conn
+    context_manager.__exit__.return_value = None
+
+    with patch(
+        "src.db.models.document_repository.get_database_connection",
+        return_value=context_manager,
+    ):
+        document = DocumentRepository.get_by_doi("10.1000/test-2")
+
+    assert document.instrument_name is None
+    assert document.publication_year is None
+    assert document.authors is None
+    assert conn.execute.call_count == 1
 
 
 @pytest.mark.asyncio

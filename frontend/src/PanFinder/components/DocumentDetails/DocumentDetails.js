@@ -47,11 +47,7 @@ function ErrorRow({ error }) {
 
 function DocumentField({ label, children }) {
   return (
-    <Box
-      sx={{
-        mb: 1.5,
-      }}
-    >
+    <Box>
       <Text
         sx={{
           fontSize: '1em',
@@ -281,6 +277,26 @@ function DocumentDetails({ details, isLoading, doi, statisticId }) {
             {details.facility_name && (
               <DocumentField label="Facility">
                 <Text sx={{ color: '#e2e8f0' }}>{details.facility_name}</Text>
+              </DocumentField>
+            )}
+
+            {details.instrument_name && (
+              <DocumentField label="Instrument">
+                <Text sx={{ color: '#e2e8f0' }}>{details.instrument_name}</Text>
+              </DocumentField>
+            )}
+
+            {details.publication_year && (
+              <DocumentField label="Publication Year">
+                <Text sx={{ color: '#e2e8f0' }}>
+                  {details.publication_year}
+                </Text>
+              </DocumentField>
+            )}
+
+            {details.authors && (
+              <DocumentField label="Authors">
+                <Text sx={{ color: '#e2e8f0' }}>{details.authors}</Text>
               </DocumentField>
             )}
 

@@ -9,6 +9,9 @@ class DocumentTypedDict(TypedDict):
     summary: Optional[str]
     raw: Optional[str]
     facility_name: Optional[str]
+    publication_year: Optional[str]
+    instrument_name: Optional[str]
+    authors: Optional[str]
 
 
 class Document:
@@ -25,6 +28,9 @@ class Document:
         summary: Optional[str] = None,
         raw: Optional[str] = None,
         facility_name: Optional[str] = None,
+        publication_year: Optional[str] = None,
+        instrument_name: Optional[str] = None,
+        authors: Optional[str] = None,
     ):
         self.id = id
         self.doi = doi
@@ -33,6 +39,9 @@ class Document:
         self.summary = summary
         self.raw = raw
         self.facility_name = facility_name
+        self.publication_year = publication_year
+        self.instrument_name = instrument_name
+        self.authors = authors
 
     @classmethod
     def from_row(cls, row: dict):
@@ -47,6 +56,9 @@ class Document:
             summary=row.get("summary"),
             raw=row.get("raw"),
             facility_name=row.get("facility_name"),
+            publication_year=row.get("publication_year"),
+            instrument_name=row.get("instrument_name"),
+            authors=row.get("authors"),
         )
 
     def to_dict(self):
@@ -61,4 +73,7 @@ class Document:
             "summary": self.summary,
             "raw": self.raw,
             "facility_name": self.facility_name,
+            "publication_year": self.publication_year,
+            "instrument_name": self.instrument_name,
+            "authors": self.authors,
         }

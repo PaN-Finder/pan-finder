@@ -18,6 +18,9 @@ class DocumentDetailsResponseModel(BaseModel):
     title: str
     abstract: str | None
     facility_name: str | None
+    publication_year: str | None
+    instrument_name: str | None
+    authors: str | None
 
 
 @router.get("/raw/{doi:path}")
@@ -59,7 +62,7 @@ async def get_document_details(
 ) -> DocumentDetailsResponseModel:
     """
     Get detailed document information by DOI.
-    Returns: id, doi, title, text, facility_name
+    Returns: id, doi, title, text, facility_name, publication_year, instrument_name, authors
     """
     verify_session(x_session_id)
 
