@@ -151,6 +151,18 @@ class LLMClient:
         key_string = json.dumps(key_data, sort_keys=True)
         return hashlib.sha256(key_string.encode("utf-8")).hexdigest()
 
+    def _build_token_limit_kwargs(
+        self, model: str, max_tokens: int | None
+    ) -> dict[str, int]:
+        """Map token limit parameters to the name expected by the target model."""
+        if max_tokens is None:
+            return {}
+
+        if model.startswith("gpt-5"):
+            return {"max_completion_tokens": max_tokens}
+
+        return {"max_tokens": max_tokens}
+
     async def complete(self, request: LLMCompletionRequest) -> LLMCompletionResponse:
         """
         Perform non-streaming LLM completion with caching.
@@ -249,6 +261,7 @@ class LLMClient:
     ) -> LLMCompletionResponse:
         """Handle non-streaming completion."""
         model = request.model or self._default_model
+        token_limit_kwargs = self._build_token_limit_kwargs(model, request.max_tokens)
 
         # Prepare messages for provider
         messages = [
@@ -260,10 +273,10 @@ class LLMClient:
             lambda: self._client.chat.completions.create(
                 model=model,
                 messages=messages,
-                max_tokens=request.max_tokens,
                 temperature=request.temperature,
                 response_format=request.response_format or None,
                 stream=False,
+                **token_limit_kwargs,
             )
         )
 
@@ -303,6 +316,7 @@ class LLMClient:
     ) -> AsyncGenerator[str, None]:
         """Handle streaming completion."""
         model = request.model or self._default_model
+        token_limit_kwargs = self._build_token_limit_kwargs(model, request.max_tokens)
         messages = [
             {"role": msg.role, "content": msg.content} for msg in request.messages
         ]
@@ -312,10 +326,10 @@ class LLMClient:
             lambda: self._client.chat.completions.create(
                 model=model,
                 messages=messages,
-                max_tokens=request.max_tokens,
                 temperature=request.temperature,
                 response_format=request.response_format or None,
                 stream=True,
+                **token_limit_kwargs,
             )
         )
 
