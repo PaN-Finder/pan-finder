@@ -80,6 +80,8 @@ function ResultTableRow({
             padding: '12px 8px',
             textAlign: 'center',
             width: '40px',
+            verticalAlign: 'middle',
+            lineHeight: 0,
           }}
         >
           {isExpanded ? (
