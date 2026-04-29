@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict XDCllgb7ovak2t7L0zZ2rsxcSuUejnPgHdfkpu6RJoRPCvSTUurOfhgpVNA7jFL
+\restrict OYwB5pQQvXoR5S7PX7lXphaAbKNYQYGxkR27ehne8NOx11OZtMQmtbwd4tyns7B
 
 -- Dumped from database version 17.4 (Debian 17.4-1.pgdg120+2)
 -- Dumped by pg_dump version 17.6
@@ -444,7 +444,8 @@ CREATE TABLE public.filter (
     value_boolean boolean,
     value_timestamp timestamp without time zone,
     value_numeric numeric,
-    value_si public.unit
+    value_si public.unit,
+    value_vector public.vector(384)
 );
 ALTER TABLE ONLY public.filter ALTER COLUMN document_id SET STATISTICS 1000;
 ALTER TABLE ONLY public.filter ALTER COLUMN key SET STATISTICS 1000;
@@ -821,6 +822,13 @@ CREATE INDEX filter_value_trgm_idx ON public.filter USING gin (value public.gin_
 
 
 --
+-- Name: filter_value_vector_hnsw_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX filter_value_vector_hnsw_idx ON public.filter USING hnsw (value_vector public.vector_cosine_ops) WHERE (value_vector IS NOT NULL);
+
+
+--
 -- Name: idx_feedback_statistic_id_metadata; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -878,5 +886,5 @@ ALTER TABLE ONLY public.filter_description
 -- PostgreSQL database dump complete
 --
 
-\unrestrict XDCllgb7ovak2t7L0zZ2rsxcSuUejnPgHdfkpu6RJoRPCvSTUurOfhgpVNA7jFL
+\unrestrict OYwB5pQQvXoR5S7PX7lXphaAbKNYQYGxkR27ehne8NOx11OZtMQmtbwd4tyns7B
 
