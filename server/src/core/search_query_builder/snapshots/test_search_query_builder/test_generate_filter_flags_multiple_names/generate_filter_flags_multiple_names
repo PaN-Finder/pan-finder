@@ -1,4 +1,4 @@
-MAX(CASE 
+MAX(CASE
                         WHEN f.key IN ('alias1', 'alias2') AND f.value ILIKE 'shared%' THEN 2
                         WHEN f.key IN ('alias1', 'alias2') AND f.value ILIKE '%shared%' THEN 1
                         ELSE 0

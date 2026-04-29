@@ -2,6 +2,7 @@ import importlib.util
 from pathlib import Path
 from unittest.mock import ANY, MagicMock, patch
 
+import numpy as np
 import pytest
 from psycopg.sql import Composable
 
@@ -23,7 +24,14 @@ SearchQueryBuilder = search_query_builder.SearchQueryBuilder
 @pytest.fixture
 def mock_sentence_transformer():
     mock = MagicMock()
-    mock.encode.return_value = MagicMock(tolist=lambda: [0.1, 0.2, 0.3])
+
+    def _encode(input_, *args, **kwargs):
+        # Single string → 1-D array; list of strings → 2-D array (n, 3)
+        if isinstance(input_, str):
+            return np.array([0.1, 0.2, 0.3])
+        return np.array([[0.1, 0.2, 0.3]] * len(input_))
+
+    mock.encode.side_effect = _encode
     return mock
 
 

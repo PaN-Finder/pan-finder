@@ -40,3 +40,4 @@ class EnhancedSearchResult(BaseModel):
     full_match_score: float
     partial_match_score: float
     keyword_score: float
+    value_vector_score: float

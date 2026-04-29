@@ -59,6 +59,7 @@ class Settings:
         self.rrf_k_full_match = int(os.getenv("RRF_K_FULL_MATCH", "6"))
         self.rrf_k_partial_match = int(os.getenv("RRF_K_PARTIAL_MATCH", "6"))
         self.rrf_k_keyword = int(os.getenv("RRF_K_KEYWORD", "10"))
+        self.rrf_k_value_vector = int(os.getenv("RRF_K_VALUE_VECTOR", "6"))
 
     def _parse_cors_origins(self) -> list[str]:
         """Parse CORS origins from environment variable."""
