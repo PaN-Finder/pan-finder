@@ -6,7 +6,8 @@
     "rrf_k_full_match": 1,
     "rrf_k_partial_match": 1,
     "rrf_k_keyword": 10,
-    "notes": "Low k only for Match types, higher k for others."
+    "rrf_k_value_vector": 1,
+    "notes": "Low k only for Match types, higher k for others. Value vector is filter-based so treated like a match signal."
   },
   {
     "test_name": "SimilarityFocus",
@@ -15,7 +16,8 @@
     "rrf_k_full_match": 6,
     "rrf_k_partial_match": 6,
     "rrf_k_keyword": 10,
-    "notes": "Assume Similarity is most precise (low k), Matches less so, Keyword least precise (high k)."
+    "rrf_k_value_vector": 6,
+    "notes": "Assume Similarity is most precise (low k), Matches less so, Keyword least precise (high k). Value vector is filter-based so treated like a match signal."
   },
   {
     "test_name": "6_6_3_3_10",
@@ -24,7 +26,8 @@
     "rrf_k_full_match": 3,
     "rrf_k_partial_match": 3,
     "rrf_k_keyword": 10,
-    "notes": "Frontend's values"
+    "rrf_k_value_vector": 3,
+    "notes": "Frontend's values. Value vector follows match signals."
   },
   {
     "test_name": "LessKeyword",
@@ -33,6 +36,7 @@
     "rrf_k_full_match": 6,
     "rrf_k_partial_match": 6,
     "rrf_k_keyword": 10,
-    "notes": "Baseline k=6, but extra smoothing (k=10) for Keyword Rank."
+    "rrf_k_value_vector": 6,
+    "notes": "Baseline k=6, but extra smoothing (k=10) for Keyword Rank. Value vector at baseline."
   }
 ]

@@ -28,7 +28,7 @@ CACHE_FILE_PATH = benchmark_dir() / "cache" / "llm_cache.json"
 settings = get_settings()
 
 llm_model = "gpt-4.1-mini"
-system_prompt_version = "1_0_9.md"
+system_prompt_version = "1_0_10.md"
 
 # Global LLM client with file caching
 llm_client: LLMClient = get_llm_client(llm_model)
@@ -84,7 +84,7 @@ async def get_llm_response(prompt: str, query: str, **kwargs) -> str | None:
 
 async def process_query(
     query_obj: dict[str, Any], doi: str, builder: SearchQueryBuilder
-) -> tuple[float, float, float, float, float, float, float, float]:
+) -> tuple[float, float, float, float, float, float, float, float, float]:
     query_text = query_obj.get("query", "").strip()
     if not query_text:
         raise ValueError("Query text is empty")
@@ -109,6 +109,7 @@ async def process_query(
 
     with get_database_connection() as conn, conn.cursor() as cursor:
         start_time = time.time()
+        # print(query.as_string())
         cursor.execute(query)
         results = cursor.fetchall()
         elapsed_time = time.time() - start_time
@@ -123,6 +124,7 @@ async def process_query(
                 "Full Match Score",
                 "Partial Match Score",
                 "Keyword Score",
+                "Value Vector Score",
             ],
         ).astype(
             {
@@ -132,6 +134,7 @@ async def process_query(
                 "Full Match Score": float,
                 "Partial Match Score": float,
                 "Keyword Score": float,
+                "Value Vector Score": float,
             }
         )
 
@@ -155,6 +158,7 @@ async def process_query(
             full_match_score,
             partial_match_score,
             keyword_score,
+            value_vector_score,
         ) = (
             float(results[position][1]),
             float(results[position][2]),
@@ -162,11 +166,12 @@ async def process_query(
             float(results[position][4]),
             float(results[position][5]),
             float(results[position][6]),
+            float(results[position][7]),
         )
     else:
         overall = sim_score = chunk_score = full_match_score = partial_match_score = (
             keyword_score
-        ) = 0.0
+        ) = value_vector_score = 0.0
 
     logging.info(
         "Score: %.3f | Position: %d | Min: %d | Runtime: %.3fs",
@@ -185,6 +190,7 @@ async def process_query(
         full_match_score,
         partial_match_score,
         keyword_score,
+        value_vector_score,
     )
 
 
@@ -205,6 +211,7 @@ async def process_document(
             full_match_score,
             partial_match_score,
             keyword_score,
+            value_vector_score,
         ) = await process_query(query_obj, doi, builder)
         scores.append(score)
         runtimes.append(runtime)
@@ -216,6 +223,7 @@ async def process_document(
                 "full_match_score": full_match_score,
                 "partial_match_score": partial_match_score,
                 "keyword": keyword_score,
+                "value_vector_score": value_vector_score,
             }
         )
     return scores, runtimes, breakdowns
@@ -254,6 +262,7 @@ async def process_rrf_config(
         rrf_k_full_match=rrf_config.get("rrf_k_full_match", 60),
         rrf_k_partial_match=rrf_config.get("rrf_k_partial_match", 60),
         rrf_k_keyword=rrf_config.get("rrf_k_keyword", 60),
+        rrf_k_value_vector=rrf_config.get("rrf_k_value_vector", 60),
         logger=logging.getLogger("search_query_builder"),
     )
 

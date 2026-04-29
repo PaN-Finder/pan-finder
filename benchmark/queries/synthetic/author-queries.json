@@ -1,0 +1,160 @@
+[
+  {
+    "doi": "10.16907/c4fdaf60-562b-4501-a314-a7c153d676ee",
+    "queries": [
+      {
+        "query": "Look for datasets where the author is Federica Marone",
+        "min_position": 9
+      },
+      {
+        "query": "Look for datasets where the author is Marone, Federica",
+        "min_position": 9
+      },
+      {
+        "query": "Look for datasets where the author is Federica M.",
+        "min_position": 9
+      },
+      {
+        "query": "Look for datasets where the author is M. Federica",
+        "min_position": 9
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.9-12-504",
+    "queries": [
+      {
+        "query": "Look for datasets where the author is Thomas Chaussee",
+        "min_position": 0
+      },
+      {
+        "query": "Look for datasets where the author is Chaussee, Thomas",
+        "min_position": 0
+      },
+      {
+        "query": "Look for datasets where the author is T. Chaussee",
+        "min_position": 0
+      },
+      {
+        "query": "Look for datasets where the author is Chaussee T.",
+        "min_position": 0
+      },
+      {
+        "query": "Look for datasets where the author is CHAUSSEE Thomas",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.16907/1c2661e3-769b-4cdf-8504-4959fff59d17",
+    "queries": [
+      {
+        "query": "Look for datasets where the author is Zurab Guguchia",
+        "min_position": 0
+      },
+      {
+        "query": "Look for datasets where the author is Guguchia, Zurab",
+        "min_position": 0
+      },
+      {
+        "query": "Look for datasets where the author is Z. Guguchia",
+        "min_position": 0
+      },
+      {
+        "query": "Look for datasets where the author is Guguchia Z.",
+        "min_position": 0
+      },
+      {
+        "query": "Find datasets owned by Zurab Guguchia",
+        "min_position": 1
+      }
+    ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-23-714",
+    "queries": [
+      {
+        "query": "Look for datasets where the author is Koji Fujita",
+        "min_position": 0
+      },
+      {
+        "query": "Look for datasets where the author is Fujita, Koji",
+        "min_position": 0
+      },
+      {
+        "query": "Look for datasets where the author is K. Fujita",
+        "min_position": 0
+      },
+      {
+        "query": "Look for datasets where the author is Fujita K.",
+        "min_position": 1
+      },
+      {
+        "query": "Look for datasets where the author is Koji F.",
+        "min_position": 0
+      },
+      {
+        "query": "Find datasets from author Fujita Koji",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.16907/a672b15a-9973-4d92-bf1e-3488cdfb4d1b",
+    "queries": [
+      {
+        "query": "Look for datasets where the team member is Luca Caricchi",
+        "min_position": 0
+      },
+      {
+        "query": "Look for datasets where the team member is Caricchi, Luca",
+        "min_position": 0
+      },
+      {
+        "query": "Look for datasets where the team member is L. Caricchi",
+        "min_position": 0
+      },
+      {
+        "query": "Look for datasets where the team member is Caricchi L.",
+        "min_position": 0
+      },
+      {
+        "query": "Look for datasets where the team member is Luca C.",
+        "min_position": 1
+      },
+      {
+        "query": "Find datasets from team member Luca Caricchi",
+        "min_position": 0
+      }
+    ]
+  },
+  {
+    "doi": "10.16907/bacdd377-981b-4934-8938-7eb9d8006224",
+    "queries": [
+      {
+        "query": "Look for datasets where the author is Else Marie Friis",
+        "min_position": 8
+      },
+      {
+        "query": "Look for datasets where the author is Friis, Else Marie",
+        "min_position": 8
+      },
+      {
+        "query": "Look for datasets where the author is Else Marie",
+        "min_position": 8
+      },
+      {
+        "query": "Find datasets from author Else Marie Friis",
+        "min_position": 8
+      },
+      {
+        "query": "Find datasets from Else Marie Friis",
+        "min_position": 8
+      },
+      {
+        "query": "Find datasets by Else Marie Friis",
+        "min_position": 8
+      }
+    ]
+  }
+]
