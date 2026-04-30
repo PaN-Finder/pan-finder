@@ -103,27 +103,27 @@
     "doi": "10.16907/a672b15a-9973-4d92-bf1e-3488cdfb4d1b",
     "queries": [
       {
-        "query": "Look for datasets where the team member is Luca Caricchi",
+        "query": "Look for datasets where the creator is Luca Caricchi",
         "min_position": 0
       },
       {
-        "query": "Look for datasets where the team member is Caricchi, Luca",
+        "query": "Look for datasets where the creator is Caricchi, Luca",
         "min_position": 0
       },
       {
-        "query": "Look for datasets where the team member is L. Caricchi",
+        "query": "Look for datasets where the creator is L. Caricchi",
         "min_position": 0
       },
       {
-        "query": "Look for datasets where the team member is Caricchi L.",
+        "query": "Look for datasets where the creator is Caricchi L.",
         "min_position": 0
       },
       {
-        "query": "Look for datasets where the team member is Luca C.",
+        "query": "Look for datasets where the creator is Luca C.",
         "min_position": 1
       },
       {
-        "query": "Find datasets from team member Luca Caricchi",
+        "query": "Find datasets from creator Luca Caricchi",
         "min_position": 0
       }
     ]

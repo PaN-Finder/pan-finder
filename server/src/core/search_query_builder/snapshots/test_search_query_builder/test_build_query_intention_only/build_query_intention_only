@@ -6,15 +6,13 @@
                 rrf_score(chunk_similarity_rank, 6) +
                 rrf_score(full_match_rank, 6) +
                 rrf_score(partial_match_rank, 6) +
-                rrf_score(keyword_rank, 6) +
-                rrf_score(filter_value_rank, 6)
+                rrf_score(keyword_rank, 6)
             ) AS overall_score,
             sum(rrf_score(similarity_rank, 6)) AS similarity_score,
             sum(rrf_score(chunk_similarity_rank, 6)) AS chunk_similarity_score,
             sum(rrf_score(full_match_rank, 6)) AS full_match_score,
             sum(rrf_score(partial_match_rank, 6)) AS partial_match_score,
-            sum(rrf_score(keyword_rank, 6)) AS keyword_score,
-            sum(rrf_score(filter_value_rank, 6)) AS filter_value_score
+            sum(rrf_score(keyword_rank, 6)) AS keyword_score
         FROM (
             -- Subquery 1: Document Similarity (title + summary (generated))
             (
@@ -24,8 +22,7 @@
                     0 AS chunk_similarity_rank,
                     0 AS full_match_rank,
                     0 AS partial_match_rank,
-                    0 AS keyword_rank,
-                    0 AS filter_value_rank
+                    0 AS keyword_rank
                 FROM document d
                 WHERE
                     d.title_summary_vector <=> '{0.1,0.2,0.3}'::float8[]::vector < 0.5
@@ -56,8 +53,7 @@
                     -- Secondary: break ties by number of qualifying chunks (more is better)
                     0 AS full_match_rank,
                     0 AS partial_match_rank,
-                    0 AS keyword_rank,
-                    0 AS filter_value_rank
+                    0 AS keyword_rank
                 FROM RankedChunks rc
                 WHERE
                     rc.rn_within_doi = 1        -- Keep only the single best chunk per DOI
@@ -73,8 +69,7 @@
                     0 AS chunk_similarity_rank,
                     0 AS full_match_rank,
                     0 AS partial_match_rank,
-                    0 AS keyword_rank,
-                    0 AS filter_value_rank
+                    0 AS keyword_rank
                 WHERE FALSE -- Ensure this returns no rows
                 LIMIT 0
             )
@@ -87,28 +82,13 @@
                     0 AS chunk_similarity_rank,
                     0 AS full_match_rank,
                     0 AS partial_match_rank,
-                    DENSE_RANK() OVER (ORDER BY ts_rank_cd(title_text_search_vector, to_tsquery('english', '')) DESC) AS keyword_rank,
-                    0 AS filter_value_rank
+                    DENSE_RANK() OVER (ORDER BY ts_rank_cd(title_text_search_vector, to_tsquery('english', '')) DESC) AS keyword_rank
                 FROM document d
                 WHERE
                     '' != '' -- Avoid error if keywords are empty
                     AND title_text_search_vector @@ to_tsquery('english', '')
                 -- NO ORDER BY here, as we will use the rank to calculate the score
                 -- NO LIMIT here: we want all DOIs with at least one keyword match
-            )
-            UNION ALL
-            -- Subquery 5: Filter Value Similarity (value vector search)
-            (
-                SELECT
-                    NULL::text AS doi,
-                    0 AS similarity_rank,
-                    0 AS chunk_similarity_rank,
-                    0 AS full_match_rank,
-                    0 AS partial_match_rank,
-                    0 AS keyword_rank,
-                    0 AS filter_value_rank
-                WHERE FALSE -- Ensure this returns no rows
-                LIMIT 0
             )
         ) searches
         WHERE searches.doi IS NOT NULL -- Exclude potential NULL DOIs from empty subqueries
@@ -117,7 +97,6 @@
             overall_score DESC,
             full_match_score DESC,
             partial_match_score DESC,
-            filter_value_score DESC,
             similarity_score DESC,
             chunk_similarity_score DESC,
             keyword_score DESC

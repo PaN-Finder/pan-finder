@@ -81,7 +81,6 @@ class SearchEngine:
                 rrf_k_full_match=settings.rrf_k_full_match,
                 rrf_k_partial_match=settings.rrf_k_partial_match,
                 rrf_k_keyword=settings.rrf_k_keyword,
-                rrf_k_filter_value=settings.rrf_k_filter_value,
                 value_vector_keys=settings.value_vector_keys,
                 logger=get_logger("SearchQueryBuilder"),
             )
@@ -191,14 +190,12 @@ class SearchEngine:
         """
         try:
             # Generate SQL query
-            query_build_start = time.time()
             sql_query, subqueries_used = self.query_builder.build_query(
                 search_data.model_dump()
             )
-            query_build_time = time.time() - query_build_start
-            self._logger.debug(
-                f"SQL query building took {query_build_time:.3f} seconds"
-            )
+
+            # Log the generated SQL query for debugging
+            self._logger.debug(f"Generated SQL query: {sql_query.as_string()}")
 
             # Execute the query
             db_execution_start = time.time()
@@ -297,7 +294,6 @@ class SearchEngine:
                         full_match_score=float(result.get("full_match_score", 0)),
                         partial_match_score=float(result.get("partial_match_score", 0)),
                         keyword_score=float(result.get("keyword_score", 0)),
-                        filter_value_score=float(result.get("filter_value_score", 0)),
                     )
                 )
 
@@ -333,13 +329,12 @@ class SearchEngine:
         if structured_data.keywords and len(structured_data.keywords) > 0:
             result_dict["keyword_score"] = result.keyword_score
 
-        # Include full_match, partial_match and filter_value scores only if filters are provided
+        # Include filter scores only if filters are provided
         if structured_data.filters and len(structured_data.filters) > 0:
             # Preserve numeric scores; *add* boolean convenience flag
             result_dict["full_match_score"] = result.full_match_score
             result_dict["full_match"] = result.full_match_score > 0
             result_dict["partial_match_score"] = result.partial_match_score
-            result_dict["filter_value_score"] = result.filter_value_score
 
         return result_dict
 

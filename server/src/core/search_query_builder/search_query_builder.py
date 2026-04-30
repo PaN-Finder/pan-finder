@@ -24,7 +24,6 @@ class SearchResult(TypedDict):
     full_match_score: float
     partial_match_score: float
     keyword_score: float
-    filter_value_score: float
 
 
 class SubqueriesUsed(TypedDict):
@@ -38,7 +37,6 @@ class SubqueriesUsed(TypedDict):
     full_match: bool
     partial_match: bool
     keyword: bool
-    filter_value: bool
 
 
 class SearchQueryBuilder:
@@ -80,7 +78,6 @@ class SearchQueryBuilder:
         rrf_k_full_match: int = _DEFAULT_RRF_K,
         rrf_k_partial_match: int = _DEFAULT_RRF_K,
         rrf_k_keyword: int = _DEFAULT_RRF_K,
-        rrf_k_filter_value: int = _DEFAULT_RRF_K,
         results_set_size: int = _RESULTS_SET_SIZE,
         value_vector_keys: tuple[str, ...] = (),
         logger: Logger | None = None,
@@ -92,7 +89,6 @@ class SearchQueryBuilder:
         self.rrf_k_full_match = rrf_k_full_match
         self.rrf_k_partial_match = rrf_k_partial_match
         self.rrf_k_keyword = rrf_k_keyword
-        self.rrf_k_filter_value = rrf_k_filter_value
         self.results_set_size = results_set_size
         self.value_vector_keys = value_vector_keys
         self._logger = logger or getLogger(__name__)
@@ -137,12 +133,6 @@ class SearchQueryBuilder:
         filter_subquery, filter_used = self._build_filter_subquery(
             normalized_params.get("filters")
         )
-        filter_value_inputs = self._extract_filter_value_inputs(
-            normalized_params.get("filters")
-        )
-        filter_value_subquery, filter_value_used = self._build_filter_value_subquery(
-            filter_value_inputs
-        )
 
         subqueries_used: SubqueriesUsed = {
             "similarity": intent_embedding is not None,
@@ -150,7 +140,6 @@ class SearchQueryBuilder:
             "keyword": bool(keywords_tsquery_text),
             "full_match": filter_used,
             "partial_match": filter_used,
-            "filter_value": filter_value_used,
         }
 
         # 3. Assemble the final query with composables and sanitized values
@@ -163,15 +152,13 @@ class SearchQueryBuilder:
                 rrf_score(chunk_similarity_rank, {rrf_k_chunk}) +
                 rrf_score(full_match_rank, {rrf_k_full_match}) +
                 rrf_score(partial_match_rank, {rrf_k_partial_match}) +
-                rrf_score(keyword_rank, {rrf_k_keyword}) +
-                rrf_score(filter_value_rank, {rrf_k_filter_value})
+                rrf_score(keyword_rank, {rrf_k_keyword})
             ) AS overall_score,
             sum(rrf_score(similarity_rank, {rrf_k_similarity})) AS similarity_score,
             sum(rrf_score(chunk_similarity_rank, {rrf_k_chunk})) AS chunk_similarity_score,
             sum(rrf_score(full_match_rank, {rrf_k_full_match})) AS full_match_score,
             sum(rrf_score(partial_match_rank, {rrf_k_partial_match})) AS partial_match_score,
-            sum(rrf_score(keyword_rank, {rrf_k_keyword})) AS keyword_score,
-            sum(rrf_score(filter_value_rank, {rrf_k_filter_value})) AS filter_value_score
+            sum(rrf_score(keyword_rank, {rrf_k_keyword})) AS keyword_score
         FROM (
             -- Subquery 1: Document Similarity (title + summary (generated))
             (
@@ -196,19 +183,13 @@ class SearchQueryBuilder:
                     0 AS chunk_similarity_rank,
                     0 AS full_match_rank,
                     0 AS partial_match_rank,
-                    DENSE_RANK() OVER (ORDER BY ts_rank_cd(title_text_search_vector, to_tsquery('english', {keywords_tsquery_text})) DESC) AS keyword_rank,
-                    0 AS filter_value_rank
+                    DENSE_RANK() OVER (ORDER BY ts_rank_cd(title_text_search_vector, to_tsquery('english', {keywords_tsquery_text})) DESC) AS keyword_rank
                 FROM document d
                 WHERE
                     {keywords_tsquery_text} != '' -- Avoid error if keywords are empty
                     AND title_text_search_vector @@ to_tsquery('english', {keywords_tsquery_text})
                 -- NO ORDER BY here, as we will use the rank to calculate the score
                 -- NO LIMIT here: we want all DOIs with at least one keyword match
-            )
-            UNION ALL
-            -- Subquery 5: Filter Value Similarity (value vector search)
-            (
-                {filter_value_subquery}
             )
         ) searches
         WHERE searches.doi IS NOT NULL -- Exclude potential NULL DOIs from empty subqueries
@@ -217,7 +198,6 @@ class SearchQueryBuilder:
             overall_score DESC,
             full_match_score DESC,
             partial_match_score DESC,
-            filter_value_score DESC,
             similarity_score DESC,
             chunk_similarity_score DESC,
             keyword_score DESC
@@ -229,11 +209,9 @@ class SearchQueryBuilder:
             rrf_k_full_match=self.rrf_k_full_match,
             rrf_k_partial_match=self.rrf_k_partial_match,
             rrf_k_keyword=self.rrf_k_keyword,
-            rrf_k_filter_value=self.rrf_k_filter_value,
             doc_similarity_subquery=doc_similarity_subquery,
             chunk_similarity_subquery=chunk_similarity_subquery,
             filter_subquery=filter_subquery,
-            filter_value_subquery=filter_value_subquery,
             keywords_tsquery_text=keywords_tsquery_text,
             results_set_size=self.results_set_size,
         )
@@ -264,8 +242,7 @@ class SearchQueryBuilder:
                     0 AS chunk_similarity_rank,
                     0 AS full_match_rank,
                     0 AS partial_match_rank,
-                    0 AS keyword_rank,
-                    0 AS filter_value_rank
+                    0 AS keyword_rank
                 FROM document d
                 WHERE
                     d.title_summary_vector <=> {intention_vector}::vector < {_SIMILARITY_THRESHOLD_DOCS}"""
@@ -318,8 +295,7 @@ class SearchQueryBuilder:
                     -- Secondary: break ties by number of qualifying chunks (more is better)
                     0 AS full_match_rank,
                     0 AS partial_match_rank,
-                    0 AS keyword_rank,
-                    0 AS filter_value_rank
+                    0 AS keyword_rank
                 FROM RankedChunks rc
                 WHERE
                     rc.rn_within_doi = 1        -- Keep only the single best chunk per DOI
@@ -330,94 +306,65 @@ class SearchQueryBuilder:
             _SIMILARITY_THRESHOLD_CHUNKS=self._SIMILARITY_THRESHOLD_CHUNKS,
         )
 
-    def _extract_filter_value_inputs(self, filters: dict | None) -> list[str]:
+    def _extract_filter_value_strings(self, condition: dict) -> list[str]:
         """
-        Recursively scans the filter tree and collects string values from conditions
-        whose name is in value_vector_keys and whose operator is a
-        string-matching operator (=, !=, LIKE, ILIKE, NOT LIKE, NOT ILIKE, IN).
+        Extract string values from a single condition that is eligible for
+        filter-value vector matching.
         """
-        _STRING_OPS = {"=", "!=", "LIKE", "ILIKE", "NOT LIKE", "NOT ILIKE", "IN"}
-        result: list[str] = []
+        _STRING_OPS = {"=", "LIKE", "ILIKE", "IN"}
 
-        if not filters or not isinstance(filters, dict):
-            return result
-
-        if "logic" in filters and "conditions" in filters:
-            for condition in filters.get("conditions", []):
-                result.extend(self._extract_filter_value_inputs(condition))
-            return result
-
-        name_list = filters.get("name")
-        operator = str(filters.get("operator", "")).upper()
-        value = filters.get("value")
+        name_list = condition.get("name")
+        operator = str(condition.get("operator", "")).upper()
+        value = condition.get("value")
 
         if not isinstance(name_list, list) or operator not in _STRING_OPS:
-            return result
+            return []
 
-        is_vector_key = any(n in self.value_vector_keys for n in name_list)
-        if not is_vector_key:
-            return result
+        if not any(name in self.value_vector_keys for name in name_list):
+            return []
 
         if isinstance(value, str) and value.strip():
-            result.append(value.strip())
-        elif isinstance(value, list):
-            result.extend(v.strip() for v in value if isinstance(v, str) and v.strip())
+            return [value.strip()]
 
-        return result
+        if operator == "IN" and isinstance(value, list):
+            return [
+                item.strip() for item in value if isinstance(item, str) and item.strip()
+            ]
 
-    def _build_filter_value_subquery(
-        self, filter_value_inputs: list[str]
-    ) -> tuple[Composed | SQL, bool]:
+        return []
+
+    def _build_condition_vector_map(
+        self, filters: dict | None
+    ) -> dict[int, list[float]]:
         """
-        Builds the subquery for value vector similarity search.
-
-        Encodes the provided values and finds documents whose filter rows have a
-        value_vector close to that query vector. Uses MIN distance per document so
-        the best-matching row wins.
-
-        Args:
-            filter_value_inputs: Pre-extracted string values from vector-key filter
-                conditions (from _extract_filter_value_inputs).
-
-        Returns:
-            A tuple of (subquery SQL, activated). activated is True only when
-            at least one vector value was provided and the subquery will produce
-            real rows.
+        Precompute one averaged embedding per eligible filter condition.
         """
-        if not filter_value_inputs:
-            return self._get_empty_subquery(), False
+        condition_values: dict[int, list[str]] = {}
 
-        # Encode all extracted values and average their vectors as the query vector
-        # encode() returns a 2-D array (n, dims); mean over axis=0 gives (dims,)
-        embeddings = self.sentence_transformer.encode(filter_value_inputs)
-        filter_value_query_vector = embeddings.mean(axis=0).tolist()
+        def _collect(condition: dict | None) -> None:
+            if not isinstance(condition, dict):
+                return
 
-        vector_keys_sql = SQL(", ").join(Literal(k) for k in self.value_vector_keys)
+            if "logic" in condition and "conditions" in condition:
+                for sub_condition in condition.get("conditions", []):
+                    _collect(sub_condition)
+                return
 
-        return SQL(
-            """SELECT
-                    d.doi,
-                    0 AS similarity_rank,
-                    0 AS chunk_similarity_rank,
-                    0 AS full_match_rank,
-                    0 AS partial_match_rank,
-                    0 AS keyword_rank,
-                    DENSE_RANK() OVER (
-                        ORDER BY MIN(f.value_vector <=> {filter_value_query_vector}::vector) ASC
-                    ) AS filter_value_rank
-                FROM filter f
-                JOIN document d ON d.id = f.document_id
-                WHERE f.key IN ({vector_keys_sql})
-                    AND f.value_vector IS NOT NULL
-                    AND f.value_vector <=> {filter_value_query_vector}::vector < {threshold}
-                GROUP BY d.doi
-                -- NO ORDER BY here, as we will use the rank to calculate the score
-                -- NO LIMIT here: we want all DOIs with a matching filter value"""
-        ).format(
-            filter_value_query_vector=filter_value_query_vector,
-            vector_keys_sql=vector_keys_sql,
-            threshold=self._SIMILARITY_THRESHOLD_FILTER_VALUE,
-        ), True
+            values = self._extract_filter_value_strings(condition)
+            if values:
+                condition_values[id(condition)] = values
+
+        _collect(filters)
+
+        if not condition_values:
+            return {}
+
+        condition_vectors: dict[int, list[float]] = {}
+        for condition_id, values in condition_values.items():
+            embeddings = self.sentence_transformer.encode(values)
+            condition_vectors[condition_id] = embeddings.mean(axis=0).tolist()
+
+        return condition_vectors
 
     # --- Private Helper Methods ---
     def _parse_datetime_strict(self, value: Any) -> datetime | None:
@@ -654,10 +601,12 @@ class SearchQueryBuilder:
             return self._get_empty_subquery(), False
 
         try:
+            condition_vectors = self._build_condition_vector_map(filters)
+
             # 1. Generate flag definitions using MAX(CASE WHEN ...) AS has_condition_N
             # Also capture which base condition dicts produced a valid flag so logic indexing stays aligned.
             flag_definitions, flag_count, valid_condition_ids = (
-                self._generate_filter_flags(filters)
+                self._generate_filter_flags(filters, condition_vectors)
             )
             if not flag_definitions:
                 self._logger.info(
@@ -733,8 +682,7 @@ class SearchQueryBuilder:
                 0 AS chunk_similarity_rank,
                 fl.full_match_score AS full_match_rank, -- Treated as 1 (match) or 0 (no match); downstream scoring handles this.
                 DENSE_RANK() OVER (ORDER BY fl.partial_match_count DESC) AS partial_match_rank,
-                0 AS keyword_rank,
-                0 AS filter_value_rank
+                0 AS keyword_rank
             FROM FilterLogic fl
             JOIN document d ON d.id = fl.document_id
             WHERE partial_match_count > 0 -- Ensures only documents that truly matched (score > 0) are returned
@@ -766,8 +714,7 @@ class SearchQueryBuilder:
                     0 AS chunk_similarity_rank,
                     0 AS full_match_rank,
                     0 AS partial_match_rank,
-                    0 AS keyword_rank,
-                    0 AS filter_value_rank
+                    0 AS keyword_rank
                 WHERE FALSE -- Ensure this returns no rows
                 LIMIT 0"""
         )
@@ -779,6 +726,7 @@ class SearchQueryBuilder:
         flag_counter: list[int],
         all_flags: list[Composable],
         valid_condition_ids: set[int],
+        condition_vectors: dict[int, list[float]],
     ) -> None:
         """
         Recursively traverses the filter structure to generate SQL 'flag' expressions.
@@ -796,7 +744,11 @@ class SearchQueryBuilder:
             for sub in condition.get("conditions", []):
                 if isinstance(sub, dict):
                     self._build_flags_recursive(
-                        sub, flag_counter, all_flags, valid_condition_ids
+                        sub,
+                        flag_counter,
+                        all_flags,
+                        valid_condition_ids,
+                        condition_vectors,
                     )
             return
 
@@ -822,6 +774,19 @@ class SearchQueryBuilder:
         key_in_clause: Composed = Composed(
             [SQL("f.key IN ("), key_values_sql, SQL(")")]
         )
+        vector_key_names = [
+            name for name in name_list if name in self.value_vector_keys
+        ]
+        vector_key_in_clause: Composed | None = None
+        if vector_key_names:
+            vector_key_values_sql = SQL(", ").join(
+                [Literal(v) for v in vector_key_names]
+            )
+            vector_key_in_clause = Composed(
+                [SQL("f.key IN ("), vector_key_values_sql, SQL(")")]
+            )
+
+        condition_vector = condition_vectors.get(id(condition))
         flag_sql_to_add: Composable | None = None
         comparison_clause: Composable | None = None
         op_sql = SQL(cast(LiteralString, operator_raw))
@@ -912,7 +877,7 @@ class SearchQueryBuilder:
                     flag_counter[0] -= 1
                     return
 
-            elif operator_raw in ("IN", "NOT IN"):
+            elif operator_raw == "IN":
                 if isinstance(value, list) and value:
                     if all(isinstance(v, NUMBER_TYPES) for v in value):
                         # If a unit is specified, compare using value_si; fallback to value_numeric when value_si is NULL
@@ -956,6 +921,79 @@ class SearchQueryBuilder:
                             )
                     elif all(isinstance(v, str) for v in value):
                         values_sql = SQL(", ").join([Literal(v) for v in value])
+                        vector_branch = SQL("")
+                        if (
+                            vector_key_in_clause is not None
+                            and condition_vector is not None
+                        ):
+                            vector_branch = SQL(
+                                "\n                        WHEN {vector_key_in_clause} AND f.value_vector IS NOT NULL AND f.value_vector <=> {condition_vector}::vector < {threshold} THEN 1"
+                            ).format(
+                                vector_key_in_clause=vector_key_in_clause,
+                                condition_vector=condition_vector,
+                                threshold=self._SIMILARITY_THRESHOLD_FILTER_VALUE,
+                            )
+
+                        flag_sql_to_add = SQL(
+                            """MAX(CASE
+                        WHEN {key_in_clause} AND f.value IN ({values_sql}) THEN 1{vector_branch}
+                        ELSE 0
+                    END) AS {flag_name}"""
+                        ).format(
+                            key_in_clause=key_in_clause,
+                            values_sql=values_sql,
+                            vector_branch=vector_branch,
+                            flag_name=Identifier(flag_name),
+                        )
+                    else:
+                        flag_counter[0] -= 1
+                        return
+                else:
+                    flag_counter[0] -= 1
+                    return
+            elif operator_raw == "NOT IN":
+                if isinstance(value, list) and value:
+                    if all(isinstance(v, NUMBER_TYPES) for v in value):
+                        # If a unit is specified, compare using value_si; fallback to value_numeric when value_si is NULL
+                        if isinstance(unit_text, str) and unit_text.strip():
+                            values_sql_units = SQL(", ").join(
+                                [
+                                    SQL("to_unit({v}, {u})").format(
+                                        v=Literal(v), u=Literal(unit_text.strip())
+                                    )
+                                    for v in value
+                                ]
+                            )
+                            values_sql_raw = SQL(", ").join([Literal(v) for v in value])
+                            comparison_clause = Composed(
+                                [
+                                    SQL("("),
+                                    SQL("f.value_si "),
+                                    op_sql,
+                                    SQL(" ("),
+                                    values_sql_units,
+                                    SQL(")"),
+                                    SQL(" OR (f.value_si IS NULL AND f.value_numeric "),
+                                    op_sql,
+                                    SQL(" ("),
+                                    values_sql_raw,
+                                    SQL("))"),
+                                    SQL(")"),
+                                ]
+                            )
+                        else:
+                            values_sql = SQL(", ").join([Literal(v) for v in value])
+                            comparison_clause = Composed(
+                                [
+                                    SQL("f.value_numeric "),
+                                    op_sql,
+                                    SQL(" ("),
+                                    values_sql,
+                                    SQL(")"),
+                                ]
+                            )
+                    elif all(isinstance(v, str) for v in value):
+                        values_sql = SQL(", ").join([Literal(v) for v in value])
                         comparison_clause = Composed(
                             [SQL("f.value "), op_sql, SQL(" ("), values_sql, SQL(")")]
                         )
@@ -977,16 +1015,27 @@ class SearchQueryBuilder:
                 value
             ) is None:  # Ensure we don't treat timestamps as strings
                 # Aggregated priority: 2 if any value has prefix match, else 1 if any value contains, else 0
+                vector_branch = SQL("")
+                if vector_key_in_clause is not None and condition_vector is not None:
+                    vector_branch = SQL(
+                        "\n                        WHEN {vector_key_in_clause} AND f.value_vector IS NOT NULL AND f.value_vector <=> {condition_vector}::vector < {threshold} THEN 1"
+                    ).format(
+                        vector_key_in_clause=vector_key_in_clause,
+                        condition_vector=condition_vector,
+                        threshold=self._SIMILARITY_THRESHOLD_FILTER_VALUE,
+                    )
+
                 flag_sql_to_add = SQL(
                     """MAX(CASE
                         WHEN {key_in_clause} AND f.value ILIKE {prefix} THEN 2
-                        WHEN {key_in_clause} AND f.value ILIKE {contains} THEN 1
+                        WHEN {key_in_clause} AND f.value ILIKE {contains} THEN 1{vector_branch}
                         ELSE 0
                     END) AS {flag_name}"""
                 ).format(
                     key_in_clause=key_in_clause,
                     prefix=Literal(str(value) + "%"),
                     contains=Literal("%" + str(value) + "%"),
+                    vector_branch=vector_branch,
                     flag_name=Identifier(flag_name),
                 )
 
@@ -1106,7 +1155,9 @@ class SearchQueryBuilder:
             flag_counter[0] -= 1
 
     def _generate_filter_flags(
-        self, filt: dict
+        self,
+        filt: dict,
+        condition_vectors: dict[int, list[float]] | None = None,
     ) -> tuple[list[Composable], int, set[int]]:
         """
         Generates all filter flag expressions for a given filter structure.
@@ -1121,9 +1172,15 @@ class SearchQueryBuilder:
         flag_counter = [0]
         all_flags: list[Composable] = []
         valid_condition_ids: set[int] = set()
+        if condition_vectors is None:
+            condition_vectors = {}
         try:
             self._build_flags_recursive(
-                filt, flag_counter, all_flags, valid_condition_ids
+                filt,
+                flag_counter,
+                all_flags,
+                valid_condition_ids,
+                condition_vectors,
             )
         except Exception as e:
             self._logger.info(f"Unexpected error during recursive flag building: {e}")

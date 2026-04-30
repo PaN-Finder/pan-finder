@@ -6,15 +6,13 @@
                 rrf_score(chunk_similarity_rank, 6) +
                 rrf_score(full_match_rank, 6) +
                 rrf_score(partial_match_rank, 6) +
-                rrf_score(keyword_rank, 6) +
-                rrf_score(filter_value_rank, 6)
+                rrf_score(keyword_rank, 6)
             ) AS overall_score,
             sum(rrf_score(similarity_rank, 6)) AS similarity_score,
             sum(rrf_score(chunk_similarity_rank, 6)) AS chunk_similarity_score,
             sum(rrf_score(full_match_rank, 6)) AS full_match_score,
             sum(rrf_score(partial_match_rank, 6)) AS partial_match_score,
-            sum(rrf_score(keyword_rank, 6)) AS keyword_score,
-            sum(rrf_score(filter_value_rank, 6)) AS filter_value_score
+            sum(rrf_score(keyword_rank, 6)) AS keyword_score
         FROM (
             -- Subquery 1: Document Similarity (title + summary (generated))
             (
@@ -24,8 +22,7 @@
                     0 AS chunk_similarity_rank,
                     0 AS full_match_rank,
                     0 AS partial_match_rank,
-                    0 AS keyword_rank,
-                    0 AS filter_value_rank
+                    0 AS keyword_rank
                 WHERE FALSE -- Ensure this returns no rows
                 LIMIT 0
             )
@@ -38,8 +35,7 @@
                     0 AS chunk_similarity_rank,
                     0 AS full_match_rank,
                     0 AS partial_match_rank,
-                    0 AS keyword_rank,
-                    0 AS filter_value_rank
+                    0 AS keyword_rank
                 WHERE FALSE -- Ensure this returns no rows
                 LIMIT 0
             )
@@ -51,15 +47,14 @@
                 -- Step 1: Calculate flags for each unique base condition per document using MAX(CASE WHEN ...)
                 SELECT
                     f.document_id,
-                    MAX(CASE WHEN f.key IN ('year') AND f.value_numeric > 2021 THEN 1 ELSE 0 END) AS "has_condition_1",
                     MAX(CASE
-                        WHEN f.key IN ('journal') AND f.value ILIKE 'Science%' THEN 2
-                        WHEN f.key IN ('journal') AND f.value ILIKE '%Science%' THEN 1
+                        WHEN f.key IN ('journal') AND f.value ILIKE 'Nature%' THEN 2
+                        WHEN f.key IN ('journal') AND f.value ILIKE '%Nature%' THEN 1
                         ELSE 0
-                    END) AS "has_condition_2"
+                    END) AS "has_condition_1"
                 FROM filter f
                 -- Pre-filter rows based on all keys involved in the conditions
-                WHERE f.key IN ('journal', 'year')
+                WHERE f.key IN ('journal')
                 GROUP BY f.document_id
             ),
             FilterLogic AS (
@@ -67,15 +62,15 @@
                 SELECT
                     ff.document_id,
                     CASE
-                        WHEN ("has_condition_1" > 0 AND "has_condition_2" > 0)
+                        WHEN "has_condition_1" > 0
                         THEN 1 -- The document satisfies the overall logic (Full Match)
                         ELSE 0 -- The document does not satisfy the overall logic (Partial or No Match)
                     END AS full_match_score,
                     -- Sum of individual flags (scores can be 0, 1, or 2)
-                    ("has_condition_1" + "has_condition_2") AS partial_match_count
+                    ("has_condition_1") AS partial_match_count
                 FROM FilterFlags ff
                 -- Optimization: Only process documents that matched at least one flag based on score
-                WHERE ("has_condition_1" > 0 OR "has_condition_2" > 0)
+                WHERE ("has_condition_1" > 0)
             )
             -- Step 3: Final SELECT, Ranking, and Join
             SELECT
@@ -84,8 +79,7 @@
                 0 AS chunk_similarity_rank,
                 fl.full_match_score AS full_match_rank, -- Treated as 1 (match) or 0 (no match); downstream scoring handles this.
                 DENSE_RANK() OVER (ORDER BY fl.partial_match_count DESC) AS partial_match_rank,
-                0 AS keyword_rank,
-                0 AS filter_value_rank
+                0 AS keyword_rank
             FROM FilterLogic fl
             JOIN document d ON d.id = fl.document_id
             WHERE partial_match_count > 0 -- Ensures only documents that truly matched (score > 0) are returned
@@ -102,28 +96,13 @@
                     0 AS chunk_similarity_rank,
                     0 AS full_match_rank,
                     0 AS partial_match_rank,
-                    DENSE_RANK() OVER (ORDER BY ts_rank_cd(title_text_search_vector, to_tsquery('english', '')) DESC) AS keyword_rank,
-                    0 AS filter_value_rank
+                    DENSE_RANK() OVER (ORDER BY ts_rank_cd(title_text_search_vector, to_tsquery('english', '')) DESC) AS keyword_rank
                 FROM document d
                 WHERE
                     '' != '' -- Avoid error if keywords are empty
                     AND title_text_search_vector @@ to_tsquery('english', '')
                 -- NO ORDER BY here, as we will use the rank to calculate the score
                 -- NO LIMIT here: we want all DOIs with at least one keyword match
-            )
-            UNION ALL
-            -- Subquery 5: Filter Value Similarity (value vector search)
-            (
-                SELECT
-                    NULL::text AS doi,
-                    0 AS similarity_rank,
-                    0 AS chunk_similarity_rank,
-                    0 AS full_match_rank,
-                    0 AS partial_match_rank,
-                    0 AS keyword_rank,
-                    0 AS filter_value_rank
-                WHERE FALSE -- Ensure this returns no rows
-                LIMIT 0
             )
         ) searches
         WHERE searches.doi IS NOT NULL -- Exclude potential NULL DOIs from empty subqueries
@@ -132,7 +111,6 @@
             overall_score DESC,
             full_match_score DESC,
             partial_match_score DESC,
-            filter_value_score DESC,
             similarity_score DESC,
             chunk_similarity_score DESC,
             keyword_score DESC

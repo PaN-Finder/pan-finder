@@ -4,7 +4,6 @@ SELECT
                     0 AS chunk_similarity_rank,
                     0 AS full_match_rank,
                     0 AS partial_match_rank,
-                    0 AS keyword_rank,
-                    0 AS filter_value_rank
+                    0 AS keyword_rank
                 WHERE FALSE -- Ensure this returns no rows
                 LIMIT 0

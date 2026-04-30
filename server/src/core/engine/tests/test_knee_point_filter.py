@@ -23,7 +23,6 @@ with patch("src.config.get_settings") as mock_get_settings:
         rrf_k_full_match=6,
         rrf_k_partial_match=6,
         rrf_k_keyword=10,
-        rrf_k_filter_value=6,
     )
     from src.core.engine.knee_point import KneePoint
     from src.db.models.search import EnhancedSearchResult

@@ -246,6 +246,38 @@ def test_update_filter_names_nested(builder, mock_postgres_client):
         ]
 
 
+def test_generate_filter_flags_vector_string_operator(builder):
+    filters_obj = {
+        "logic": "OR",
+        "conditions": [
+            {
+                "name": ["authors", "publisher"],
+                "operator": "ILIKE",
+                "value": "ESS",
+            }
+        ],
+    }
+
+    condition_vectors = builder._build_condition_vector_map(filters_obj)
+    flags, count, valid_condition_ids = builder._generate_filter_flags(
+        filters_obj, condition_vectors
+    )
+
+    assert count == 1
+    assert valid_condition_ids == {id(filters_obj["conditions"][0])}
+
+    flag_sql = flags[0].as_string()
+    assert (
+        "f.key IN ('authors', 'publisher') AND f.value ILIKE 'ESS%' THEN 2" in flag_sql
+    )
+    assert (
+        "f.key IN ('authors', 'publisher') AND f.value ILIKE '%ESS%' THEN 1" in flag_sql
+    )
+    assert "f.key IN ('authors')" in flag_sql
+    assert "f.value_vector IS NOT NULL" in flag_sql
+    assert "< 0.35 THEN 1" in flag_sql
+
+
 def test_update_filter_names_no_filters(builder):
     """Test updating when no filters are present."""
     with patch.object(builder, "_find_similar_names") as mock_find:
@@ -853,7 +885,6 @@ def test_build_query_intention_only(builder, snapshot):
         assert subqueries_used["keyword"] is False
         assert subqueries_used["full_match"] is False
         assert subqueries_used["partial_match"] is False
-        assert subqueries_used["filter_value"] is False
         snapshot.assert_match(sql.as_string(), "build_query_intention_only")
 
 
@@ -863,7 +894,6 @@ def test_build_query_intention_keywords(builder, snapshot):
     with patch.object(builder, "_update_filter_names", side_effect=lambda d: d):
         sql, subqueries_used = builder.build_query(data)
         assert subqueries_used["keyword"] is True
-        assert subqueries_used["filter_value"] is False
         snapshot.assert_match(sql.as_string(), "build_query_intention_keywords")
 
 
@@ -968,8 +998,6 @@ def test_build_query_all_parts(builder, snapshot):
         assert subqueries_used["similarity"] is True
         assert subqueries_used["keyword"] is True
         assert subqueries_used["full_match"] is True
-        # "author" maps to ["authors", "creator"] — both are value_vector_keys
-        assert subqueries_used["filter_value"] is True
 
     snapshot.assert_match(sql.as_string(), "build_query_all_parts")
 

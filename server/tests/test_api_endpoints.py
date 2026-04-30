@@ -527,7 +527,6 @@ async def test_search_endpoint_logic():
             full_match_score=0.6,
             partial_match_score=0.5,
             keyword_score=0.4,
-            filter_value_score=0.3,
         )
     ]
 

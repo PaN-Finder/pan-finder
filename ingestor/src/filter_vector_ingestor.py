@@ -37,8 +37,16 @@ def _split_names(value: str) -> list[str] | None:
 
     Returns None when the value represents a single person (plain name or
     "Last, First" format).  Returns a list when the value is a
-    comma-separated sequence of full names.
+    semicolon- or comma-separated sequence of full names.
+
+    Semicolons unambiguously separate full names ("Last; First" is not a
+    recognised convention), so a semicolon-containing value is always split
+    on ";" without the extra heuristics applied to commas.
     """
+    if ";" in value:
+        parts = [p.strip() for p in value.split(";") if p.strip()]
+        return parts if len(parts) > 1 else None
+
     parts = [p.strip() for p in value.split(",") if p.strip()]
     if len(parts) <= 1:
         return None

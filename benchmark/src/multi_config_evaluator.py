@@ -93,7 +93,7 @@ async def get_llm_response(prompt: str, query: str, **kwargs) -> str | None:
 
 async def process_query(
     query_obj: dict[str, Any], doi: str, builder: SearchQueryBuilder
-) -> tuple[float, float, float, float, float, float, float, float, float]:
+) -> tuple[float, float, float, float, float, float, float, float]:
     query_text = query_obj.get("query", "").strip()
     if not query_text:
         raise ValueError("Query text is empty")
@@ -134,7 +134,6 @@ async def process_query(
                 "Full Match Score",
                 "Partial Match Score",
                 "Keyword Score",
-                "Value Vector Score",
             ],
         ).astype(
             {
@@ -144,7 +143,6 @@ async def process_query(
                 "Full Match Score": float,
                 "Partial Match Score": float,
                 "Keyword Score": float,
-                "Value Vector Score": float,
             }
         )
 
@@ -168,7 +166,6 @@ async def process_query(
             full_match_score,
             partial_match_score,
             keyword_score,
-            filter_value_score,
         ) = (
             float(results[position][1]),
             float(results[position][2]),
@@ -176,12 +173,11 @@ async def process_query(
             float(results[position][4]),
             float(results[position][5]),
             float(results[position][6]),
-            float(results[position][7]),
         )
     else:
         overall = sim_score = chunk_score = full_match_score = partial_match_score = (
             keyword_score
-        ) = filter_value_score = 0.0
+        ) = 0.0
 
     logging.info(
         "Score: %.3f | Position: %d | Min: %d | Runtime: %.3fs",
@@ -200,7 +196,6 @@ async def process_query(
         full_match_score,
         partial_match_score,
         keyword_score,
-        filter_value_score,
     )
 
 
@@ -221,7 +216,6 @@ async def process_document(
             full_match_score,
             partial_match_score,
             keyword_score,
-            filter_value_score,
         ) = await process_query(query_obj, doi, builder)
         scores.append(score)
         runtimes.append(runtime)
@@ -233,7 +227,6 @@ async def process_document(
                 "full_match_score": full_match_score,
                 "partial_match_score": partial_match_score,
                 "keyword": keyword_score,
-                "filter_value_score": filter_value_score,
             }
         )
     return scores, runtimes, breakdowns
@@ -272,7 +265,6 @@ async def process_rrf_config(
         rrf_k_full_match=rrf_config.get("rrf_k_full_match", 60),
         rrf_k_partial_match=rrf_config.get("rrf_k_partial_match", 60),
         rrf_k_keyword=rrf_config.get("rrf_k_keyword", 60),
-        rrf_k_filter_value=rrf_config.get("rrf_k_filter_value", 60),
         value_vector_keys=settings.value_vector_keys,
         logger=logging.getLogger("search_query_builder"),
     )
