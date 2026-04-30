@@ -55,7 +55,7 @@ def load_datasets() -> dict[str, list[dict[str, Any]]]:
     """Load all query datasets, returning parsed JSON per file name."""
     base_dir = benchmark_dir() / "queries" / "synthetic"
     datasets: dict[str, list[dict[str, Any]]] = {}
-    for filepath in sorted(base_dir.glob("author-queries.json")):
+    for filepath in sorted(base_dir.glob("*.json")):
         datasets[filepath.name] = json.loads(filepath.read_text())
     return datasets
 
