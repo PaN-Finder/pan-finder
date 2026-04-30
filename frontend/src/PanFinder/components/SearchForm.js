@@ -177,7 +177,7 @@ function SearchForm({
         }}
       >
         <Text as="span" sx={{ color: 'inherit' }}>
-          Any feedback?
+          We need your feedback. Please share it at
         </Text>
         <Box
           as="button"
