@@ -40,7 +40,15 @@ extract_prompt = load_system_prompt(llm_model, system_prompt_version)
 
 def load_rrf_score_k_values() -> list[dict[str, Any]]:
     filepath = benchmark_dir() / "rrf_score_k_values_matrix.json"
-    return json.loads(filepath.read_text())
+    configs: list[dict[str, Any]] = json.loads(filepath.read_text())
+    disabled_configs = [
+        config.get("test_name", "unknown_test")
+        for config in configs
+        if config.get("disabled", False)
+    ]
+    if disabled_configs:
+        logging.info("Skipping disabled RRF configs: %s", ", ".join(disabled_configs))
+    return [config for config in configs if not config.get("disabled", False)]
 
 
 def load_datasets() -> dict[str, list[dict[str, Any]]]:

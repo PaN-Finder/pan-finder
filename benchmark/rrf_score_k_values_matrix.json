@@ -1,6 +1,7 @@
 [
   {
     "test_name": "MatchFocus",
+    "disabled": true,
     "rrf_k_similarity": 8,
     "rrf_k_chunk": 8,
     "rrf_k_full_match": 1,
@@ -11,6 +12,7 @@
   },
   {
     "test_name": "SimilarityFocus",
+    "disabled": true,
     "rrf_k_similarity": 1,
     "rrf_k_chunk": 1,
     "rrf_k_full_match": 6,

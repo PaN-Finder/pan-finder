@@ -222,15 +222,22 @@ def plot_average_scores_per_dataset(
         index="dataset_name", columns="test_name", values="avg_score_percent"
     )
 
-    # Plotting
-    ax = pivot_df.plot(kind="bar", figsize=(15, 8), width=0.8)
+    n_datasets = max(1, len(pivot_df.index))
+    n_configs = max(1, len(pivot_df.columns))
+    fig_width = max(12, min(18, 1.2 * n_datasets + 1.1 * n_configs))
+    fig, ax = plt.subplots(figsize=(fig_width, 8))
 
-    plt.title("Average Score (%) per Dataset Across Test Configurations")
-    plt.ylabel("Average Score (%)")
-    plt.xlabel("Dataset Name")
-    plt.xticks(rotation=45, ha="right")
-    plt.grid(axis="y", linestyle="--", alpha=0.7)
-    plt.ylim(0, 105)
+    # Plotting
+    pivot_df.plot(kind="bar", width=0.8, ax=ax)
+
+    ax.set_title("Average Score (%) per Dataset Across Test Configurations", pad=12)
+    ax.set_ylabel("Average Score (%)")
+    ax.set_xlabel("Dataset Name")
+    ax.tick_params(axis="x", rotation=35)
+    for label in ax.get_xticklabels():
+        label.set_ha("right")
+    ax.grid(axis="y", linestyle="--", alpha=0.7)
+    ax.set_ylim(0, 105)
 
     # Add individual bar labels
     for container in ax.containers:
@@ -240,29 +247,21 @@ def plot_average_scores_per_dataset(
             )
 
     handles, labels = ax.get_legend_handles_labels()
-    new_labels = []
-    for label in labels:
-        test_name = label  # The label is the test_name
-        metrics = overall_test_metrics.get(
-            test_name, {"avg_score": 0, "avg_runtime": 0}
-        )
-        avg_score_percent = metrics.get("avg_score", 0)
-        avg_runtime = metrics.get("avg_runtime", 0)
-        new_labels.append(
-            f"{test_name} (Avg: {avg_score_percent:.1f}%, Time: {avg_runtime:.3f}s)"
+
+    if handles:
+        ax.legend(
+            handles,
+            labels,
+            title="Test Configuration",
+            loc="upper left",
+            bbox_to_anchor=(1.01, 1.0),
+            ncols=1,
+            frameon=False,
         )
 
-    ax.legend(
-        handles,
-        new_labels,
-        title="Test Configuration (Overall Avg % | Avg Time)",
-        bbox_to_anchor=(1.05, 1),
-        loc="upper left",
-    )
-
-    plt.tight_layout(rect=(0.0, 0.0, 0.85, 1.0))  # Adjust rect to make space for legend
-    plt.savefig(output_path)
-    plt.close()
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=200, bbox_inches="tight", pad_inches=0.1)
+    plt.close(fig)
 
 
 def plot_score_distribution_boxplot(
@@ -705,9 +704,16 @@ def plot_overall_changes(results_dir: Path, output_path: Path):
         print("Pivoted data is empty. Cannot generate plot.")
         return
 
+    n_timestamps = max(1, len(pivot_df.index))
+    n_configs = max(1, len(pivot_df.columns))
+    fig_width = max(11, min(18, 7 + 0.35 * n_timestamps + 0.6 * n_configs))
     fig, (ax1, ax2) = plt.subplots(
-        2, 1, figsize=(18, 12), sharex=True
-    )  # Create two subplots, sharing x-axis
+        2,
+        1,
+        figsize=(fig_width, 10),
+        sharex=True,
+        gridspec_kw={"height_ratios": [1.05, 0.95]},
+    )
 
     # Plot individual test configurations on the first subplot (ax1)
     numeric_cols_to_plot = pivot_df.select_dtypes(include=np.number).columns
@@ -719,9 +725,20 @@ def plot_overall_changes(results_dir: Path, output_path: Path):
 
     ax1.set_title("Average Score (%) Over Time by Test Configuration")
     ax1.set_ylabel("Average Score (%)")
-    ax1.legend(title="Test Configuration", bbox_to_anchor=(1.05, 1), loc="upper left")
     ax1.grid(True, linestyle="--", alpha=0.7)
     ax1.set_ylim(70, 90)
+
+    handles, labels = ax1.get_legend_handles_labels()
+    if handles:
+        ax1.legend(
+            handles,
+            labels,
+            title="Test Configuration",
+            loc="upper left",
+            bbox_to_anchor=(1.01, 1.0),
+            ncols=1,
+            frameon=False,
+        )
 
     # Annotate individual test lines on ax1
     for test_name in pivot_df.columns:
@@ -782,20 +799,17 @@ def plot_overall_changes(results_dir: Path, output_path: Path):
                 )
 
     # Manage X-axis ticks and labels for the shared x-axis (applies to ax2, which is bottom)
-    num_timestamps = len(pivot_df.index)
-    if num_timestamps > 0:
-        if num_timestamps > 15:
-            step = max(1, num_timestamps // 15)
+    if n_timestamps > 0:
+        if n_timestamps > 15:
+            step = max(1, n_timestamps // 15)
             # Set ticks for ax2, ax1 will share them
-            ax2.set_xticks(np.arange(0, num_timestamps, step))
+            ax2.set_xticks(np.arange(0, n_timestamps, step))
             ax2.set_xticklabels(pivot_df.index[::step], rotation=45, ha="right")
         else:
-            ax2.set_xticks(np.arange(0, num_timestamps))
+            ax2.set_xticks(np.arange(0, n_timestamps))
             ax2.set_xticklabels(pivot_df.index, rotation=45, ha="right")
 
-    # Adjust layout to make space for the legend and titles
-    plt.tight_layout(rect=(0.0, 0.0, 0.85, 1.0))
-
-    plt.savefig(output_path)
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=200, bbox_inches="tight", pad_inches=0.1)
     plt.close(fig)
     print(f"Overall changes plot saved to {output_path}")
