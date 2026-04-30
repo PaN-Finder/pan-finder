@@ -14599,60 +14599,6 @@
         "max_tokens": 500
       }
     },
-    "3842f84cb7d8e3c1d790ffe0576296d2f5b82ac5b02a1198329234962a69c0b2": {
-      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"team member\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"Luca Caricchi\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 66, \"prompt_tokens\": 4055, \"total_tokens\": 4121}, \"created_at\": 1777390854.637224}",
-      "metadata": {
-        "llm_model": "gpt-4.1-mini",
-        "system_prompt_version": "1_0_10.md",
-        "temperature": 0,
-        "max_tokens": 500
-      }
-    },
-    "419548dea8a30a9e4734cd56eb8cfee29bdd8a119774b6f91521a936dd69b974": {
-      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"team member\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"Caricchi, Luca\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 66, \"prompt_tokens\": 4056, \"total_tokens\": 4122}, \"created_at\": 1777390857.2342541}",
-      "metadata": {
-        "llm_model": "gpt-4.1-mini",
-        "system_prompt_version": "1_0_10.md",
-        "temperature": 0,
-        "max_tokens": 500
-      }
-    },
-    "c2d8bcd6ee5ddf45ac3dda06f1e6a428b2001cb207ca25a1452515c273a1e94e": {
-      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"team member\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"L. Caricchi\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 66, \"prompt_tokens\": 4056, \"total_tokens\": 4122}, \"created_at\": 1777390859.955523}",
-      "metadata": {
-        "llm_model": "gpt-4.1-mini",
-        "system_prompt_version": "1_0_10.md",
-        "temperature": 0,
-        "max_tokens": 500
-      }
-    },
-    "7427aeead4fbf099fe8ba78af5c352fae28647041346acb490c19251fa721a06": {
-      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"team member\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"Caricchi L.\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 65, \"prompt_tokens\": 4056, \"total_tokens\": 4121}, \"created_at\": 1777390863.0595598}",
-      "metadata": {
-        "llm_model": "gpt-4.1-mini",
-        "system_prompt_version": "1_0_10.md",
-        "temperature": 0,
-        "max_tokens": 500
-      }
-    },
-    "a2ae96743ce0b388adeac6e1aeb1f43fd1a52cc921e8dd1d0e0002c92a606bb5": {
-      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"team member\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"Luca C.\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 64, \"prompt_tokens\": 4054, \"total_tokens\": 4118}, \"created_at\": 1777390868.434561}",
-      "metadata": {
-        "llm_model": "gpt-4.1-mini",
-        "system_prompt_version": "1_0_10.md",
-        "temperature": 0,
-        "max_tokens": 500
-      }
-    },
-    "2db05d67bb11855e1053cc7d08fe078cb38a7be4190a65dc9eda7393968717dd": {
-      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"team member\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"Luca Caricchi\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 66, \"prompt_tokens\": 4052, \"total_tokens\": 4118}, \"created_at\": 1777390871.114005}",
-      "metadata": {
-        "llm_model": "gpt-4.1-mini",
-        "system_prompt_version": "1_0_10.md",
-        "temperature": 0,
-        "max_tokens": 500
-      }
-    },
     "69b99bc146be14bb002386eef38365c74f34cf3aa2c60aa6aaa2a7e9ae5dc848": {
       "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"author\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"Else Marie Friis\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 64, \"prompt_tokens\": 4054, \"total_tokens\": 4118}, \"created_at\": 1777390873.753293}",
       "metadata": {
@@ -16626,6 +16572,60 @@
     },
     "feee25e416ec451c174ee22cabc1b38765630de10c93dbb32b12107ae84fd2b6": {
       "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"x-shutter time\\\",\\n        \\\"operator\\\": \\\"=\\\",\\n        \\\"value\\\": 12000,\\n        \\\"unit\\\": \\\"\\u00b5s\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 71, \"prompt_tokens\": 4060, \"total_tokens\": 4131}, \"created_at\": 1777391607.307928}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_10.md",
+        "temperature": 0,
+        "max_tokens": 500
+      }
+    },
+    "e0db3779d42954f7fc389a759345d9cc40d4a47eadcccd02b2358dc3a6259fa2": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"creator\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"Luca Caricchi\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 65, \"prompt_tokens\": 4054, \"total_tokens\": 4119}, \"created_at\": 1777559152.010719}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_10.md",
+        "temperature": 0,
+        "max_tokens": 500
+      }
+    },
+    "fddb002fafda4b8bfcab2c2a48760ff545488c2715b095824afe91c543e668d3": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"creator\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"Caricchi, Luca\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 65, \"prompt_tokens\": 4055, \"total_tokens\": 4120}, \"created_at\": 1777559154.832196}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_10.md",
+        "temperature": 0,
+        "max_tokens": 500
+      }
+    },
+    "0c3e4a39f63ad8e9d4a8c47137e5e2a9d8c60e06241b79e55393c0288a2e6186": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"creator\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"L. Caricchi\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 65, \"prompt_tokens\": 4055, \"total_tokens\": 4120}, \"created_at\": 1777559157.2257879}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_10.md",
+        "temperature": 0,
+        "max_tokens": 500
+      }
+    },
+    "194a8000ae29b68c6624d6149a5d6b2b6e5525bc3954aedbc1f40c21f0c7c47e": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"creator\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"Caricchi L.\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 64, \"prompt_tokens\": 4055, \"total_tokens\": 4119}, \"created_at\": 1777559159.479084}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_10.md",
+        "temperature": 0,
+        "max_tokens": 500
+      }
+    },
+    "d4ab5d93418e45b62d80e156051149e4c3d4fad3364093e40f32a0fd62e67bfe": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"creator\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"Luca C.\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 63, \"prompt_tokens\": 4053, \"total_tokens\": 4116}, \"created_at\": 1777559161.940632}",
+      "metadata": {
+        "llm_model": "gpt-4.1-mini",
+        "system_prompt_version": "1_0_10.md",
+        "temperature": 0,
+        "max_tokens": 500
+      }
+    },
+    "9be9566ef33b2f455d2514a8c753d0f1027e2c3568cf25a146ba46a9ec950b96": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"creator\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"Luca Caricchi\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 65, \"prompt_tokens\": 4051, \"total_tokens\": 4116}, \"created_at\": 1777559164.190101}",
       "metadata": {
         "llm_model": "gpt-4.1-mini",
         "system_prompt_version": "1_0_10.md",
