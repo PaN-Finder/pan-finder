@@ -84,7 +84,6 @@ class SearchQueryBuilder:
         results_set_size: int = _RESULTS_SET_SIZE,
         value_vector_keys: tuple[str, ...] = (),
         logger: Logger | None = None,
-        capture_similar_names: bool = False,
     ):
         self.sentence_transformer = sentence_transformer
         self.pool = pool
@@ -97,16 +96,6 @@ class SearchQueryBuilder:
         self.results_set_size = results_set_size
         self.value_vector_keys = value_vector_keys
         self._logger = logger or getLogger(__name__)
-        self._capture_similar_names = capture_similar_names
-        self._similar_names = {}  # For debugging purposes, stores similar names found during query building
-
-    @property
-    def similar_names(self) -> dict[str, list[dict[str, Any]]]:
-        """
-        Returns the dictionary of similar names found during query building.
-        Only populated if capture_similar_names was set to True in the constructor.
-        """
-        return self._similar_names
 
     # --- Public Methods ---
     def build_query(self, params: dict[str, Any]) -> tuple[Composed, SubqueriesUsed]:
@@ -124,9 +113,6 @@ class SearchQueryBuilder:
         """
         if not isinstance(params, dict):
             raise ValueError("Input 'params' must be a dictionary.")
-
-        if self._capture_similar_names:
-            self._similar_names.clear()  # Clear previous similar names if capturing
 
         self._logger.info(f"Building query with params: {params}")
         # 1. Preprocess: Update filter names with similar ones
@@ -560,9 +546,6 @@ class SearchQueryBuilder:
             self._logger.info(
                 f"Finding similar names for '{raw_name}'. Found: {[row['name'] for row in result[:5]]}"
             )
-            if self._capture_similar_names:
-                self._similar_names[raw_name] = result
-
             if len(result) == 0:
                 return [raw_name]
 
