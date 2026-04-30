@@ -71,7 +71,7 @@ class Settings:
         self.rrf_k_full_match = int(os.getenv("RRF_K_FULL_MATCH", "6"))
         self.rrf_k_partial_match = int(os.getenv("RRF_K_PARTIAL_MATCH", "6"))
         self.rrf_k_keyword = int(os.getenv("RRF_K_KEYWORD", "10"))
-        self.rrf_k_value_vector = int(os.getenv("RRF_K_VALUE_VECTOR", "6"))
+        self.rrf_k_filter_value = int(os.getenv("RRF_K_FILTER_VALUE", "6"))
         self.value_vector_keys = self._parse_csv_env(
             "VALUE_VECTOR_KEYS", DEFAULT_VALUE_VECTOR_KEYS
         )

@@ -26,7 +26,7 @@ with patch("src.config.get_settings") as mock_get_settings:
         rrf_k_full_match=6,
         rrf_k_partial_match=6,
         rrf_k_keyword=10,
-        rrf_k_value_vector=6,
+        rrf_k_filter_value=6,
     )
     mock_get_settings.return_value = _mock_settings
 
@@ -44,7 +44,7 @@ RRF_K = {
     "full_match": _mock_settings.rrf_k_full_match,
     "partial_match": _mock_settings.rrf_k_partial_match,
     "keyword": _mock_settings.rrf_k_keyword,
-    "value_vector": _mock_settings.rrf_k_value_vector,
+    "filter_value": _mock_settings.rrf_k_filter_value,
 }
 
 MAX = {k: 1 / (1 + v) for k, v in RRF_K.items()}
@@ -57,7 +57,7 @@ def _all_false() -> SubqueriesUsed:
         "full_match": False,
         "partial_match": False,
         "keyword": False,
-        "value_vector": False,
+        "filter_value": False,
     }
 
 
@@ -77,7 +77,7 @@ def _make_result(**kwargs) -> EnhancedSearchResult:
         "full_match_score": 0.0,
         "partial_match_score": 0.0,
         "keyword_score": 0.0,
-        "value_vector_score": 0.0,
+        "filter_value_score": 0.0,
     }
     defaults.update(kwargs)
     return EnhancedSearchResult(**defaults)
@@ -104,17 +104,17 @@ def test_overall_score_max_keyword_only():
     assert Scoring.overall_score_max(su) == pytest.approx(MAX["keyword"])
 
 
-def test_overall_score_max_filter_without_value_vector():
-    """Filter active but value_vector inactive → value_vector max NOT counted."""
+def test_overall_score_max_filter_without_filter_value():
+    """Filter active but filter_value inactive → filter_value max NOT counted."""
     su = _subqueries_used(full_match=True, partial_match=True)
     expected = MAX["full_match"] + MAX["partial_match"]
     assert Scoring.overall_score_max(su) == pytest.approx(expected)
 
 
-def test_overall_score_max_value_vector_only():
-    """value_vector can be active independently of filter flags."""
-    su = _subqueries_used(value_vector=True)
-    assert Scoring.overall_score_max(su) == pytest.approx(MAX["value_vector"])
+def test_overall_score_max_filter_value_only():
+    """filter_value can be active independently of filter flags."""
+    su = _subqueries_used(filter_value=True)
+    assert Scoring.overall_score_max(su) == pytest.approx(MAX["filter_value"])
 
 
 def test_overall_score_max_all_true():
@@ -126,7 +126,7 @@ def test_overall_score_max_all_true():
             "full_match": True,
             "partial_match": True,
             "keyword": True,
-            "value_vector": True,
+            "filter_value": True,
         },
     )
     expected = sum(MAX.values())
@@ -168,7 +168,7 @@ def test_normalize_scores_all_false_zeros_everything():
         keyword_score=0.1,
         full_match_score=0.1,
         partial_match_score=0.1,
-        value_vector_score=0.1,
+        filter_value_score=0.1,
     )
     Scoring.normalize_scores([result], _all_false())
     assert result.similarity_score == 0.0
@@ -176,7 +176,7 @@ def test_normalize_scores_all_false_zeros_everything():
     assert result.keyword_score == 0.0
     assert result.full_match_score == 0.0
     assert result.partial_match_score == 0.0
-    assert result.value_vector_score == 0.0
+    assert result.filter_value_score == 0.0
     assert result.overall_score == 0.0
 
 
@@ -200,58 +200,58 @@ def test_normalize_scores_similarity_only():
     assert result.keyword_score == 0.0
     assert result.full_match_score == 0.0
     assert result.partial_match_score == 0.0
-    assert result.value_vector_score == 0.0
+    assert result.filter_value_score == 0.0
     assert result.overall_score == pytest.approx(overall_raw / overall_max)
 
 
-def test_normalize_scores_filter_active_value_vector_inactive():
-    """full_match/partial_match normalized; value_vector zeroed when not in subqueries."""
+def test_normalize_scores_filter_active_filter_value_inactive():
+    """full_match/partial_match normalized; filter_value zeroed when not in subqueries."""
     su = _subqueries_used(full_match=True, partial_match=True)
     raw_full = MAX["full_match"]
     raw_partial = MAX["partial_match"] / 2
-    raw_vv = 0.99  # Non-zero in raw data — must be zeroed
+    raw_filter_value = 0.99  # Non-zero in raw data — must be zeroed
 
     result = _make_result(
         overall_score=raw_full + raw_partial,
         full_match_score=raw_full,
         partial_match_score=raw_partial,
-        value_vector_score=raw_vv,
+        filter_value_score=raw_filter_value,
     )
     Scoring.normalize_scores([result], su)
 
     assert result.full_match_score == pytest.approx(1.0)
     assert result.partial_match_score == pytest.approx(0.5)
-    assert result.value_vector_score == 0.0  # zeroed because value_vector=False
+    assert result.filter_value_score == 0.0  # zeroed because filter_value=False
 
 
-def test_normalize_scores_value_vector_active():
-    """value_vector score is normalized when the flag is True."""
-    su = _subqueries_used(value_vector=True)
-    raw_vv = MAX["value_vector"]  # at max → normalized to 1.0
+def test_normalize_scores_filter_value_active():
+    """filter_value score is normalized when the flag is True."""
+    su = _subqueries_used(filter_value=True)
+    raw_filter_value = MAX["filter_value"]  # at max → normalized to 1.0
 
     result = _make_result(
-        overall_score=raw_vv,
-        value_vector_score=raw_vv,
+        overall_score=raw_filter_value,
+        filter_value_score=raw_filter_value,
     )
     Scoring.normalize_scores([result], su)
 
-    assert result.value_vector_score == pytest.approx(1.0)
+    assert result.filter_value_score == pytest.approx(1.0)
     assert result.overall_score == pytest.approx(1.0)
 
 
-def test_normalize_scores_value_vector_active_filter_inactive():
-    """value_vector normalized independently from filter flags."""
-    su = _subqueries_used(value_vector=True)
-    raw_vv = MAX["value_vector"] / 2
+def test_normalize_scores_filter_value_active_filter_inactive():
+    """filter_value is normalized independently from filter flags."""
+    su = _subqueries_used(filter_value=True)
+    raw_filter_value = MAX["filter_value"] / 2
 
     result = _make_result(
-        overall_score=raw_vv,
-        value_vector_score=raw_vv,
+        overall_score=raw_filter_value,
+        filter_value_score=raw_filter_value,
         full_match_score=0.5,  # should be zeroed
         partial_match_score=0.5,  # should be zeroed
     )
     Scoring.normalize_scores([result], su)
 
-    assert result.value_vector_score == pytest.approx(0.5)
+    assert result.filter_value_score == pytest.approx(0.5)
     assert result.full_match_score == 0.0
     assert result.partial_match_score == 0.0

@@ -1,6 +1,7 @@
 import csv
 import json
 import logging
+import os
 import time
 from datetime import datetime
 from typing import Any
@@ -101,7 +102,8 @@ async def process_query(
     logging.info("Query: %s", query_text)
 
     data = json.loads(response)
-    query = builder.build_query(data)
+    query, subqueries_used = builder.build_query(data)
+    logging.debug("Activated subqueries: %s", subqueries_used)
     try:
         logging.debug("SQL Query: %s", query.as_string())
     except Exception:
@@ -158,7 +160,7 @@ async def process_query(
             full_match_score,
             partial_match_score,
             keyword_score,
-            value_vector_score,
+            filter_value_score,
         ) = (
             float(results[position][1]),
             float(results[position][2]),
@@ -171,7 +173,7 @@ async def process_query(
     else:
         overall = sim_score = chunk_score = full_match_score = partial_match_score = (
             keyword_score
-        ) = value_vector_score = 0.0
+        ) = filter_value_score = 0.0
 
     logging.info(
         "Score: %.3f | Position: %d | Min: %d | Runtime: %.3fs",
@@ -190,7 +192,7 @@ async def process_query(
         full_match_score,
         partial_match_score,
         keyword_score,
-        value_vector_score,
+        filter_value_score,
     )
 
 
@@ -211,7 +213,7 @@ async def process_document(
             full_match_score,
             partial_match_score,
             keyword_score,
-            value_vector_score,
+            filter_value_score,
         ) = await process_query(query_obj, doi, builder)
         scores.append(score)
         runtimes.append(runtime)
@@ -223,7 +225,7 @@ async def process_document(
                 "full_match_score": full_match_score,
                 "partial_match_score": partial_match_score,
                 "keyword": keyword_score,
-                "value_vector_score": value_vector_score,
+                "filter_value_score": filter_value_score,
             }
         )
     return scores, runtimes, breakdowns
@@ -262,7 +264,7 @@ async def process_rrf_config(
         rrf_k_full_match=rrf_config.get("rrf_k_full_match", 60),
         rrf_k_partial_match=rrf_config.get("rrf_k_partial_match", 60),
         rrf_k_keyword=rrf_config.get("rrf_k_keyword", 60),
-        rrf_k_value_vector=rrf_config.get("rrf_k_value_vector", 60),
+        rrf_k_filter_value=rrf_config.get("rrf_k_filter_value", 60),
         logger=logging.getLogger("search_query_builder"),
     )
 
@@ -312,8 +314,9 @@ async def process_rrf_config(
 
 async def main() -> None:
     # Basic logging setup for the benchmark script
+    log_level = os.getenv("LOG_LEVEL", "INFO").upper()
     logging.basicConfig(
-        level=logging.INFO,
+        level=getattr(logging, log_level, logging.INFO),
         format="%(asctime)s | %(levelname)s | %(message)s",
         datefmt="%H:%M:%S",
     )

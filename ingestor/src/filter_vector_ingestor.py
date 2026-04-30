@@ -29,17 +29,6 @@ from typing import Any
 
 from sentence_transformers import SentenceTransformer
 
-AUTHOR_KEYS = (
-    "authors",
-    "creator",
-    "scientificMetadata.author",
-    "owner",
-    "metadata.authors.name",
-    "principalInvestigator",
-    "investigator",
-    "scientificMetadata.measurement.team",
-)
-
 BATCH_SIZE = 512
 
 
@@ -77,6 +66,7 @@ class FilterVectorIngestor:
         settings,
     ) -> None:
         self.db_conn_factory = db_conn_factory
+        self.value_vector_keys = settings.value_vector_keys
         model_path = Path(settings.embedding_model_path)
         if not model_path.exists():
             self.logger.warning("Embedding model path does not exist: %s", model_path)
@@ -98,7 +88,7 @@ class FilterVectorIngestor:
               AND value != ''
               AND value_vector IS NULL
             """,
-            (list(AUTHOR_KEYS),),
+            (list(self.value_vector_keys),),
         )
         return cursor.fetchall()
 
@@ -205,7 +195,7 @@ class FilterVectorIngestor:
                       AND type != 'DERIVED'::filter_type
                       AND value_vector IS NOT NULL
                     """,
-                    (list(AUTHOR_KEYS),),
+                    (list(self.value_vector_keys),),
                 )
                 self.logger.info("Cleared value_vector on %d rows.", cursor.rowcount)
 
@@ -217,7 +207,7 @@ class FilterVectorIngestor:
                       AND type = 'DERIVED'::filter_type
                       AND value_vector IS NOT NULL
                     """,
-                    (list(AUTHOR_KEYS),),
+                    (list(self.value_vector_keys),),
                 )
                 self.logger.info("Deleted %d derived rows.", cursor.rowcount)
 

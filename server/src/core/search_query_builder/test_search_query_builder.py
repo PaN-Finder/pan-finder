@@ -853,7 +853,7 @@ def test_build_query_intention_only(builder, snapshot):
         assert subqueries_used["keyword"] is False
         assert subqueries_used["full_match"] is False
         assert subqueries_used["partial_match"] is False
-        assert subqueries_used["value_vector"] is False
+        assert subqueries_used["filter_value"] is False
         snapshot.assert_match(sql.as_string(), "build_query_intention_only")
 
 
@@ -863,7 +863,7 @@ def test_build_query_intention_keywords(builder, snapshot):
     with patch.object(builder, "_update_filter_names", side_effect=lambda d: d):
         sql, subqueries_used = builder.build_query(data)
         assert subqueries_used["keyword"] is True
-        assert subqueries_used["value_vector"] is False
+        assert subqueries_used["filter_value"] is False
         snapshot.assert_match(sql.as_string(), "build_query_intention_keywords")
 
 
@@ -969,7 +969,7 @@ def test_build_query_all_parts(builder, snapshot):
         assert subqueries_used["keyword"] is True
         assert subqueries_used["full_match"] is True
         # "author" maps to ["authors", "creator"] — both are value_vector_keys
-        assert subqueries_used["value_vector"] is True
+        assert subqueries_used["filter_value"] is True
 
     snapshot.assert_match(sql.as_string(), "build_query_all_parts")
 

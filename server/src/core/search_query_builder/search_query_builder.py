@@ -24,7 +24,7 @@ class SearchResult(TypedDict):
     full_match_score: float
     partial_match_score: float
     keyword_score: float
-    value_vector_score: float
+    filter_value_score: float
 
 
 class SubqueriesUsed(TypedDict):
@@ -38,7 +38,7 @@ class SubqueriesUsed(TypedDict):
     full_match: bool
     partial_match: bool
     keyword: bool
-    value_vector: bool
+    filter_value: bool
 
 
 class SearchQueryBuilder:
@@ -65,7 +65,7 @@ class SearchQueryBuilder:
     # Similarity threshold for document chunks vs intention
     _SIMILARITY_THRESHOLD_CHUNKS: float = 0.5
     # Similarity threshold for filter value vector similarity search
-    _SIMILARITY_THRESHOLD_VALUE_VECTOR: float = 0.35
+    _SIMILARITY_THRESHOLD_FILTER_VALUE: float = 0.35
     # Final result limit
     _RESULTS_SET_SIZE: int = 20
     # Default RRF K value (can be used as a common default)
@@ -80,7 +80,7 @@ class SearchQueryBuilder:
         rrf_k_full_match: int = _DEFAULT_RRF_K,
         rrf_k_partial_match: int = _DEFAULT_RRF_K,
         rrf_k_keyword: int = _DEFAULT_RRF_K,
-        rrf_k_value_vector: int = _DEFAULT_RRF_K,
+        rrf_k_filter_value: int = _DEFAULT_RRF_K,
         results_set_size: int = _RESULTS_SET_SIZE,
         value_vector_keys: tuple[str, ...] = (),
         logger: Logger | None = None,
@@ -93,7 +93,7 @@ class SearchQueryBuilder:
         self.rrf_k_full_match = rrf_k_full_match
         self.rrf_k_partial_match = rrf_k_partial_match
         self.rrf_k_keyword = rrf_k_keyword
-        self.rrf_k_value_vector = rrf_k_value_vector
+        self.rrf_k_filter_value = rrf_k_filter_value
         self.results_set_size = results_set_size
         self.value_vector_keys = value_vector_keys
         self._logger = logger or getLogger(__name__)
@@ -151,11 +151,11 @@ class SearchQueryBuilder:
         filter_subquery, filter_used = self._build_filter_subquery(
             normalized_params.get("filters")
         )
-        vector_values = self._extract_value_vector_values(
+        filter_value_inputs = self._extract_filter_value_inputs(
             normalized_params.get("filters")
         )
-        value_vector_subquery, value_vector_used = self._build_value_vector_subquery(
-            vector_values
+        filter_value_subquery, filter_value_used = self._build_filter_value_subquery(
+            filter_value_inputs
         )
 
         subqueries_used: SubqueriesUsed = {
@@ -164,7 +164,7 @@ class SearchQueryBuilder:
             "keyword": bool(keywords_tsquery_text),
             "full_match": filter_used,
             "partial_match": filter_used,
-            "value_vector": value_vector_used,
+            "filter_value": filter_value_used,
         }
 
         # 3. Assemble the final query with composables and sanitized values
@@ -178,14 +178,14 @@ class SearchQueryBuilder:
                 rrf_score(full_match_rank, {rrf_k_full_match}) +
                 rrf_score(partial_match_rank, {rrf_k_partial_match}) +
                 rrf_score(keyword_rank, {rrf_k_keyword}) +
-                rrf_score(value_vector_rank, {rrf_k_value_vector})
+                rrf_score(filter_value_rank, {rrf_k_filter_value})
             ) AS overall_score,
             sum(rrf_score(similarity_rank, {rrf_k_similarity})) AS similarity_score,
             sum(rrf_score(chunk_similarity_rank, {rrf_k_chunk})) AS chunk_similarity_score,
             sum(rrf_score(full_match_rank, {rrf_k_full_match})) AS full_match_score,
             sum(rrf_score(partial_match_rank, {rrf_k_partial_match})) AS partial_match_score,
             sum(rrf_score(keyword_rank, {rrf_k_keyword})) AS keyword_score,
-            sum(rrf_score(value_vector_rank, {rrf_k_value_vector})) AS value_vector_score
+            sum(rrf_score(filter_value_rank, {rrf_k_filter_value})) AS filter_value_score
         FROM (
             -- Subquery 1: Document Similarity (title + summary (generated))
             (
@@ -211,7 +211,7 @@ class SearchQueryBuilder:
                     0 AS full_match_rank,
                     0 AS partial_match_rank,
                     DENSE_RANK() OVER (ORDER BY ts_rank_cd(title_text_search_vector, to_tsquery('english', {keywords_tsquery_text})) DESC) AS keyword_rank,
-                    0 AS value_vector_rank
+                    0 AS filter_value_rank
                 FROM document d
                 WHERE
                     {keywords_tsquery_text} != '' -- Avoid error if keywords are empty
@@ -222,7 +222,7 @@ class SearchQueryBuilder:
             UNION ALL
             -- Subquery 5: Filter Value Similarity (value vector search)
             (
-                {value_vector_subquery}
+                {filter_value_subquery}
             )
         ) searches
         WHERE searches.doi IS NOT NULL -- Exclude potential NULL DOIs from empty subqueries
@@ -231,7 +231,7 @@ class SearchQueryBuilder:
             overall_score DESC,
             full_match_score DESC,
             partial_match_score DESC,
-            value_vector_score DESC,
+            filter_value_score DESC,
             similarity_score DESC,
             chunk_similarity_score DESC,
             keyword_score DESC
@@ -243,11 +243,11 @@ class SearchQueryBuilder:
             rrf_k_full_match=self.rrf_k_full_match,
             rrf_k_partial_match=self.rrf_k_partial_match,
             rrf_k_keyword=self.rrf_k_keyword,
-            rrf_k_value_vector=self.rrf_k_value_vector,
+            rrf_k_filter_value=self.rrf_k_filter_value,
             doc_similarity_subquery=doc_similarity_subquery,
             chunk_similarity_subquery=chunk_similarity_subquery,
             filter_subquery=filter_subquery,
-            value_vector_subquery=value_vector_subquery,
+            filter_value_subquery=filter_value_subquery,
             keywords_tsquery_text=keywords_tsquery_text,
             results_set_size=self.results_set_size,
         )
@@ -279,7 +279,7 @@ class SearchQueryBuilder:
                     0 AS full_match_rank,
                     0 AS partial_match_rank,
                     0 AS keyword_rank,
-                    0 AS value_vector_rank
+                    0 AS filter_value_rank
                 FROM document d
                 WHERE
                     d.title_summary_vector <=> {intention_vector}::vector < {_SIMILARITY_THRESHOLD_DOCS}"""
@@ -333,7 +333,7 @@ class SearchQueryBuilder:
                     0 AS full_match_rank,
                     0 AS partial_match_rank,
                     0 AS keyword_rank,
-                    0 AS value_vector_rank
+                    0 AS filter_value_rank
                 FROM RankedChunks rc
                 WHERE
                     rc.rn_within_doi = 1        -- Keep only the single best chunk per DOI
@@ -344,7 +344,7 @@ class SearchQueryBuilder:
             _SIMILARITY_THRESHOLD_CHUNKS=self._SIMILARITY_THRESHOLD_CHUNKS,
         )
 
-    def _extract_value_vector_values(self, filters: dict | None) -> list[str]:
+    def _extract_filter_value_inputs(self, filters: dict | None) -> list[str]:
         """
         Recursively scans the filter tree and collects string values from conditions
         whose name is in value_vector_keys and whose operator is a
@@ -358,7 +358,7 @@ class SearchQueryBuilder:
 
         if "logic" in filters and "conditions" in filters:
             for condition in filters.get("conditions", []):
-                result.extend(self._extract_value_vector_values(condition))
+                result.extend(self._extract_filter_value_inputs(condition))
             return result
 
         name_list = filters.get("name")
@@ -379,8 +379,8 @@ class SearchQueryBuilder:
 
         return result
 
-    def _build_value_vector_subquery(
-        self, vector_values: list[str]
+    def _build_filter_value_subquery(
+        self, filter_value_inputs: list[str]
     ) -> tuple[Composed | SQL, bool]:
         """
         Builds the subquery for value vector similarity search.
@@ -390,21 +390,21 @@ class SearchQueryBuilder:
         the best-matching row wins.
 
         Args:
-            vector_values: Pre-extracted string values from vector-key filter
-                           conditions (from _extract_value_vector_values).
+            filter_value_inputs: Pre-extracted string values from vector-key filter
+                conditions (from _extract_filter_value_inputs).
 
         Returns:
             A tuple of (subquery SQL, activated). activated is True only when
             at least one vector value was provided and the subquery will produce
             real rows.
         """
-        if not vector_values:
+        if not filter_value_inputs:
             return self._get_empty_subquery(), False
 
         # Encode all extracted values and average their vectors as the query vector
         # encode() returns a 2-D array (n, dims); mean over axis=0 gives (dims,)
-        embeddings = self.sentence_transformer.encode(vector_values)
-        value_vector = embeddings.mean(axis=0).tolist()
+        embeddings = self.sentence_transformer.encode(filter_value_inputs)
+        filter_value_query_vector = embeddings.mean(axis=0).tolist()
 
         vector_keys_sql = SQL(", ").join(Literal(k) for k in self.value_vector_keys)
 
@@ -417,20 +417,20 @@ class SearchQueryBuilder:
                     0 AS partial_match_rank,
                     0 AS keyword_rank,
                     DENSE_RANK() OVER (
-                        ORDER BY MIN(f.value_vector <=> {value_vector}::vector) ASC
-                    ) AS value_vector_rank
+                        ORDER BY MIN(f.value_vector <=> {filter_value_query_vector}::vector) ASC
+                    ) AS filter_value_rank
                 FROM filter f
                 JOIN document d ON d.id = f.document_id
                 WHERE f.key IN ({vector_keys_sql})
                     AND f.value_vector IS NOT NULL
-                    AND f.value_vector <=> {value_vector}::vector < {threshold}
+                    AND f.value_vector <=> {filter_value_query_vector}::vector < {threshold}
                 GROUP BY d.doi
                 -- NO ORDER BY here, as we will use the rank to calculate the score
                 -- NO LIMIT here: we want all DOIs with a matching filter value"""
         ).format(
-            value_vector=value_vector,
+            filter_value_query_vector=filter_value_query_vector,
             vector_keys_sql=vector_keys_sql,
-            threshold=self._SIMILARITY_THRESHOLD_VALUE_VECTOR,
+            threshold=self._SIMILARITY_THRESHOLD_FILTER_VALUE,
         ), True
 
     # --- Private Helper Methods ---
@@ -751,7 +751,7 @@ class SearchQueryBuilder:
                 fl.full_match_score AS full_match_rank, -- Treated as 1 (match) or 0 (no match); downstream scoring handles this.
                 DENSE_RANK() OVER (ORDER BY fl.partial_match_count DESC) AS partial_match_rank,
                 0 AS keyword_rank,
-                0 AS value_vector_rank
+                0 AS filter_value_rank
             FROM FilterLogic fl
             JOIN document d ON d.id = fl.document_id
             WHERE partial_match_count > 0 -- Ensures only documents that truly matched (score > 0) are returned
@@ -784,7 +784,7 @@ class SearchQueryBuilder:
                     0 AS full_match_rank,
                     0 AS partial_match_rank,
                     0 AS keyword_rank,
-                    0 AS value_vector_rank
+                    0 AS filter_value_rank
                 WHERE FALSE -- Ensure this returns no rows
                 LIMIT 0"""
         )

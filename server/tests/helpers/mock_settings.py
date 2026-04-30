@@ -36,7 +36,7 @@ class MockSettings:
     rrf_k_full_match = 6
     rrf_k_partial_match = 6
     rrf_k_keyword = 10
-    rrf_k_value_vector = 6
+    rrf_k_filter_value = 6
 
     def __init__(self, enable_turnstile=False):
         """Initialize with configurable Turnstile setting."""

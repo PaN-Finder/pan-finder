@@ -18,7 +18,7 @@ class Scoring:
     full_match_score_max = 1 / (1 + settings.rrf_k_full_match)
     partial_match_score_max = 1 / (1 + settings.rrf_k_partial_match)
     keyword_score_max = 1 / (1 + settings.rrf_k_keyword)
-    value_vector_score_max = 1 / (1 + settings.rrf_k_value_vector)
+    filter_value_score_max = 1 / (1 + settings.rrf_k_filter_value)
 
     @staticmethod
     def overall_score_max(subqueries_used: SubqueriesUsed) -> float:
@@ -33,8 +33,8 @@ class Scoring:
             total_max_score += Scoring.full_match_score_max
         if subqueries_used["partial_match"]:
             total_max_score += Scoring.partial_match_score_max
-        if subqueries_used["value_vector"]:
-            total_max_score += Scoring.value_vector_score_max
+        if subqueries_used["filter_value"]:
+            total_max_score += Scoring.filter_value_score_max
         return total_max_score
 
     @staticmethod
@@ -51,14 +51,14 @@ class Scoring:
         enabled = Scoring.components_enabled(subqueries_used)
 
         logger.debug(
-            "Normalizing scores | enabled_components=%s | similarity_max=%.6f | chunk_similarity_max=%.6f | keyword_max=%.6f | full_match_max=%.6f | partial_match_max=%.6f | value_vector_max=%.6f | overall_max=%.6f | results_count=%d",
+            "Normalizing scores | enabled_components=%s | similarity_max=%.6f | chunk_similarity_max=%.6f | keyword_max=%.6f | full_match_max=%.6f | partial_match_max=%.6f | filter_value_max=%.6f | overall_max=%.6f | results_count=%d",
             enabled,
             Scoring.similarity_score_max,
             Scoring.chunk_similarity_score_max,
             Scoring.keyword_score_max,
             Scoring.full_match_score_max,
             Scoring.partial_match_score_max,
-            Scoring.value_vector_score_max,
+            Scoring.filter_value_score_max,
             Scoring.overall_score_max(subqueries_used),
             len(results),
         )
@@ -98,12 +98,12 @@ class Scoring:
                 result.full_match_score = 0.0
                 result.partial_match_score = 0.0
 
-            if enabled["value_vector"]:
-                result.value_vector_score = safe_div(
-                    result.value_vector_score, Scoring.value_vector_score_max
+            if enabled["filter_value"]:
+                result.filter_value_score = safe_div(
+                    result.filter_value_score, Scoring.filter_value_score_max
                 )
             else:
-                result.value_vector_score = 0.0
+                result.filter_value_score = 0.0
 
             overall_max = Scoring.overall_score_max(subqueries_used)
             result.overall_score = (
