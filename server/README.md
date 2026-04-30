@@ -53,10 +53,11 @@ Authentication & Security:
 
 Common options:
 - `EMBEDDING_MODEL_PATH` (default `/code/models/all-MiniLM-L12-v2`)
+- `VALUE_VECTOR_KEYS` (optional comma-separated list of filter keys eligible for value-vector semantic matching and ingestion)
 - `ALLOWED_ORIGINS` (default `*`), `API_HOST` (default `0.0.0.0`), `API_PORT` (default `8080`)
 - `AZURE_OPENAI_API_VERSION` (only used when `LLM_PROVIDER=azure`)
 - DB pool: `DB_POOL_MIN_SIZE`, `DB_POOL_MAX_SIZE`, `DB_CONNECTION_TIMEOUT`, `DB_MAX_IDLE`, `DB_MAX_LIFETIME`
-- RRF: `RRF_K_SIMILARITY`, `RRF_K_CHUNK`, `RRF_K_FULL_MATCH`, `RRF_K_PARTIAL_MATCH`, `RRF_K_KEYWORD`
+- RRF: `RRF_K_SIMILARITY`, `RRF_K_CHUNK`, `RRF_K_FULL_MATCH`, `RRF_K_PARTIAL_MATCH`, `RRF_K_KEYWORD`, `RRF_K_VALUE_VECTOR`
 
 ## Endpoints
 

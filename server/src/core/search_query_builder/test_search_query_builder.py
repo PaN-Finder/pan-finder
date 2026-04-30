@@ -6,6 +6,17 @@ import numpy as np
 import pytest
 from psycopg.sql import Composable
 
+VALUE_VECTOR_KEYS = (
+    "authors",
+    "creator",
+    "scientificMetadata.author",
+    "owner",
+    "metadata.authors.name",
+    "principalInvestigator",
+    "investigator",
+    "scientificMetadata.measurement.team",
+)
+
 # --- Dynamic Import ---
 # Assuming search_query_builder.py is in the same directory as the test file
 search_query_builder_file = Path(__file__).parent / "search_query_builder.py"
@@ -17,6 +28,7 @@ search_query_builder = importlib.util.module_from_spec(spec)
 assert spec.loader is not None, "Loader is None"
 spec.loader.exec_module(search_query_builder)
 SearchQueryBuilder = search_query_builder.SearchQueryBuilder
+SubqueriesUsed = search_query_builder.SubqueriesUsed
 # --- End Dynamic Import ---
 
 
@@ -68,7 +80,9 @@ def mock_postgres_client():
 @pytest.fixture
 def builder(mock_sentence_transformer, mock_postgres_client):
     pool, _ = mock_postgres_client
-    return SearchQueryBuilder(mock_sentence_transformer, pool)
+    return SearchQueryBuilder(
+        mock_sentence_transformer, pool, value_vector_keys=VALUE_VECTOR_KEYS
+    )
 
 
 # --- End Mocks ---
@@ -80,7 +94,9 @@ def builder(mock_sentence_transformer, mock_postgres_client):
 def test_init(mock_sentence_transformer, mock_postgres_client):
     """Test if the builder initializes correctly."""
     pool, _ = mock_postgres_client
-    builder_instance = SearchQueryBuilder(mock_sentence_transformer, pool)
+    builder_instance = SearchQueryBuilder(
+        mock_sentence_transformer, pool, value_vector_keys=VALUE_VECTOR_KEYS
+    )
     assert builder_instance.sentence_transformer == mock_sentence_transformer
     assert builder_instance.pool == pool
 
@@ -813,14 +829,17 @@ def test_get_empty_subquery(builder, snapshot):
 
 def test_build_filter_subquery_no_filters(builder, snapshot):
     """Test building the subquery when no filters are provided."""
-    sql = builder._build_filter_subquery(None).as_string()
-    snapshot.assert_match(sql, "build_filter_subquery_no_filters")
-    sql_empty = builder._build_filter_subquery({}).as_string()
-    assert sql == sql_empty  # Should be identical
-    sql_empty_cond = builder._build_filter_subquery(
+    sql, activated = builder._build_filter_subquery(None)
+    assert activated is False
+    snapshot.assert_match(sql.as_string(), "build_filter_subquery_no_filters")
+    sql_empty, activated_empty = builder._build_filter_subquery({})
+    assert activated_empty is False
+    assert sql.as_string() == sql_empty.as_string()  # Should be identical
+    sql_empty_cond, activated_cond = builder._build_filter_subquery(
         {"logic": "AND", "conditions": []}
-    ).as_string()
-    assert sql == sql_empty_cond  # Should be identical
+    )
+    assert activated_cond is False
+    assert sql.as_string() == sql_empty_cond.as_string()  # Should be identical
 
 
 def test_build_query_intention_only(builder, snapshot):
@@ -828,16 +847,24 @@ def test_build_query_intention_only(builder, snapshot):
     data = {"intention": "find science papers"}
     # Mock filter name update to do nothing for this test
     with patch.object(builder, "_update_filter_names", side_effect=lambda d: d):
-        sql = builder.build_query(data).as_string()
-        snapshot.assert_match(sql, "build_query_intention_only")
+        sql, subqueries_used = builder.build_query(data)
+        assert subqueries_used["similarity"] is True
+        assert subqueries_used["chunk_similarity"] is True
+        assert subqueries_used["keyword"] is False
+        assert subqueries_used["full_match"] is False
+        assert subqueries_used["partial_match"] is False
+        assert subqueries_used["value_vector"] is False
+        snapshot.assert_match(sql.as_string(), "build_query_intention_only")
 
 
 def test_build_query_intention_keywords(builder, snapshot):
     """Test build_query with intention and keywords."""
     data = {"intention": "find biology papers", "keywords": ["dna", "rna sequence"]}
     with patch.object(builder, "_update_filter_names", side_effect=lambda d: d):
-        sql = builder.build_query(data).as_string()
-        snapshot.assert_match(sql, "build_query_intention_keywords")
+        sql, subqueries_used = builder.build_query(data)
+        assert subqueries_used["keyword"] is True
+        assert subqueries_used["value_vector"] is False
+        snapshot.assert_match(sql.as_string(), "build_query_intention_keywords")
 
 
 def test_build_query_intention_filters(builder, snapshot):
@@ -858,11 +885,13 @@ def test_build_query_intention_filters(builder, snapshot):
     with patch.object(
         builder, "_find_similar_names", side_effect=lambda name: [name]
     ) as mock_find:
-        sql = builder.build_query(data)
+        sql, subqueries_used = builder.build_query(data)
         # Assert that _find_similar_names was called for 'year' and 'journal'
         mock_find.assert_any_call("year")
         mock_find.assert_any_call("journal")
         assert mock_find.call_count == 2
+        assert subqueries_used["full_match"] is True
+        assert subqueries_used["partial_match"] is True
 
     snapshot.assert_match(sql.as_string(), "build_query_intention_filters")
 
@@ -885,7 +914,9 @@ def test_build_query_invalid_filters(builder, snapshot):
     }
     # Patch _find_similar_names to return the original name in a list
     with patch.object(builder, "_find_similar_names", side_effect=lambda name: [name]):
-        sql = builder.build_query(data)
+        sql, subqueries_used = builder.build_query(data)
+        assert subqueries_used["full_match"] is True  # year condition is valid
+        assert subqueries_used["partial_match"] is True
 
     snapshot.assert_match(sql.as_string(), "build_query_invalid_filters")
 
@@ -927,13 +958,18 @@ def test_build_query_all_parts(builder, snapshot):
     with patch.object(
         builder, "_find_similar_names", side_effect=find_mock
     ) as mock_find:
-        sql = builder.build_query(data)
+        sql, subqueries_used = builder.build_query(data)
         # Assert calls were made as expected
         mock_find.assert_any_call("year")
         mock_find.assert_any_call("author")
         mock_find.assert_any_call("topic")
         mock_find.assert_any_call("energy")
         assert mock_find.call_count == 4
+        assert subqueries_used["similarity"] is True
+        assert subqueries_used["keyword"] is True
+        assert subqueries_used["full_match"] is True
+        # "author" maps to ["authors", "creator"] — both are value_vector_keys
+        assert subqueries_used["value_vector"] is True
 
     snapshot.assert_match(sql.as_string(), "build_query_all_parts")
 
@@ -951,9 +987,11 @@ def test_build_query_keywords_only_no_intention(builder, snapshot):
         patch.object(builder, "_update_filter_names", side_effect=lambda d: d),
         patch.object(builder.sentence_transformer, "encode") as mock_encode,
     ):
-        sql = builder.build_query(data).as_string()
+        sql, subqueries_used = builder.build_query(data)
         mock_encode.assert_not_called()
-    snapshot.assert_match(sql, "build_query_keywords_only_no_intention")
+        assert subqueries_used["similarity"] is False
+        assert subqueries_used["keyword"] is True
+    snapshot.assert_match(sql.as_string(), "build_query_keywords_only_no_intention")
 
 
 def test_build_query_filters_only_no_intention(builder, snapshot):
@@ -971,9 +1009,11 @@ def test_build_query_filters_only_no_intention(builder, snapshot):
         patch.object(builder, "_find_similar_names", side_effect=lambda n: [n]),
         patch.object(builder.sentence_transformer, "encode") as mock_encode,
     ):
-        sql = builder.build_query(data).as_string()
+        sql, subqueries_used = builder.build_query(data)
         mock_encode.assert_not_called()
-    snapshot.assert_match(sql, "build_query_filters_only_no_intention")
+        assert subqueries_used["similarity"] is False
+        assert subqueries_used["full_match"] is True
+    snapshot.assert_match(sql.as_string(), "build_query_filters_only_no_intention")
 
 
 def test_build_filter_subquery_all_invalid_conditions(builder):
@@ -991,8 +1031,9 @@ def test_build_filter_subquery_all_invalid_conditions(builder):
         ],
     }
     empty = builder._get_empty_subquery().as_string()
-    subquery = builder._build_filter_subquery(invalid_filters).as_string()
-    assert subquery == empty
+    subquery, activated = builder._build_filter_subquery(invalid_filters)
+    assert subquery.as_string() == empty
+    assert activated is False
 
 
 def test_generate_filter_flags_case_insensitive_operator(builder):
@@ -1066,9 +1107,11 @@ def test_build_query_all_invalid_filters_behaves_like_no_filters(builder):
     }
     params_no_filters = {"intention": "explore galaxies"}
     with patch.object(builder, "_find_similar_names", side_effect=lambda n: [n]):
-        sql_invalid = builder.build_query(params_with_invalid).as_string()
-    sql_none = builder.build_query(params_no_filters).as_string()
-    assert sql_invalid == sql_none
+        sql_invalid, su_invalid = builder.build_query(params_with_invalid)
+    sql_none, su_none = builder.build_query(params_no_filters)
+    assert sql_invalid.as_string() == sql_none.as_string()
+    assert su_invalid["full_match"] is False
+    assert su_none["full_match"] is False
 
 
 def test_build_keywords_tsquery_text_large_list(builder):

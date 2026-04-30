@@ -27,6 +27,20 @@ class SearchResult(TypedDict):
     value_vector_score: float
 
 
+class SubqueriesUsed(TypedDict):
+    """
+    Tracks which search subqueries were actually activated during build_query().
+    Returned alongside the SQL.
+    """
+
+    similarity: bool
+    chunk_similarity: bool
+    full_match: bool
+    partial_match: bool
+    keyword: bool
+    value_vector: bool
+
+
 class SearchQueryBuilder:
     """
     Builds a complex SQL query for searching documents based on user input.
@@ -52,17 +66,6 @@ class SearchQueryBuilder:
     _SIMILARITY_THRESHOLD_CHUNKS: float = 0.5
     # Similarity threshold for filter value vector similarity search
     _SIMILARITY_THRESHOLD_VALUE_VECTOR: float = 0.35
-    # Filter keys that have value_vector populated and support semantic similarity search
-    _VALUE_VECTOR_KEYS: tuple[str, ...] = (
-        "authors",
-        "creator",
-        "scientificMetadata.author",
-        "owner",
-        "metadata.authors.name",
-        "principalInvestigator",
-        "investigator",
-        "scientificMetadata.measurement.team",
-    )
     # Final result limit
     _RESULTS_SET_SIZE: int = 20
     # Default RRF K value (can be used as a common default)
@@ -79,6 +82,7 @@ class SearchQueryBuilder:
         rrf_k_keyword: int = _DEFAULT_RRF_K,
         rrf_k_value_vector: int = _DEFAULT_RRF_K,
         results_set_size: int = _RESULTS_SET_SIZE,
+        value_vector_keys: tuple[str, ...] = (),
         logger: Logger | None = None,
         capture_similar_names: bool = False,
     ):
@@ -91,6 +95,7 @@ class SearchQueryBuilder:
         self.rrf_k_keyword = rrf_k_keyword
         self.rrf_k_value_vector = rrf_k_value_vector
         self.results_set_size = results_set_size
+        self.value_vector_keys = value_vector_keys
         self._logger = logger or getLogger(__name__)
         self._capture_similar_names = capture_similar_names
         self._similar_names = {}  # For debugging purposes, stores similar names found during query building
@@ -104,16 +109,18 @@ class SearchQueryBuilder:
         return self._similar_names
 
     # --- Public Methods ---
-    def build_query(self, params: dict[str, Any]) -> Composed:
+    def build_query(self, params: dict[str, Any]) -> tuple[Composed, SubqueriesUsed]:
         """
         Constructs the final SQL search query based on the input data.
 
         Args:
-            data: A dictionary containing search parameters like 'intention',
-                  'keywords', and 'filters'.
+            params: A dictionary containing search parameters like 'intention',
+                    'keywords', and 'filters'.
 
         Returns:
-            A psycopg Composed object representing the full SQL query.
+            A tuple of (Composed SQL query, SubqueriesUsed flags). The flags
+            reflect which subqueries were actually activated — safe for concurrent
+            use because no instance state is written.
         """
         if not isinstance(params, dict):
             raise ValueError("Input 'params' must be a dictionary.")
@@ -141,10 +148,24 @@ class SearchQueryBuilder:
         keywords_tsquery_text = self._build_keywords_tsquery_text(
             normalized_params.get("keywords", [])
         )
-        filter_subquery = self._build_filter_subquery(normalized_params.get("filters"))
-        value_vector_subquery = self._build_value_vector_subquery(
+        filter_subquery, filter_used = self._build_filter_subquery(
             normalized_params.get("filters")
         )
+        vector_values = self._extract_value_vector_values(
+            normalized_params.get("filters")
+        )
+        value_vector_subquery, value_vector_used = self._build_value_vector_subquery(
+            vector_values
+        )
+
+        subqueries_used: SubqueriesUsed = {
+            "similarity": intent_embedding is not None,
+            "chunk_similarity": intent_embedding is not None,
+            "keyword": bool(keywords_tsquery_text),
+            "full_match": filter_used,
+            "partial_match": filter_used,
+            "value_vector": value_vector_used,
+        }
 
         # 3. Assemble the final query with composables and sanitized values
         search_sql = SQL(
@@ -231,7 +252,7 @@ class SearchQueryBuilder:
             results_set_size=self.results_set_size,
         )
 
-        return search_sql
+        return search_sql, subqueries_used
 
     def _build_similarity_query(self, intention_vector: list | None) -> Composed | SQL:
         """
@@ -326,7 +347,7 @@ class SearchQueryBuilder:
     def _extract_value_vector_values(self, filters: dict | None) -> list[str]:
         """
         Recursively scans the filter tree and collects string values from conditions
-        whose name is in _VALUE_VECTOR_KEYS and whose operator is a
+        whose name is in value_vector_keys and whose operator is a
         string-matching operator (=, !=, LIKE, ILIKE, NOT LIKE, NOT ILIKE, IN).
         """
         _STRING_OPS = {"=", "!=", "LIKE", "ILIKE", "NOT LIKE", "NOT ILIKE", "IN"}
@@ -347,7 +368,7 @@ class SearchQueryBuilder:
         if not isinstance(name_list, list) or operator not in _STRING_OPS:
             return result
 
-        is_vector_key = any(n in self._VALUE_VECTOR_KEYS for n in name_list)
+        is_vector_key = any(n in self.value_vector_keys for n in name_list)
         if not is_vector_key:
             return result
 
@@ -358,35 +379,34 @@ class SearchQueryBuilder:
 
         return result
 
-    def _build_value_vector_subquery(self, filters: dict | None) -> Composed | SQL:
+    def _build_value_vector_subquery(
+        self, vector_values: list[str]
+    ) -> tuple[Composed | SQL, bool]:
         """
         Builds the subquery for value vector similarity search.
 
-        Scans the filter conditions for vector-searchable keys with string operators,
-        encodes the extracted values, and finds documents whose filter rows have a
+        Encodes the provided values and finds documents whose filter rows have a
         value_vector close to that query vector. Uses MIN distance per document so
-        the best-matching name row wins.
-
-        Only fires when the user explicitly filters on an vector-searchable key.
-        Returns an empty subquery if no such conditions are present.
+        the best-matching row wins.
 
         Args:
-            filters: The filter dict from the search params (post name-update).
+            vector_values: Pre-extracted string values from vector-key filter
+                           conditions (from _extract_value_vector_values).
 
         Returns:
-            A Composed or SQL object for the subquery, or an empty subquery if
-            no vector-key filter conditions are present.
+            A tuple of (subquery SQL, activated). activated is True only when
+            at least one vector value was provided and the subquery will produce
+            real rows.
         """
-        vector_values = self._extract_value_vector_values(filters)
         if not vector_values:
-            return self._get_empty_subquery()
+            return self._get_empty_subquery(), False
 
         # Encode all extracted values and average their vectors as the query vector
         # encode() returns a 2-D array (n, dims); mean over axis=0 gives (dims,)
         embeddings = self.sentence_transformer.encode(vector_values)
         value_vector = embeddings.mean(axis=0).tolist()
 
-        vector_keys_sql = SQL(", ").join(Literal(k) for k in self._VALUE_VECTOR_KEYS)
+        vector_keys_sql = SQL(", ").join(Literal(k) for k in self.value_vector_keys)
 
         return SQL(
             """SELECT
@@ -411,7 +431,7 @@ class SearchQueryBuilder:
             value_vector=value_vector,
             vector_keys_sql=vector_keys_sql,
             threshold=self._SIMILARITY_THRESHOLD_VALUE_VECTOR,
-        )
+        ), True
 
     # --- Private Helper Methods ---
     def _parse_datetime_strict(self, value: Any) -> datetime | None:
@@ -628,7 +648,9 @@ class SearchQueryBuilder:
         return data
 
     # --- Filter Subquery Construction ---
-    def _build_filter_subquery(self, filters: dict | None) -> Composed | SQL:
+    def _build_filter_subquery(
+        self, filters: dict | None
+    ) -> tuple[Composed | SQL, bool]:
         """
         Builds the SQL subquery for filtering documents based on the filter object.
 
@@ -639,13 +661,14 @@ class SearchQueryBuilder:
             filters: The dictionary representing the filter structure.
 
         Returns:
-            A Composed or SQL object for the filter subquery.
+            A tuple of (subquery SQL, activated). activated is True only when
+            valid filter conditions were found and the subquery will produce real rows.
         """
         if not filters or not filters.get("conditions"):
             self._logger.info(
                 "No valid filters provided, creating empty filter subquery."
             )
-            return self._get_empty_subquery()
+            return self._get_empty_subquery(), False
 
         try:
             # 1. Generate flag definitions using MAX(CASE WHEN ...) AS has_condition_N
@@ -657,7 +680,7 @@ class SearchQueryBuilder:
                 self._logger.info(
                     "Could not generate any filter flags from the provided structure."
                 )
-                return self._get_empty_subquery()
+                return self._get_empty_subquery(), False
 
             # Join flags with newline and indentation so the generated SQL places
             # each flag definition on its own aligned line for readability.
@@ -668,7 +691,7 @@ class SearchQueryBuilder:
             self._collect_keys_recursive(filters, filter_key_names)
             if not filter_key_names:
                 self._logger.info("No filter keys found in the provided structure.")
-                return self._get_empty_subquery()
+                return self._get_empty_subquery(), False
 
             # Sort keys for deterministic SQL generation
             sorted_filter_keys = sorted(list(filter_key_names))
@@ -741,7 +764,7 @@ class SearchQueryBuilder:
                 filter_logic_expr=filter_logic_expr,
                 partial_match_sum_expr=partial_match_sum_expr,
                 any_flag_match_expr=any_flag_match_expr,
-            )
+            ), True
         except Exception as e:
             self._logger.info(f"Unexpected error building filter subquery: {e}")
             raise

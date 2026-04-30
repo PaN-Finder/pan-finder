@@ -7,6 +7,18 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+DEFAULT_VALUE_VECTOR_KEYS: tuple[str, ...] = (
+    "authors",
+    "creator",
+    "scientificMetadata.author",
+    "owner",
+    "metadata.authors.name",
+    "principalInvestigator",
+    "investigator",
+    "scientificMetadata.measurement.team",
+)
+
+
 class Settings:
     """Configuration settings loaded from environment variables or .env file."""
 
@@ -60,6 +72,9 @@ class Settings:
         self.rrf_k_partial_match = int(os.getenv("RRF_K_PARTIAL_MATCH", "6"))
         self.rrf_k_keyword = int(os.getenv("RRF_K_KEYWORD", "10"))
         self.rrf_k_value_vector = int(os.getenv("RRF_K_VALUE_VECTOR", "6"))
+        self.value_vector_keys = self._parse_csv_env(
+            "VALUE_VECTOR_KEYS", DEFAULT_VALUE_VECTOR_KEYS
+        )
 
     def _parse_cors_origins(self) -> list[str]:
         """Parse CORS origins from environment variable."""
@@ -90,6 +105,24 @@ class Settings:
             raise ValueError("Invalid DATABASE_URL format") from None
 
         return url
+
+    def _parse_csv_env(
+        self, key: str, default: tuple[str, ...] | list[str]
+    ) -> tuple[str, ...]:
+        """Parse a comma-separated environment variable into a deduplicated tuple."""
+        raw_value = os.getenv(key, "").strip()
+        values = raw_value.split(",") if raw_value else list(default)
+
+        parsed_values: list[str] = []
+        seen_values: set[str] = set()
+        for value in values:
+            normalized_value = value.strip()
+            if not normalized_value or normalized_value in seen_values:
+                continue
+            seen_values.add(normalized_value)
+            parsed_values.append(normalized_value)
+
+        return tuple(parsed_values)
 
 
 @lru_cache

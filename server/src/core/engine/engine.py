@@ -81,6 +81,8 @@ class SearchEngine:
                 rrf_k_full_match=settings.rrf_k_full_match,
                 rrf_k_partial_match=settings.rrf_k_partial_match,
                 rrf_k_keyword=settings.rrf_k_keyword,
+                rrf_k_value_vector=settings.rrf_k_value_vector,
+                value_vector_keys=settings.value_vector_keys,
                 logger=get_logger("SearchQueryBuilder"),
             )
         return self._query_builder
@@ -190,7 +192,9 @@ class SearchEngine:
         try:
             # Generate SQL query
             query_build_start = time.time()
-            sql_query = self.query_builder.build_query(search_data.model_dump())
+            sql_query, subqueries_used = self.query_builder.build_query(
+                search_data.model_dump()
+            )
             query_build_time = time.time() - query_build_start
             self._logger.debug(
                 f"SQL query building took {query_build_time:.3f} seconds"
@@ -205,7 +209,7 @@ class SearchEngine:
             )
 
             # Normalize scores to a 0-1 range
-            Scoring.normalize_scores(results, search_data)
+            Scoring.normalize_scores(results, subqueries_used)
 
             # Apply knee-point filtering to discard low-relevance tail
             knee_result = self._knee_point.filter_with_stats(results)

@@ -151,7 +151,7 @@
                 JOIN document d ON d.id = f.document_id
                 WHERE f.key IN ('authors', 'creator', 'scientificMetadata.author', 'owner', 'metadata.authors.name', 'principalInvestigator', 'investigator', 'scientificMetadata.measurement.team')
                     AND f.value_vector IS NOT NULL
-                    AND f.value_vector <=> '{0.1,0.2,0.3}'::float8[]::vector < 0.9
+                    AND f.value_vector <=> '{0.1,0.2,0.3}'::float8[]::vector < 0.35
                 GROUP BY d.doi
                 -- NO ORDER BY here, as we will use the rank to calculate the score
                 -- NO LIMIT here: we want all DOIs with a matching filter value
