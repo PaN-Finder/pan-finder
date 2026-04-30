@@ -55,7 +55,7 @@ def load_datasets() -> dict[str, list[dict[str, Any]]]:
     """Load all query datasets, returning parsed JSON per file name."""
     base_dir = benchmark_dir() / "queries" / "synthetic"
     datasets: dict[str, list[dict[str, Any]]] = {}
-    for filepath in sorted(base_dir.glob("*.json")):
+    for filepath in sorted(base_dir.glob("author-queries.json")):
         datasets[filepath.name] = json.loads(filepath.read_text())
     return datasets
 
@@ -273,6 +273,7 @@ async def process_rrf_config(
         rrf_k_partial_match=rrf_config.get("rrf_k_partial_match", 60),
         rrf_k_keyword=rrf_config.get("rrf_k_keyword", 60),
         rrf_k_filter_value=rrf_config.get("rrf_k_filter_value", 60),
+        value_vector_keys=settings.value_vector_keys,
         logger=logging.getLogger("search_query_builder"),
     )
 
@@ -328,6 +329,7 @@ async def main() -> None:
         format="%(asctime)s | %(levelname)s | %(message)s",
         datefmt="%H:%M:%S",
     )
+    logging.getLogger("matplotlib.font_manager").setLevel(logging.WARNING)
 
     # Load inputs (LLM client will handle its own caching)
     rrf_score_k_values = load_rrf_score_k_values()
