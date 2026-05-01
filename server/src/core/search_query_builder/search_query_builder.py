@@ -311,7 +311,16 @@ class SearchQueryBuilder:
         Extract string values from a single condition that is eligible for
         filter-value vector matching.
         """
-        _STRING_OPS = {"=", "LIKE", "ILIKE", "IN"}
+        _STRING_OPS = {
+            "=",
+            "!=",
+            "LIKE",
+            "ILIKE",
+            "NOT LIKE",
+            "NOT ILIKE",
+            "IN",
+            "NOT IN",
+        }
 
         name_list = condition.get("name")
         operator = str(condition.get("operator", "")).upper()
@@ -326,7 +335,7 @@ class SearchQueryBuilder:
         if isinstance(value, str) and value.strip():
             return [value.strip()]
 
-        if operator == "IN" and isinstance(value, list):
+        if operator in ("IN", "NOT IN") and isinstance(value, list):
             return [
                 item.strip() for item in value if isinstance(item, str) and item.strip()
             ]
@@ -994,8 +1003,29 @@ class SearchQueryBuilder:
                             )
                     elif all(isinstance(v, str) for v in value):
                         values_sql = SQL(", ").join([Literal(v) for v in value])
-                        comparison_clause = Composed(
-                            [SQL("f.value "), op_sql, SQL(" ("), values_sql, SQL(")")]
+                        vector_branch = SQL("")
+                        if (
+                            vector_key_in_clause is not None
+                            and condition_vector is not None
+                        ):
+                            vector_branch = SQL(
+                                "\n                        WHEN {vector_key_in_clause} AND f.value_vector IS NOT NULL AND f.value_vector <=> {condition_vector}::vector > {threshold} THEN 1"
+                            ).format(
+                                vector_key_in_clause=vector_key_in_clause,
+                                condition_vector=condition_vector,
+                                threshold=self._SIMILARITY_THRESHOLD_FILTER_VALUE,
+                            )
+
+                        flag_sql_to_add = SQL(
+                            """MAX(CASE
+                        WHEN {key_in_clause} AND f.value NOT IN ({values_sql}) THEN 1{vector_branch}
+                        ELSE 0
+                    END) AS {flag_name}"""
+                        ).format(
+                            key_in_clause=key_in_clause,
+                            values_sql=values_sql,
+                            vector_branch=vector_branch,
+                            flag_name=Identifier(flag_name),
                         )
                     else:
                         flag_counter[0] -= 1
@@ -1045,9 +1075,26 @@ class SearchQueryBuilder:
             ) and self._parse_datetime_strict(
                 value
             ) is None:  # Ensure we don't treat timestamps as strings
-                comparison_clause = SQL("f.value NOT ILIKE {v}").format(
-                    op=op_sql,
-                    v=Literal("%" + str(value) + "%"),
+                vector_branch = SQL("")
+                if vector_key_in_clause is not None and condition_vector is not None:
+                    vector_branch = SQL(
+                        "\n                        WHEN {vector_key_in_clause} AND f.value_vector IS NOT NULL AND f.value_vector <=> {condition_vector}::vector > {threshold} THEN 1"
+                    ).format(
+                        vector_key_in_clause=vector_key_in_clause,
+                        condition_vector=condition_vector,
+                        threshold=self._SIMILARITY_THRESHOLD_FILTER_VALUE,
+                    )
+
+                flag_sql_to_add = SQL(
+                    """MAX(CASE
+                        WHEN {key_in_clause} AND f.value NOT ILIKE {contains} THEN 1{vector_branch}
+                        ELSE 0
+                    END) AS {flag_name}"""
+                ).format(
+                    key_in_clause=key_in_clause,
+                    contains=Literal("%" + str(value) + "%"),
+                    vector_branch=vector_branch,
+                    flag_name=Identifier(flag_name),
                 )
 
             # Comparison operators

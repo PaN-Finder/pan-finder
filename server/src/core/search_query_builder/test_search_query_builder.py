@@ -278,6 +278,37 @@ def test_generate_filter_flags_vector_string_operator(builder):
     assert "< 0.35 THEN 1" in flag_sql
 
 
+@pytest.mark.parametrize("operator", ["!=", "NOT LIKE", "NOT ILIKE"])
+def test_generate_filter_flags_negative_vector_string_operator(builder, operator):
+    filters_obj = {
+        "logic": "OR",
+        "conditions": [
+            {
+                "name": ["authors", "publisher"],
+                "operator": operator,
+                "value": "ESS",
+            }
+        ],
+    }
+
+    condition_vectors = builder._build_condition_vector_map(filters_obj)
+    flags, count, valid_condition_ids = builder._generate_filter_flags(
+        filters_obj, condition_vectors
+    )
+
+    assert count == 1
+    assert valid_condition_ids == {id(filters_obj["conditions"][0])}
+
+    flag_sql = flags[0].as_string()
+    assert (
+        "f.key IN ('authors', 'publisher') AND f.value NOT ILIKE '%ESS%' THEN 1"
+        in flag_sql
+    )
+    assert "f.key IN ('authors')" in flag_sql
+    assert "f.value_vector IS NOT NULL" in flag_sql
+    assert "> 0.35 THEN 1" in flag_sql
+
+
 def test_update_filter_names_no_filters(builder):
     """Test updating when no filters are present."""
     with patch.object(builder, "_find_similar_names") as mock_find:
