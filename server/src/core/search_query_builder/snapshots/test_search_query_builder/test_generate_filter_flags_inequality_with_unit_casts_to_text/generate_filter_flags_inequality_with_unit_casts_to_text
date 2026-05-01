@@ -1,0 +1,1 @@
+MAX(CASE WHEN f.key IN ('energy') AND (f.value_si::text != to_unit(7.5, 'meV')::text OR (f.value_si IS NULL AND f.value_numeric != 7.5)) THEN 1 ELSE 0 END) AS "has_condition_1"

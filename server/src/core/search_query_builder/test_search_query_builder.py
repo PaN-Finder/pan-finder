@@ -32,6 +32,14 @@ SubqueriesUsed = search_query_builder.SubqueriesUsed
 # --- End Dynamic Import ---
 
 
+def assert_sql_snapshot(snapshot, sql, snapshot_name):
+    snapshot.assert_match(sql.as_string(), snapshot_name)
+
+
+def assert_flag_sql_snapshot(snapshot, flags, snapshot_name):
+    snapshot.assert_match("\n".join(flag.as_string() for flag in flags), snapshot_name)
+
+
 # --- Mocks ---
 @pytest.fixture
 def mock_sentence_transformer():
@@ -246,7 +254,7 @@ def test_update_filter_names_nested(builder, mock_postgres_client):
         ]
 
 
-def test_generate_filter_flags_vector_string_operator(builder):
+def test_generate_filter_flags_vector_string_operator(builder, snapshot):
     filters_obj = {
         "logic": "OR",
         "conditions": [
@@ -267,6 +275,11 @@ def test_generate_filter_flags_vector_string_operator(builder):
     assert valid_condition_ids == {id(filters_obj["conditions"][0])}
 
     flag_sql = flags[0].as_string()
+    assert_flag_sql_snapshot(
+        snapshot,
+        flags,
+        "generate_filter_flags_vector_string_operator",
+    )
     assert (
         "f.key IN ('authors', 'publisher') AND f.value ILIKE 'ESS%' THEN 2" in flag_sql
     )
@@ -307,6 +320,34 @@ def test_generate_filter_flags_negative_vector_string_operator(builder, operator
     assert "f.key IN ('authors')" in flag_sql
     assert "f.value_vector IS NOT NULL" in flag_sql
     assert "> 0.35 THEN 1" in flag_sql
+
+
+def test_generate_filter_flags_negative_vector_string_operator_snapshot(
+    builder, snapshot
+):
+    filters_obj = {
+        "logic": "OR",
+        "conditions": [
+            {
+                "name": ["authors", "publisher"],
+                "operator": "NOT ILIKE",
+                "value": "ESS",
+            }
+        ],
+    }
+
+    condition_vectors = builder._build_condition_vector_map(filters_obj)
+    flags, count, valid_condition_ids = builder._generate_filter_flags(
+        filters_obj, condition_vectors
+    )
+
+    assert count == 1
+    assert valid_condition_ids == {id(filters_obj["conditions"][0])}
+    assert_sql_snapshot(
+        snapshot,
+        flags[0],
+        "generate_filter_flags_negative_vector_string_operator",
+    )
 
 
 def test_update_filter_names_no_filters(builder):
@@ -377,9 +418,7 @@ def test_generate_filter_flags_simple(builder, snapshot):
         id(filters_obj["conditions"][4]),
         id(filters_obj["conditions"][5]),
     }  # All conditions are valid
-    snapshot.assert_match(
-        "\n".join(f.as_string() for f in flags), "generate_filter_flags_simple"
-    )
+    assert_flag_sql_snapshot(snapshot, flags, "generate_filter_flags_simple")
 
 
 def test_generate_filter_flags_string_operators(builder, snapshot):
@@ -404,10 +443,7 @@ def test_generate_filter_flags_string_operators(builder, snapshot):
     assert count == 6
     assert len(flags) == 6
     assert all(isinstance(f, Composable) for f in flags)
-    snapshot.assert_match(
-        "\n".join(f.as_string() for f in flags),
-        "generate_filter_flags_string_operators",
-    )
+    assert_flag_sql_snapshot(snapshot, flags, "generate_filter_flags_string_operators")
 
 
 def test_generate_filter_flags_numeric_operators(builder, snapshot):
@@ -426,10 +462,7 @@ def test_generate_filter_flags_numeric_operators(builder, snapshot):
     assert count == 5
     assert len(flags) == 5
     assert all(isinstance(f, Composable) for f in flags)
-    snapshot.assert_match(
-        "\n".join(f.as_string() for f in flags),
-        "generate_filter_flags_numeric_operators",
-    )
+    assert_flag_sql_snapshot(snapshot, flags, "generate_filter_flags_numeric_operators")
 
 
 def test_generate_filter_flags_boolean_operators(builder, snapshot):
@@ -449,10 +482,7 @@ def test_generate_filter_flags_boolean_operators(builder, snapshot):
     assert count == 2
     assert len(flags) == 2
     assert all(isinstance(f, Composable) for f in flags)
-    snapshot.assert_match(
-        "\n".join(f.as_string() for f in flags),
-        "generate_filter_flags_boolean_operators",
-    )
+    assert_flag_sql_snapshot(snapshot, flags, "generate_filter_flags_boolean_operators")
 
 
 def test_generate_filter_flags_timestamp_operators(builder, snapshot):
@@ -499,9 +529,8 @@ def test_generate_filter_flags_timestamp_operators(builder, snapshot):
     assert count == 16
     assert len(flags) == 16
     assert all(isinstance(f, Composable) for f in flags)
-    snapshot.assert_match(
-        "\n".join(f.as_string() for f in flags),
-        "generate_filter_flags_timestamp_operators",
+    assert_flag_sql_snapshot(
+        snapshot, flags, "generate_filter_flags_timestamp_operators"
     )
 
 
@@ -517,10 +546,7 @@ def test_generate_filter_flags_null_checks(builder, snapshot):
     assert count == 1
     assert len(flags) == 1
     assert all(isinstance(f, Composable) for f in flags)
-    snapshot.assert_match(
-        "\n".join(f.as_string() for f in flags),
-        "generate_filter_flags_null_checks",
-    )
+    assert_flag_sql_snapshot(snapshot, flags, "generate_filter_flags_null_checks")
 
 
 def test_generate_filter_flags_range_and_in(builder, snapshot):
@@ -536,10 +562,7 @@ def test_generate_filter_flags_range_and_in(builder, snapshot):
     assert count == 2
     assert len(flags) == 2
     assert all(isinstance(f, Composable) for f in flags)
-    snapshot.assert_match(
-        "\n".join(f.as_string() for f in flags),
-        "generate_filter_flags_range_and_in",
-    )
+    assert_flag_sql_snapshot(snapshot, flags, "generate_filter_flags_range_and_in")
 
 
 def test_generate_filter_flags_mixed_types(builder, snapshot):
@@ -564,13 +587,12 @@ def test_generate_filter_flags_mixed_types(builder, snapshot):
     assert count == 2
     assert len(flags) == 2
     assert all(isinstance(f, Composable) for f in flags)
-    snapshot.assert_match(
-        "\n".join(f.as_string() for f in flags),
-        "generate_filter_flags_mixed_types",
-    )
+    assert_flag_sql_snapshot(snapshot, flags, "generate_filter_flags_mixed_types")
 
 
-def test_generate_filter_flags_numeric_operator_with_unit_and_fallback(builder):
+def test_generate_filter_flags_numeric_operator_with_unit_and_fallback(
+    builder, snapshot
+):
     """Numeric comparison with unit should compare value_si against to_unit and fallback to value_numeric when value_si is NULL."""
     filt = {
         "logic": "AND",
@@ -581,12 +603,17 @@ def test_generate_filter_flags_numeric_operator_with_unit_and_fallback(builder):
     flags, count, _ = builder._generate_filter_flags(filt)
     assert count == 1 and len(flags) == 1
     sql_text = flags[0].as_string()
+    assert_sql_snapshot(
+        snapshot,
+        flags[0],
+        "generate_filter_flags_numeric_operator_with_unit_and_fallback",
+    )
     # Check both the SI comparison and the fallback numeric comparison appear
     assert "f.value_si >= to_unit(5, 'meV')" in sql_text
     assert "OR (f.value_si IS NULL AND f.value_numeric >= 5)" in sql_text
 
 
-def test_generate_filter_flags_between_with_unit_and_fallback(builder):
+def test_generate_filter_flags_between_with_unit_and_fallback(builder, snapshot):
     """BETWEEN with unit should compare using SI and fallback to numeric when SI is NULL."""
     filt = {
         "logic": "AND",
@@ -597,11 +624,16 @@ def test_generate_filter_flags_between_with_unit_and_fallback(builder):
     flags, count, _ = builder._generate_filter_flags(filt)
     assert count == 1 and len(flags) == 1
     sql_text = flags[0].as_string()
+    assert_sql_snapshot(
+        snapshot,
+        flags[0],
+        "generate_filter_flags_between_with_unit_and_fallback",
+    )
     assert "f.value_si BETWEEN to_unit(1, 'Gy') AND to_unit(10, 'Gy')" in sql_text
     assert "OR (f.value_si IS NULL AND f.value_numeric BETWEEN 1 AND 10)" in sql_text
 
 
-def test_generate_filter_flags_in_with_unit_and_fallback(builder):
+def test_generate_filter_flags_in_with_unit_and_fallback(builder, snapshot):
     """IN with unit should compare using SI and fallback to numeric when SI is NULL."""
     filt = {
         "logic": "AND",
@@ -617,6 +649,11 @@ def test_generate_filter_flags_in_with_unit_and_fallback(builder):
     flags, count, _ = builder._generate_filter_flags(filt)
     assert count == 1 and len(flags) == 1
     sql_text = flags[0].as_string()
+    assert_sql_snapshot(
+        snapshot,
+        flags[0],
+        "generate_filter_flags_in_with_unit_and_fallback",
+    )
     assert (
         "f.value_si IN (to_unit(1, 'Gy/s'), to_unit(2, 'Gy/s'), to_unit(5, 'Gy/s'))"
         in sql_text
@@ -624,7 +661,7 @@ def test_generate_filter_flags_in_with_unit_and_fallback(builder):
     assert "OR (f.value_si IS NULL AND f.value_numeric IN (1, 2, 5))" in sql_text
 
 
-def test_generate_filter_flags_equality_with_unit_casts_to_text(builder):
+def test_generate_filter_flags_equality_with_unit_casts_to_text(builder, snapshot):
     """For '=' with unit, value_si and to_unit must be cast to text to avoid rounding issues."""
     filt = {
         "logic": "AND",
@@ -635,13 +672,18 @@ def test_generate_filter_flags_equality_with_unit_casts_to_text(builder):
     flags, count, _ = builder._generate_filter_flags(filt)
     assert count == 1 and len(flags) == 1
     sql_text = flags[0].as_string()
+    assert_sql_snapshot(
+        snapshot,
+        flags[0],
+        "generate_filter_flags_equality_with_unit_casts_to_text",
+    )
     # Ensure text casts present on both sides
     assert "f.value_si::text = to_unit(5, 'meV')::text" in sql_text
     # Fallback should remain numeric without text cast
     assert "OR (f.value_si IS NULL AND f.value_numeric = 5)" in sql_text
 
 
-def test_generate_filter_flags_inequality_with_unit_casts_to_text(builder):
+def test_generate_filter_flags_inequality_with_unit_casts_to_text(builder, snapshot):
     """For '!=' with unit, value_si and to_unit must be cast to text to avoid rounding issues."""
     filt = {
         "logic": "AND",
@@ -652,6 +694,11 @@ def test_generate_filter_flags_inequality_with_unit_casts_to_text(builder):
     flags, count, _ = builder._generate_filter_flags(filt)
     assert count == 1 and len(flags) == 1
     sql_text = flags[0].as_string()
+    assert_sql_snapshot(
+        snapshot,
+        flags[0],
+        "generate_filter_flags_inequality_with_unit_casts_to_text",
+    )
     # Ensure text casts present on both sides
     assert "f.value_si::text != to_unit(7.5, 'meV')::text" in sql_text
     # Fallback should remain numeric without text cast
@@ -684,10 +731,7 @@ def test_generate_filter_flags_multiple_names(builder, snapshot):
     assert count == 1
     assert len(flags) == 1
     assert all(isinstance(f, Composable) for f in flags)
-    snapshot.assert_match(
-        "\n".join(f.as_string() for f in flags),
-        "generate_filter_flags_multiple_names",
-    )
+    assert_flag_sql_snapshot(snapshot, flags, "generate_filter_flags_multiple_names")
 
 
 def test_generate_filter_flags_nested(builder, snapshot):
@@ -714,9 +758,7 @@ def test_generate_filter_flags_nested(builder, snapshot):
     }
     assert valid_condition_ids == expected_ids
     assert all(isinstance(f, Composable) for f in flags)
-    snapshot.assert_match(
-        "\n".join(f.as_string() for f in flags), "generate_filter_flags_nested"
-    )
+    assert_flag_sql_snapshot(snapshot, flags, "generate_filter_flags_nested")
 
 
 def test_generate_filter_flags_invalid_conditions(builder, snapshot):
@@ -748,9 +790,8 @@ def test_generate_filter_flags_invalid_conditions(builder, snapshot):
     assert count == 1  # Only the valid category condition should count
     assert valid_condition_ids == {id(filters_obj["conditions"][0])}
     assert all(isinstance(f, Composable) for f in flags)
-    snapshot.assert_match(
-        "\n".join(f.as_string() for f in flags),
-        "generate_filter_flags_invalid_conditions",
+    assert_flag_sql_snapshot(
+        snapshot, flags, "generate_filter_flags_invalid_conditions"
     )
 
 
@@ -785,7 +826,7 @@ def test_collect_keys_recursive(builder):
     assert unique_keys == {"category", "cat_alias", "price", "in_stock", "available"}
 
 
-def test_build_filter_logic_simple(builder):
+def test_build_filter_logic_simple(builder, snapshot):
     """Test building logic SQL for simple AND/OR."""
     filters_and = {
         "logic": "AND",
@@ -798,6 +839,7 @@ def test_build_filter_logic_simple(builder):
 
     logic_and = builder._build_filter_logic(filters_and, valid_condition_ids)
     assert logic_and.as_string() == '("has_condition_1" > 0 AND "has_condition_2" > 0)'
+    assert_sql_snapshot(snapshot, logic_and, "build_filter_logic_simple_and")
 
     filters_or = {
         "logic": "OR",
@@ -810,9 +852,10 @@ def test_build_filter_logic_simple(builder):
 
     logic_or = builder._build_filter_logic(filters_or, valid_condition_ids)
     assert logic_or.as_string() == '("has_condition_1" > 0 OR "has_condition_2" > 0)'
+    assert_sql_snapshot(snapshot, logic_or, "build_filter_logic_simple_or")
 
 
-def test_build_filter_logic_nested(builder):
+def test_build_filter_logic_nested(builder, snapshot):
     """Test building logic SQL for nested conditions."""
     filters_nested = {
         "logic": "AND",
@@ -837,9 +880,10 @@ def test_build_filter_logic_nested(builder):
         '("has_condition_1" > 0 AND ("has_condition_2" > 0 OR "has_condition_3" > 0))'
     )
     assert logic_nested.as_string() == expected
+    assert_sql_snapshot(snapshot, logic_nested, "build_filter_logic_nested")
 
 
-def test_build_filter_logic_with_invalid(builder):
+def test_build_filter_logic_with_invalid(builder, snapshot):
     """Test building logic SQL when some conditions are invalid."""
     filters_invalid = {
         "logic": "AND",
@@ -864,37 +908,48 @@ def test_build_filter_logic_with_invalid(builder):
     # Expected: (flag1=1 AND (FALSE OR (flag2=1 OR FALSE))) -> (flag1>0 AND flag2>0)
     expected = '("has_condition_1" > 0 AND "has_condition_2" > 0)'
     assert logic_invalid.as_string() == expected
+    assert_sql_snapshot(snapshot, logic_invalid, "build_filter_logic_with_invalid")
 
 
-def test_build_filter_logic_empty(builder):
+def test_build_filter_logic_empty(builder, snapshot):
     """Test building logic SQL for empty/fully invalid filters."""
     # Empty filters
-    assert builder._build_filter_logic({}, set()).as_string() == "FALSE"
-    assert (
-        builder._build_filter_logic(
-            {"logic": "AND", "conditions": []}, set()
-        ).as_string()
-        == "FALSE"
+    empty_logic = builder._build_filter_logic({}, set())
+    assert empty_logic.as_string() == "FALSE"
+    assert_sql_snapshot(snapshot, empty_logic, "build_filter_logic_empty_dict")
+
+    empty_conditions_logic = builder._build_filter_logic(
+        {"logic": "AND", "conditions": []}, set()
     )
-    assert (
-        builder._build_filter_logic(
-            {"logic": "AND", "conditions": [{"name": []}]}, set()
-        ).as_string()
-        == "FALSE"
+    assert empty_conditions_logic.as_string() == "FALSE"
+    assert_sql_snapshot(
+        snapshot,
+        empty_conditions_logic,
+        "build_filter_logic_empty_conditions",
+    )
+
+    invalid_condition_logic = builder._build_filter_logic(
+        {"logic": "AND", "conditions": [{"name": []}]}, set()
+    )
+    assert invalid_condition_logic.as_string() == "FALSE"
+    assert_sql_snapshot(
+        snapshot,
+        invalid_condition_logic,
+        "build_filter_logic_empty_invalid_condition",
     )
 
 
 def test_get_empty_subquery(builder, snapshot):
     """Test the SQL generated for an empty subquery."""
     sql = builder._get_empty_subquery()
-    snapshot.assert_match(sql.as_string(), "empty_subquery")
+    assert_sql_snapshot(snapshot, sql, "empty_subquery")
 
 
 def test_build_filter_subquery_no_filters(builder, snapshot):
     """Test building the subquery when no filters are provided."""
     sql, activated = builder._build_filter_subquery(None)
     assert activated is False
-    snapshot.assert_match(sql.as_string(), "build_filter_subquery_no_filters")
+    assert_sql_snapshot(snapshot, sql, "build_filter_subquery_no_filters")
     sql_empty, activated_empty = builder._build_filter_subquery({})
     assert activated_empty is False
     assert sql.as_string() == sql_empty.as_string()  # Should be identical
@@ -916,7 +971,7 @@ def test_build_query_intention_only(builder, snapshot):
         assert subqueries_used["keyword"] is False
         assert subqueries_used["full_match"] is False
         assert subqueries_used["partial_match"] is False
-        snapshot.assert_match(sql.as_string(), "build_query_intention_only")
+        assert_sql_snapshot(snapshot, sql, "build_query_intention_only")
 
 
 def test_build_query_intention_keywords(builder, snapshot):
@@ -925,7 +980,7 @@ def test_build_query_intention_keywords(builder, snapshot):
     with patch.object(builder, "_update_filter_names", side_effect=lambda d: d):
         sql, subqueries_used = builder.build_query(data)
         assert subqueries_used["keyword"] is True
-        snapshot.assert_match(sql.as_string(), "build_query_intention_keywords")
+        assert_sql_snapshot(snapshot, sql, "build_query_intention_keywords")
 
 
 def test_build_query_intention_filters(builder, snapshot):
@@ -954,7 +1009,7 @@ def test_build_query_intention_filters(builder, snapshot):
         assert subqueries_used["full_match"] is True
         assert subqueries_used["partial_match"] is True
 
-    snapshot.assert_match(sql.as_string(), "build_query_intention_filters")
+    assert_sql_snapshot(snapshot, sql, "build_query_intention_filters")
 
 
 def test_build_query_invalid_filters(builder, snapshot):
@@ -979,7 +1034,7 @@ def test_build_query_invalid_filters(builder, snapshot):
         assert subqueries_used["full_match"] is True  # year condition is valid
         assert subqueries_used["partial_match"] is True
 
-    snapshot.assert_match(sql.as_string(), "build_query_invalid_filters")
+    assert_sql_snapshot(snapshot, sql, "build_query_invalid_filters")
 
 
 def test_build_query_all_parts(builder, snapshot):
@@ -1030,7 +1085,7 @@ def test_build_query_all_parts(builder, snapshot):
         assert subqueries_used["keyword"] is True
         assert subqueries_used["full_match"] is True
 
-    snapshot.assert_match(sql.as_string(), "build_query_all_parts")
+    assert_sql_snapshot(snapshot, sql, "build_query_all_parts")
 
 
 def test_build_query_invalid_input(builder):
@@ -1050,7 +1105,7 @@ def test_build_query_keywords_only_no_intention(builder, snapshot):
         mock_encode.assert_not_called()
         assert subqueries_used["similarity"] is False
         assert subqueries_used["keyword"] is True
-    snapshot.assert_match(sql.as_string(), "build_query_keywords_only_no_intention")
+    assert_sql_snapshot(snapshot, sql, "build_query_keywords_only_no_intention")
 
 
 def test_build_query_filters_only_no_intention(builder, snapshot):
@@ -1072,7 +1127,7 @@ def test_build_query_filters_only_no_intention(builder, snapshot):
         mock_encode.assert_not_called()
         assert subqueries_used["similarity"] is False
         assert subqueries_used["full_match"] is True
-    snapshot.assert_match(sql.as_string(), "build_query_filters_only_no_intention")
+    assert_sql_snapshot(snapshot, sql, "build_query_filters_only_no_intention")
 
 
 def test_build_filter_subquery_all_invalid_conditions(builder):
@@ -1095,7 +1150,7 @@ def test_build_filter_subquery_all_invalid_conditions(builder):
     assert activated is False
 
 
-def test_generate_filter_flags_case_insensitive_operator(builder):
+def test_generate_filter_flags_case_insensitive_operator(builder, snapshot):
     """Lowercase ilike should be accepted same as ILIKE."""
     filt = {
         "logic": "AND",
@@ -1108,6 +1163,11 @@ def test_generate_filter_flags_case_insensitive_operator(builder):
     assert len(flags) == 1
     assert len(valid_ids) == 1
     sql_fragment = flags[0].as_string()
+    assert_sql_snapshot(
+        snapshot,
+        flags[0],
+        "generate_filter_flags_case_insensitive_operator",
+    )
     assert "ILIKE" in sql_fragment  # normalized
 
 
@@ -1123,7 +1183,7 @@ def test_generate_filter_flags_in_empty_list_skipped(builder):
     assert valid_ids == set()
 
 
-def test_generate_filter_flags_between_boundary(builder):
+def test_generate_filter_flags_between_boundary(builder, snapshot):
     """BETWEEN boundaries should appear verbatim (inclusive semantics)."""
     filt = {
         "logic": "AND",
@@ -1134,6 +1194,7 @@ def test_generate_filter_flags_between_boundary(builder):
     flags, count, _ = builder._generate_filter_flags(filt)
     assert count == 1
     text = flags[0].as_string()
+    assert_sql_snapshot(snapshot, flags[0], "generate_filter_flags_between_boundary")
     assert (
         text
         == "MAX(CASE WHEN f.key IN ('year') AND f.value_numeric BETWEEN 2000 AND 2010 THEN 1 ELSE 0 END) AS \"has_condition_1\""

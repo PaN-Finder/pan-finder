@@ -6,5 +6,8 @@ MAX(CASE
 MAX(CASE WHEN f.key IN ('price') AND f.value_numeric > 10.5 THEN 1 ELSE 0 END) AS "has_condition_2"
 MAX(CASE WHEN f.key IN ('available') AND f.value_boolean = true THEN 1 ELSE 0 END) AS "has_condition_3"
 MAX(CASE WHEN f.key IN ('year') AND f.value_numeric BETWEEN 2000 AND 2010 THEN 1 ELSE 0 END) AS "has_condition_4"
-MAX(CASE WHEN f.key IN ('author') AND f.value IN ('Doe', 'Smith') THEN 1 ELSE 0 END) AS "has_condition_5"
+MAX(CASE
+                        WHEN f.key IN ('author') AND f.value IN ('Doe', 'Smith') THEN 1
+                        ELSE 0
+                    END) AS "has_condition_5"
 MAX(CASE WHEN f.key IN ('pages') AND f.value IS NOT NULL THEN 1 ELSE 0 END) AS "has_condition_6"

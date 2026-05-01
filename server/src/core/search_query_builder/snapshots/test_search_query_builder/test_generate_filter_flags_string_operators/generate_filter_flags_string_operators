@@ -3,7 +3,10 @@ MAX(CASE
                         WHEN f.key IN ('title') AND f.value ILIKE '%Test Title%' THEN 1
                         ELSE 0
                     END) AS "has_condition_1"
-MAX(CASE WHEN f.key IN ('status') AND f.value NOT ILIKE '%draft%' THEN 1 ELSE 0 END) AS "has_condition_2"
+MAX(CASE
+                        WHEN f.key IN ('status') AND f.value NOT ILIKE '%draft%' THEN 1
+                        ELSE 0
+                    END) AS "has_condition_2"
 MAX(CASE
                         WHEN f.key IN ('tag') AND f.value ILIKE 'important%' THEN 2
                         WHEN f.key IN ('tag') AND f.value ILIKE '%important%' THEN 1
@@ -14,5 +17,11 @@ MAX(CASE
                         WHEN f.key IN ('label') AND f.value ILIKE '%urgent%' THEN 1
                         ELSE 0
                     END) AS "has_condition_4"
-MAX(CASE WHEN f.key IN ('label') AND f.value NOT ILIKE '%old%' THEN 1 ELSE 0 END) AS "has_condition_5"
-MAX(CASE WHEN f.key IN ('category') AND f.value NOT ILIKE '%misc%' THEN 1 ELSE 0 END) AS "has_condition_6"
+MAX(CASE
+                        WHEN f.key IN ('label') AND f.value NOT ILIKE '%old%' THEN 1
+                        ELSE 0
+                    END) AS "has_condition_5"
+MAX(CASE
+                        WHEN f.key IN ('category') AND f.value NOT ILIKE '%misc%' THEN 1
+                        ELSE 0
+                    END) AS "has_condition_6"
