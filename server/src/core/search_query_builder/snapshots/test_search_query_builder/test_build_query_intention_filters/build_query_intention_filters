@@ -2,27 +2,27 @@
         SELECT
             searches.doi,
             sum(
-                rrf_score(similarity_rank, 6) +
-                rrf_score(chunk_similarity_rank, 6) +
-                rrf_score(full_match_rank, 6) +
-                rrf_score(partial_match_rank, 6) +
-                rrf_score(keyword_rank, 6)
+                rrf_score(document_rank, 6) +
+                rrf_score(chunk_rank, 6) +
+                rrf_score(conditions_full_rank, 6) +
+                rrf_score(conditions_partial_rank, 6) +
+                rrf_score(keywords_rank, 6)
             ) AS overall_score,
-            sum(rrf_score(similarity_rank, 6)) AS similarity_score,
-            sum(rrf_score(chunk_similarity_rank, 6)) AS chunk_similarity_score,
-            sum(rrf_score(full_match_rank, 6)) AS full_match_score,
-            sum(rrf_score(partial_match_rank, 6)) AS partial_match_score,
-            sum(rrf_score(keyword_rank, 6)) AS keyword_score
+            sum(rrf_score(document_rank, 6)) AS document_score,
+            sum(rrf_score(chunk_rank, 6)) AS chunk_score,
+            sum(rrf_score(conditions_full_rank, 6)) AS conditions_full_score,
+            sum(rrf_score(conditions_partial_rank, 6)) AS conditions_partial_score,
+            sum(rrf_score(keywords_rank, 6)) AS keywords_score
         FROM (
             -- Subquery 1: Document Similarity (title + summary (generated))
             (
                 SELECT
                     d.doi,
-                    DENSE_RANK () OVER (ORDER BY d.title_summary_vector <=> '{0.1,0.2,0.3}'::float8[]::vector ASC) AS similarity_rank,
-                    0 AS chunk_similarity_rank,
-                    0 AS full_match_rank,
-                    0 AS partial_match_rank,
-                    0 AS keyword_rank
+                    DENSE_RANK () OVER (ORDER BY d.title_summary_vector <=> '{0.1,0.2,0.3}'::float8[]::vector ASC) AS document_rank,
+                    0 AS chunk_rank,
+                    0 AS conditions_full_rank,
+                    0 AS conditions_partial_rank,
+                    0 AS keywords_rank
                 FROM document d
                 WHERE
                     d.title_summary_vector <=> '{0.1,0.2,0.3}'::float8[]::vector < 0.5
@@ -47,13 +47,13 @@
                 )
                 SELECT
                     rc.doi,
-                    0 AS similarity_rank,
-                    DENSE_RANK() OVER (ORDER BY rc.distance ASC, rc.chunk_count_for_doi DESC) AS chunk_similarity_rank,
+                    0 AS document_rank,
+                    DENSE_RANK() OVER (ORDER BY rc.distance ASC, rc.chunk_count_for_doi DESC) AS chunk_rank,
                     -- Primary: prioritize DOIs with a more similar best chunk (lower distance)
                     -- Secondary: break ties by number of qualifying chunks (more is better)
-                    0 AS full_match_rank,
-                    0 AS partial_match_rank,
-                    0 AS keyword_rank
+                    0 AS conditions_full_rank,
+                    0 AS conditions_partial_rank,
+                    0 AS keywords_rank
                 FROM RankedChunks rc
                 WHERE
                     rc.rn_within_doi = 1        -- Keep only the single best chunk per DOI
@@ -87,7 +87,7 @@
                         WHEN ("has_condition_1" > 0 AND "has_condition_2" > 0)
                         THEN 1 -- The document satisfies the overall logic (Full Match)
                         ELSE 0 -- The document does not satisfy the overall logic (Partial or No Match)
-                    END AS full_match_score,
+                    END AS conditions_full_score,
                     -- Sum of individual flags (scores can be 0, 1, or 2)
                     ("has_condition_1" + "has_condition_2") AS partial_match_count
                 FROM FilterFlags ff
@@ -97,11 +97,11 @@
             -- Step 3: Final SELECT, Ranking, and Join
             SELECT
                 d.doi,
-                0 AS similarity_rank,
-                0 AS chunk_similarity_rank,
-                fl.full_match_score AS full_match_rank, -- Treated as 1 (match) or 0 (no match); downstream scoring handles this.
-                DENSE_RANK() OVER (ORDER BY fl.partial_match_count DESC) AS partial_match_rank,
-                0 AS keyword_rank
+                0 AS document_rank,
+                0 AS chunk_rank,
+                fl.conditions_full_score AS conditions_full_rank, -- Treated as 1 (match) or 0 (no match); downstream scoring handles this.
+                DENSE_RANK() OVER (ORDER BY fl.partial_match_count DESC) AS conditions_partial_rank,
+                0 AS keywords_rank
             FROM FilterLogic fl
             JOIN document d ON d.id = fl.document_id
             WHERE partial_match_count > 0 -- Ensures only documents that truly matched (score > 0) are returned
@@ -114,11 +114,11 @@
             (
                 SELECT
                     d.doi,
-                    0 AS similarity_rank,
-                    0 AS chunk_similarity_rank,
-                    0 AS full_match_rank,
-                    0 AS partial_match_rank,
-                    DENSE_RANK() OVER (ORDER BY ts_rank_cd(title_text_search_vector, to_tsquery('english', '')) DESC) AS keyword_rank
+                    0 AS document_rank,
+                    0 AS chunk_rank,
+                    0 AS conditions_full_rank,
+                    0 AS conditions_partial_rank,
+                    DENSE_RANK() OVER (ORDER BY ts_rank_cd(title_text_search_vector, to_tsquery('english', '')) DESC) AS keywords_rank
                 FROM document d
                 WHERE
                     '' != '' -- Avoid error if keywords are empty
@@ -131,10 +131,10 @@
         GROUP BY searches.doi
         ORDER BY
             overall_score DESC,
-            full_match_score DESC,
-            partial_match_score DESC,
-            similarity_score DESC,
-            chunk_similarity_score DESC,
-            keyword_score DESC
+            conditions_full_score DESC,
+            conditions_partial_score DESC,
+            document_score DESC,
+            chunk_score DESC,
+            keywords_score DESC
         LIMIT 20;
         

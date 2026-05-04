@@ -966,11 +966,11 @@ def test_build_query_intention_only(builder, snapshot):
     # Mock filter name update to do nothing for this test
     with patch.object(builder, "_update_filter_names", side_effect=lambda d: d):
         sql, subqueries_used = builder.build_query(data)
-        assert subqueries_used["similarity"] is True
-        assert subqueries_used["chunk_similarity"] is True
-        assert subqueries_used["keyword"] is False
-        assert subqueries_used["full_match"] is False
-        assert subqueries_used["partial_match"] is False
+        assert subqueries_used["document"] is True
+        assert subqueries_used["chunk"] is True
+        assert subqueries_used["keywords"] is False
+        assert subqueries_used["conditions_full"] is False
+        assert subqueries_used["conditions_partial"] is False
         assert_sql_snapshot(snapshot, sql, "build_query_intention_only")
 
 
@@ -979,7 +979,7 @@ def test_build_query_intention_keywords(builder, snapshot):
     data = {"intention": "find biology papers", "keywords": ["dna", "rna sequence"]}
     with patch.object(builder, "_update_filter_names", side_effect=lambda d: d):
         sql, subqueries_used = builder.build_query(data)
-        assert subqueries_used["keyword"] is True
+        assert subqueries_used["keywords"] is True
         assert_sql_snapshot(snapshot, sql, "build_query_intention_keywords")
 
 
@@ -1006,8 +1006,8 @@ def test_build_query_intention_filters(builder, snapshot):
         mock_find.assert_any_call("year")
         mock_find.assert_any_call("journal")
         assert mock_find.call_count == 2
-        assert subqueries_used["full_match"] is True
-        assert subqueries_used["partial_match"] is True
+        assert subqueries_used["conditions_full"] is True
+        assert subqueries_used["conditions_partial"] is True
 
     assert_sql_snapshot(snapshot, sql, "build_query_intention_filters")
 
@@ -1031,8 +1031,8 @@ def test_build_query_invalid_filters(builder, snapshot):
     # Patch _find_similar_names to return the original name in a list
     with patch.object(builder, "_find_similar_names", side_effect=lambda name: [name]):
         sql, subqueries_used = builder.build_query(data)
-        assert subqueries_used["full_match"] is True  # year condition is valid
-        assert subqueries_used["partial_match"] is True
+        assert subqueries_used["conditions_full"] is True  # year condition is valid
+        assert subqueries_used["conditions_partial"] is True
 
     assert_sql_snapshot(snapshot, sql, "build_query_invalid_filters")
 
@@ -1081,9 +1081,9 @@ def test_build_query_all_parts(builder, snapshot):
         mock_find.assert_any_call("topic")
         mock_find.assert_any_call("energy")
         assert mock_find.call_count == 4
-        assert subqueries_used["similarity"] is True
-        assert subqueries_used["keyword"] is True
-        assert subqueries_used["full_match"] is True
+        assert subqueries_used["document"] is True
+        assert subqueries_used["keywords"] is True
+        assert subqueries_used["conditions_full"] is True
 
     assert_sql_snapshot(snapshot, sql, "build_query_all_parts")
 
@@ -1103,8 +1103,8 @@ def test_build_query_keywords_only_no_intention(builder, snapshot):
     ):
         sql, subqueries_used = builder.build_query(data)
         mock_encode.assert_not_called()
-        assert subqueries_used["similarity"] is False
-        assert subqueries_used["keyword"] is True
+        assert subqueries_used["document"] is False
+        assert subqueries_used["keywords"] is True
     assert_sql_snapshot(snapshot, sql, "build_query_keywords_only_no_intention")
 
 
@@ -1125,8 +1125,8 @@ def test_build_query_filters_only_no_intention(builder, snapshot):
     ):
         sql, subqueries_used = builder.build_query(data)
         mock_encode.assert_not_called()
-        assert subqueries_used["similarity"] is False
-        assert subqueries_used["full_match"] is True
+        assert subqueries_used["document"] is False
+        assert subqueries_used["conditions_full"] is True
     assert_sql_snapshot(snapshot, sql, "build_query_filters_only_no_intention")
 
 
@@ -1230,8 +1230,8 @@ def test_build_query_all_invalid_filters_behaves_like_no_filters(builder):
         sql_invalid, su_invalid = builder.build_query(params_with_invalid)
     sql_none, su_none = builder.build_query(params_no_filters)
     assert sql_invalid.as_string() == sql_none.as_string()
-    assert su_invalid["full_match"] is False
-    assert su_none["full_match"] is False
+    assert su_invalid["conditions_full"] is False
+    assert su_none["conditions_full"] is False
 
 
 def test_build_keywords_tsquery_text_large_list(builder):
@@ -1239,6 +1239,3 @@ def test_build_keywords_tsquery_text_large_list(builder):
     big_list = [f"k{i}" for i in range(50)]
     tsq = builder._build_keywords_tsquery_text(big_list)
     assert tsq.startswith("k0|") and tsq.count("|") == 49
-
-
-# --- End Test Cases ---

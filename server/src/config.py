@@ -66,11 +66,11 @@ class Settings:
             self.turnstile_secret_key = self._get_required_env("TURNSTILE_SECRET_KEY")
 
         # RRF (Reciprocal Rank Fusion) configuration
-        self.rrf_k_similarity = int(os.getenv("RRF_K_SIMILARITY", "6"))
+        self.rrf_k_document = int(os.getenv("RRF_K_DOCUMENT", "6"))
         self.rrf_k_chunk = int(os.getenv("RRF_K_CHUNK", "6"))
-        self.rrf_k_full_match = int(os.getenv("RRF_K_FULL_MATCH", "6"))
-        self.rrf_k_partial_match = int(os.getenv("RRF_K_PARTIAL_MATCH", "6"))
-        self.rrf_k_keyword = int(os.getenv("RRF_K_KEYWORD", "10"))
+        self.rrf_k_conditions_full = int(os.getenv("RRF_K_CONDITIONS_FULL", "6"))
+        self.rrf_k_conditions_partial = int(os.getenv("RRF_K_CONDITIONS_PARTIAL", "6"))
+        self.rrf_k_keywords = int(os.getenv("RRF_K_KEYWORDS", "10"))
         self.value_vector_keys = self._parse_csv_env(
             "VALUE_VECTOR_KEYS", DEFAULT_VALUE_VECTOR_KEYS
         )

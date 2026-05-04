@@ -522,11 +522,11 @@ async def test_search_endpoint_logic():
             facility_name="Facility A",
             abstract="An abstract about graphene.",
             overall_score=0.9,
-            similarity_score=0.8,
-            chunk_similarity_score=0.7,
-            full_match_score=0.6,
-            partial_match_score=0.5,
-            keyword_score=0.4,
+            document_score=0.8,
+            chunk_score=0.7,
+            conditions_full_score=0.6,
+            conditions_partial_score=0.5,
+            keywords_score=0.4,
         )
     ]
 

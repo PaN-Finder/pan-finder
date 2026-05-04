@@ -76,11 +76,11 @@ class SearchEngine:
             self._query_builder = SearchQueryBuilder(
                 pool=get_database_pool("default"),
                 sentence_transformer=self.sentence_transformer,
-                rrf_k_similarity=settings.rrf_k_similarity,
+                rrf_k_document=settings.rrf_k_document,
                 rrf_k_chunk=settings.rrf_k_chunk,
-                rrf_k_full_match=settings.rrf_k_full_match,
-                rrf_k_partial_match=settings.rrf_k_partial_match,
-                rrf_k_keyword=settings.rrf_k_keyword,
+                rrf_k_conditions_full=settings.rrf_k_conditions_full,
+                rrf_k_conditions_partial=settings.rrf_k_conditions_partial,
+                rrf_k_keywords=settings.rrf_k_keywords,
                 value_vector_keys=settings.value_vector_keys,
                 logger=get_logger("SearchQueryBuilder"),
             )
@@ -287,13 +287,15 @@ class SearchEngine:
                         facility_name=doc.get("facility_name") or "",
                         abstract=doc.get("abstract") or "",
                         overall_score=float(result.get("overall_score", 0)),
-                        similarity_score=float(result.get("similarity_score", 0)),
-                        chunk_similarity_score=float(
-                            result.get("chunk_similarity_score", 0)
+                        document_score=float(result.get("document_score", 0)),
+                        chunk_score=float(result.get("chunk_score", 0)),
+                        conditions_full_score=float(
+                            result.get("conditions_full_score", 0)
                         ),
-                        full_match_score=float(result.get("full_match_score", 0)),
-                        partial_match_score=float(result.get("partial_match_score", 0)),
-                        keyword_score=float(result.get("keyword_score", 0)),
+                        conditions_partial_score=float(
+                            result.get("conditions_partial_score", 0)
+                        ),
+                        keywords_score=float(result.get("keywords_score", 0)),
                     )
                 )
 
@@ -322,19 +324,19 @@ class SearchEngine:
 
         # Include similarity scores only if intention is not empty
         if structured_data.intention and structured_data.intention.strip():
-            result_dict["similarity_score"] = result.similarity_score
-            result_dict["chunk_similarity_score"] = result.chunk_similarity_score
+            result_dict["document_score"] = result.document_score
+            result_dict["chunk_score"] = result.chunk_score
 
         # Include keyword score only if keywords are provided
         if structured_data.keywords and len(structured_data.keywords) > 0:
-            result_dict["keyword_score"] = result.keyword_score
+            result_dict["keywords_score"] = result.keywords_score
 
         # Include filter scores only if filters are provided
         if structured_data.filters and len(structured_data.filters) > 0:
             # Preserve numeric scores; *add* boolean convenience flag
-            result_dict["full_match_score"] = result.full_match_score
-            result_dict["full_match"] = result.full_match_score > 0
-            result_dict["partial_match_score"] = result.partial_match_score
+            result_dict["conditions_full_score"] = result.conditions_full_score
+            result_dict["full_match"] = result.conditions_full_score > 0
+            result_dict["conditions_partial_score"] = result.conditions_partial_score
 
         return result_dict
 
