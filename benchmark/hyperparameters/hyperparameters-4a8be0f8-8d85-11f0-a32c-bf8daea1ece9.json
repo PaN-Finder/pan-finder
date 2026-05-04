@@ -19,11 +19,11 @@
     }
   },
   "score_weights": {
-    "rrf_k_similarity": 6,
+    "rrf_k_document": 6,
     "rrf_k_chunk": 6,
-    "rrf_k_full_match": 6,
-    "rrf_k_partial_match": 6,
-    "rrf_k_keyword": 10
+    "rrf_k_conditions_full": 6,
+    "rrf_k_conditions_partial": 6,
+    "rrf_k_keywords": 10
   },
   "results_set": {
     "results_set_size": 20
