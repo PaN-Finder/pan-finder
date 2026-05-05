@@ -34,7 +34,7 @@ class AIPrompts:
   - "utilizes the ID23 instrument" -> `{"name": "instrument", "operator": "=", "value": "ID23"}`
   - "experiment conducted at the ID23 instrument" -> `{"name": "instrument", "operator": "=", "value": "ID23"}`
   - "data from beamline P03" -> `{"name": "beamline", "operator": "=", "value": "P03"}`
-
+  
   - Facilities and Organizations → publisher filter (special rule): When the query mentions a facility/organization (case-insensitive), add a filter with `name: "publisher"` and use the facility mention as the `value` exactly as it appears in the query. This rule is an exception to the "use the exact parameter names from the query" guideline specifically for facilities.
     - Preserve known abbreviations exactly as provided (do NOT expand abbreviations to full names). Likewise, preserve known full names as provided (do NOT abbreviate). Examples of known abbreviations include: `ESRF`, `PSI`, `ILL`, `ESS`, `MAX IV`, `MAXIV`, `DESY`, `PSI LMU`.
     - "datasets from ESRF" → `{"name": "publisher", "operator": "=", "value": "ESRF"}`
@@ -43,6 +43,14 @@ class AIPrompts:
     - Multiple facilities:
       - "from ESRF or PSI" → you may use a single `IN` filter preserving original terms: `{"name": "publisher", "operator": "IN", "value": ["ESRF", "PSI"]}`; or represent them as two separate conditions joined by `"logic": "OR"`. Choose `IN` only if it cleanly represents a simple alternative without additional coupled conditions.
   - `publisher` value does not need to be in keywords.
+
+  - **Person attribution patterns**: When the query attributes datasets to a person using phrasing like "by [name]", "from [role] [name]", "authored by [name]", "created by [name]", "owned by [name]", "[role] is [name]", or "from [role] [name]", extract the person name as a filter. Use `"ILIKE"` as the operator and the exact role word from the query as `name`. If no explicit role word is present (e.g., "datasets by X Y"), default to `"author"`. The person name must **not** appear in `intention` or `keywords`.
+    - "Find datasets from author Maria Kovacs" → `{"name": "author", "operator": "ILIKE", "value": "Maria Kovacs"}`
+    - "Datasets by Tomas Lindqvist" → `{"name": "author", "operator": "ILIKE", "value": "Tomas Lindqvist"}`
+    - "Data authored by Priya Sharma" → `{"name": "author", "operator": "ILIKE", "value": "Priya Sharma"}`
+    - "datasets owned by Carlos Reyes" → `{"name": "owner", "operator": "ILIKE", "value": "Carlos Reyes"}`
+    - "Find datasets where the team member is Yuki Tanaka" → `{"name": "team member", "operator": "ILIKE", "value": "Yuki Tanaka"}`
+    - "datasets created by Amara Osei" → `{"name": "creator", "operator": "ILIKE", "value": "Amara Osei"}`
 
   - Known facilities (typo correction only): If the user clearly misspells a known facility, correct to the nearest known facility.
 
@@ -73,6 +81,7 @@ class AIPrompts:
 - Group multiple conditions using `"logic": "AND"` or `"logic": "OR"` as appropriate.
 - If only one condition is present, do not use `"logic"` unnecessarily.
 - Approximate numeric values: If a filter uses words like "about", "around", "approximately" or symbols like "~" or "≈" with a number N, interpret it as ±1% around N. Represent this either as `"operator": "BETWEEN"` with `"value": [0.99*N, 1.01*N]`, or as two filters using `">="` and `"<="` with 0.99*N and 1.01*N. Always preserve any provided unit.
+- If the same condition is repeated under the same logic operator, simplify the expression by removing the logic operator and the condition repetitions.
 
 ### 4. Handling Logical Operators
 - Preserve the logical structure (AND/OR) as expressed in the query.
@@ -267,6 +276,18 @@ class AIPrompts:
   - **User Query:** "grazing incidence diffraction at ESRF with instrument ID23"
     **JSON Output:**
     `{ "intention": "grazing incidence diffraction", "keywords": ["grazing incidence diffraction"], "filters": { "logic": "AND", "conditions": [ { "name": "publisher", "operator": "=", "value": "ESRF" }, { "name": "instrument", "operator": "=", "value": "ID23" } ] } }`
+
+  - **User Query:** "Find datasets from author Maria Kovacs"
+    **JSON Output:**
+    `{ "intention": "", "keywords": [], "filters": { "logic": "AND", "conditions": [ { "name": "author", "operator": "ILIKE", "value": "Maria Kovacs" } ] } }`
+
+  - **User Query:** "Datasets by Tomas Lindqvist"
+    **JSON Output:**
+    `{ "intention": "", "keywords": [], "filters": { "logic": "AND", "conditions": [ { "name": "author", "operator": "ILIKE", "value": "Tomas Lindqvist" } ] } }`
+
+  - **User Query:** "neutron scattering datasets authored by Priya Sharma"
+    **JSON Output:**
+    `{ "intention": "neutron scattering", "keywords": ["neutron scattering"], "filters": { "logic": "AND", "conditions": [ { "name": "author", "operator": "ILIKE", "value": "Priya Sharma" } ] } }`
 
 ### 8. Error Handling & Edge Cases
 - If no filters are provided, return `"filters": {}`.
