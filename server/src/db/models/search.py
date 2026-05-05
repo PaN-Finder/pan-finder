@@ -35,8 +35,8 @@ class EnhancedSearchResult(BaseModel):
     facility_name: str
     abstract: str
     overall_score: float
-    similarity_score: float
-    chunk_similarity_score: float
-    full_match_score: float
-    partial_match_score: float
-    keyword_score: float
+    document_score: float
+    chunk_score: float
+    conditions_full_score: float
+    conditions_partial_score: float
+    keywords_score: float

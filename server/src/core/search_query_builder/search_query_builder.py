@@ -19,11 +19,11 @@ class SearchResult(TypedDict):
 
     doi: str
     overall_score: float
-    similarity_score: float
-    chunk_similarity_score: float
-    full_match_score: float
-    partial_match_score: float
-    keyword_score: float
+    document_score: float
+    chunk_score: float
+    conditions_full_score: float
+    conditions_partial_score: float
+    keywords_score: float
 
 
 class SubqueriesUsed(TypedDict):
@@ -32,11 +32,11 @@ class SubqueriesUsed(TypedDict):
     Returned alongside the SQL.
     """
 
-    similarity: bool
-    chunk_similarity: bool
-    full_match: bool
-    partial_match: bool
-    keyword: bool
+    document: bool
+    chunk: bool
+    conditions_full: bool
+    conditions_partial: bool
+    keywords: bool
 
 
 class SearchQueryBuilder:
@@ -73,22 +73,22 @@ class SearchQueryBuilder:
         self,
         sentence_transformer: SentenceTransformer,
         pool: ConnectionPool,
-        rrf_k_similarity: int = _DEFAULT_RRF_K,
+        rrf_k_document: int = _DEFAULT_RRF_K,
         rrf_k_chunk: int = _DEFAULT_RRF_K,
-        rrf_k_full_match: int = _DEFAULT_RRF_K,
-        rrf_k_partial_match: int = _DEFAULT_RRF_K,
-        rrf_k_keyword: int = _DEFAULT_RRF_K,
+        rrf_k_conditions_full: int = _DEFAULT_RRF_K,
+        rrf_k_conditions_partial: int = _DEFAULT_RRF_K,
+        rrf_k_keywords: int = _DEFAULT_RRF_K,
         results_set_size: int = _RESULTS_SET_SIZE,
         value_vector_keys: tuple[str, ...] = (),
         logger: Logger | None = None,
     ):
         self.sentence_transformer = sentence_transformer
         self.pool = pool
-        self.rrf_k_similarity = rrf_k_similarity
+        self.rrf_k_document = rrf_k_document
         self.rrf_k_chunk = rrf_k_chunk
-        self.rrf_k_full_match = rrf_k_full_match
-        self.rrf_k_partial_match = rrf_k_partial_match
-        self.rrf_k_keyword = rrf_k_keyword
+        self.rrf_k_conditions_full = rrf_k_conditions_full
+        self.rrf_k_conditions_partial = rrf_k_conditions_partial
+        self.rrf_k_keywords = rrf_k_keywords
         self.results_set_size = results_set_size
         self.value_vector_keys = value_vector_keys
         self._logger = logger or getLogger(__name__)
@@ -135,11 +135,11 @@ class SearchQueryBuilder:
         )
 
         subqueries_used: SubqueriesUsed = {
-            "similarity": intent_embedding is not None,
-            "chunk_similarity": intent_embedding is not None,
-            "keyword": bool(keywords_tsquery_text),
-            "full_match": filter_used,
-            "partial_match": filter_used,
+            "document": intent_embedding is not None,
+            "chunk": intent_embedding is not None,
+            "keywords": bool(keywords_tsquery_text),
+            "conditions_full": filter_used,
+            "conditions_partial": filter_used,
         }
 
         # 3. Assemble the final query with composables and sanitized values
@@ -148,17 +148,17 @@ class SearchQueryBuilder:
         SELECT
             searches.doi,
             sum(
-                rrf_score(similarity_rank, {rrf_k_similarity}) +
-                rrf_score(chunk_similarity_rank, {rrf_k_chunk}) +
-                rrf_score(full_match_rank, {rrf_k_full_match}) +
-                rrf_score(partial_match_rank, {rrf_k_partial_match}) +
-                rrf_score(keyword_rank, {rrf_k_keyword})
+                rrf_score(document_rank, {rrf_k_document}) +
+                rrf_score(chunk_rank, {rrf_k_chunk}) +
+                rrf_score(conditions_full_rank, {rrf_k_conditions_full}) +
+                rrf_score(conditions_partial_rank, {rrf_k_conditions_partial}) +
+                rrf_score(keywords_rank, {rrf_k_keywords})
             ) AS overall_score,
-            sum(rrf_score(similarity_rank, {rrf_k_similarity})) AS similarity_score,
-            sum(rrf_score(chunk_similarity_rank, {rrf_k_chunk})) AS chunk_similarity_score,
-            sum(rrf_score(full_match_rank, {rrf_k_full_match})) AS full_match_score,
-            sum(rrf_score(partial_match_rank, {rrf_k_partial_match})) AS partial_match_score,
-            sum(rrf_score(keyword_rank, {rrf_k_keyword})) AS keyword_score
+            sum(rrf_score(document_rank, {rrf_k_document})) AS document_score,
+            sum(rrf_score(chunk_rank, {rrf_k_chunk})) AS chunk_score,
+            sum(rrf_score(conditions_full_rank, {rrf_k_conditions_full})) AS conditions_full_score,
+            sum(rrf_score(conditions_partial_rank, {rrf_k_conditions_partial})) AS conditions_partial_score,
+            sum(rrf_score(keywords_rank, {rrf_k_keywords})) AS keywords_score
         FROM (
             -- Subquery 1: Document Similarity (title + summary (generated))
             (
@@ -179,11 +179,11 @@ class SearchQueryBuilder:
             (
                 SELECT
                     d.doi,
-                    0 AS similarity_rank,
-                    0 AS chunk_similarity_rank,
-                    0 AS full_match_rank,
-                    0 AS partial_match_rank,
-                    DENSE_RANK() OVER (ORDER BY ts_rank_cd(title_text_search_vector, to_tsquery('english', {keywords_tsquery_text})) DESC) AS keyword_rank
+                    0 AS document_rank,
+                    0 AS chunk_rank,
+                    0 AS conditions_full_rank,
+                    0 AS conditions_partial_rank,
+                    DENSE_RANK() OVER (ORDER BY ts_rank_cd(title_text_search_vector, to_tsquery('english', {keywords_tsquery_text})) DESC) AS keywords_rank
                 FROM document d
                 WHERE
                     {keywords_tsquery_text} != '' -- Avoid error if keywords are empty
@@ -196,19 +196,19 @@ class SearchQueryBuilder:
         GROUP BY searches.doi
         ORDER BY
             overall_score DESC,
-            full_match_score DESC,
-            partial_match_score DESC,
-            similarity_score DESC,
-            chunk_similarity_score DESC,
-            keyword_score DESC
+            conditions_full_score DESC,
+            conditions_partial_score DESC,
+            document_score DESC,
+            chunk_score DESC,
+            keywords_score DESC
         LIMIT {results_set_size};
         """
         ).format(
-            rrf_k_similarity=self.rrf_k_similarity,
+            rrf_k_document=self.rrf_k_document,
             rrf_k_chunk=self.rrf_k_chunk,
-            rrf_k_full_match=self.rrf_k_full_match,
-            rrf_k_partial_match=self.rrf_k_partial_match,
-            rrf_k_keyword=self.rrf_k_keyword,
+            rrf_k_conditions_full=self.rrf_k_conditions_full,
+            rrf_k_conditions_partial=self.rrf_k_conditions_partial,
+            rrf_k_keywords=self.rrf_k_keywords,
             doc_similarity_subquery=doc_similarity_subquery,
             chunk_similarity_subquery=chunk_similarity_subquery,
             filter_subquery=filter_subquery,
@@ -238,11 +238,11 @@ class SearchQueryBuilder:
         return SQL(
             """SELECT
                     d.doi,
-                    DENSE_RANK () OVER (ORDER BY d.title_summary_vector <=> {intention_vector}::vector ASC) AS similarity_rank,
-                    0 AS chunk_similarity_rank,
-                    0 AS full_match_rank,
-                    0 AS partial_match_rank,
-                    0 AS keyword_rank
+                    DENSE_RANK () OVER (ORDER BY d.title_summary_vector <=> {intention_vector}::vector ASC) AS document_rank,
+                    0 AS chunk_rank,
+                    0 AS conditions_full_rank,
+                    0 AS conditions_partial_rank,
+                    0 AS keywords_rank
                 FROM document d
                 WHERE
                     d.title_summary_vector <=> {intention_vector}::vector < {_SIMILARITY_THRESHOLD_DOCS}"""
@@ -289,13 +289,13 @@ class SearchQueryBuilder:
                 )
                 SELECT
                     rc.doi,
-                    0 AS similarity_rank,
-                    DENSE_RANK() OVER (ORDER BY rc.distance ASC, rc.chunk_count_for_doi DESC) AS chunk_similarity_rank,
+                    0 AS document_rank,
+                    DENSE_RANK() OVER (ORDER BY rc.distance ASC, rc.chunk_count_for_doi DESC) AS chunk_rank,
                     -- Primary: prioritize DOIs with a more similar best chunk (lower distance)
                     -- Secondary: break ties by number of qualifying chunks (more is better)
-                    0 AS full_match_rank,
-                    0 AS partial_match_rank,
-                    0 AS keyword_rank
+                    0 AS conditions_full_rank,
+                    0 AS conditions_partial_rank,
+                    0 AS keywords_rank
                 FROM RankedChunks rc
                 WHERE
                     rc.rn_within_doi = 1        -- Keep only the single best chunk per DOI
@@ -677,7 +677,7 @@ class SearchQueryBuilder:
                         WHEN {filter_logic_expr}
                         THEN 1 -- The document satisfies the overall logic (Full Match)
                         ELSE 0 -- The document does not satisfy the overall logic (Partial or No Match)
-                    END AS full_match_score,
+                    END AS conditions_full_score,
                     -- Sum of individual flags (scores can be 0, 1, or 2)
                     ({partial_match_sum_expr}) AS partial_match_count
                 FROM FilterFlags ff
@@ -687,11 +687,11 @@ class SearchQueryBuilder:
             -- Step 3: Final SELECT, Ranking, and Join
             SELECT
                 d.doi,
-                0 AS similarity_rank,
-                0 AS chunk_similarity_rank,
-                fl.full_match_score AS full_match_rank, -- Treated as 1 (match) or 0 (no match); downstream scoring handles this.
-                DENSE_RANK() OVER (ORDER BY fl.partial_match_count DESC) AS partial_match_rank,
-                0 AS keyword_rank
+                0 AS document_rank,
+                0 AS chunk_rank,
+                fl.conditions_full_score AS conditions_full_rank, -- Treated as 1 (match) or 0 (no match); downstream scoring handles this.
+                DENSE_RANK() OVER (ORDER BY fl.partial_match_count DESC) AS conditions_partial_rank,
+                0 AS keywords_rank
             FROM FilterLogic fl
             JOIN document d ON d.id = fl.document_id
             WHERE partial_match_count > 0 -- Ensures only documents that truly matched (score > 0) are returned
@@ -719,11 +719,11 @@ class SearchQueryBuilder:
         return SQL(
             """SELECT
                     NULL::text AS doi,
-                    0 AS similarity_rank,
-                    0 AS chunk_similarity_rank,
-                    0 AS full_match_rank,
-                    0 AS partial_match_rank,
-                    0 AS keyword_rank
+                    0 AS document_rank,
+                    0 AS chunk_rank,
+                    0 AS conditions_full_rank,
+                    0 AS conditions_partial_rank,
+                    0 AS keywords_rank
                 WHERE FALSE -- Ensure this returns no rows
                 LIMIT 0"""
         )

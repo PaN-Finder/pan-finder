@@ -2,27 +2,27 @@
         SELECT
             searches.doi,
             sum(
-                rrf_score(similarity_rank, 6) +
-                rrf_score(chunk_similarity_rank, 6) +
-                rrf_score(full_match_rank, 6) +
-                rrf_score(partial_match_rank, 6) +
-                rrf_score(keyword_rank, 6)
+                rrf_score(document_rank, 6) +
+                rrf_score(chunk_rank, 6) +
+                rrf_score(conditions_full_rank, 6) +
+                rrf_score(conditions_partial_rank, 6) +
+                rrf_score(keywords_rank, 6)
             ) AS overall_score,
-            sum(rrf_score(similarity_rank, 6)) AS similarity_score,
-            sum(rrf_score(chunk_similarity_rank, 6)) AS chunk_similarity_score,
-            sum(rrf_score(full_match_rank, 6)) AS full_match_score,
-            sum(rrf_score(partial_match_rank, 6)) AS partial_match_score,
-            sum(rrf_score(keyword_rank, 6)) AS keyword_score
+            sum(rrf_score(document_rank, 6)) AS document_score,
+            sum(rrf_score(chunk_rank, 6)) AS chunk_score,
+            sum(rrf_score(conditions_full_rank, 6)) AS conditions_full_score,
+            sum(rrf_score(conditions_partial_rank, 6)) AS conditions_partial_score,
+            sum(rrf_score(keywords_rank, 6)) AS keywords_score
         FROM (
             -- Subquery 1: Document Similarity (title + summary (generated))
             (
                 SELECT
                     NULL::text AS doi,
-                    0 AS similarity_rank,
-                    0 AS chunk_similarity_rank,
-                    0 AS full_match_rank,
-                    0 AS partial_match_rank,
-                    0 AS keyword_rank
+                    0 AS document_rank,
+                    0 AS chunk_rank,
+                    0 AS conditions_full_rank,
+                    0 AS conditions_partial_rank,
+                    0 AS keywords_rank
                 WHERE FALSE -- Ensure this returns no rows
                 LIMIT 0
             )
@@ -31,11 +31,11 @@
             (
                 SELECT
                     NULL::text AS doi,
-                    0 AS similarity_rank,
-                    0 AS chunk_similarity_rank,
-                    0 AS full_match_rank,
-                    0 AS partial_match_rank,
-                    0 AS keyword_rank
+                    0 AS document_rank,
+                    0 AS chunk_rank,
+                    0 AS conditions_full_rank,
+                    0 AS conditions_partial_rank,
+                    0 AS keywords_rank
                 WHERE FALSE -- Ensure this returns no rows
                 LIMIT 0
             )
@@ -44,11 +44,11 @@
             (
                 SELECT
                     NULL::text AS doi,
-                    0 AS similarity_rank,
-                    0 AS chunk_similarity_rank,
-                    0 AS full_match_rank,
-                    0 AS partial_match_rank,
-                    0 AS keyword_rank
+                    0 AS document_rank,
+                    0 AS chunk_rank,
+                    0 AS conditions_full_rank,
+                    0 AS conditions_partial_rank,
+                    0 AS keywords_rank
                 WHERE FALSE -- Ensure this returns no rows
                 LIMIT 0
             )
@@ -57,11 +57,11 @@
             (
                 SELECT
                     d.doi,
-                    0 AS similarity_rank,
-                    0 AS chunk_similarity_rank,
-                    0 AS full_match_rank,
-                    0 AS partial_match_rank,
-                    DENSE_RANK() OVER (ORDER BY ts_rank_cd(title_text_search_vector, to_tsquery('english', 'protein|folding|mechanism')) DESC) AS keyword_rank
+                    0 AS document_rank,
+                    0 AS chunk_rank,
+                    0 AS conditions_full_rank,
+                    0 AS conditions_partial_rank,
+                    DENSE_RANK() OVER (ORDER BY ts_rank_cd(title_text_search_vector, to_tsquery('english', 'protein|folding|mechanism')) DESC) AS keywords_rank
                 FROM document d
                 WHERE
                     'protein|folding|mechanism' != '' -- Avoid error if keywords are empty
@@ -74,10 +74,10 @@
         GROUP BY searches.doi
         ORDER BY
             overall_score DESC,
-            full_match_score DESC,
-            partial_match_score DESC,
-            similarity_score DESC,
-            chunk_similarity_score DESC,
-            keyword_score DESC
+            conditions_full_score DESC,
+            conditions_partial_score DESC,
+            document_score DESC,
+            chunk_score DESC,
+            keywords_score DESC
         LIMIT 20;
         

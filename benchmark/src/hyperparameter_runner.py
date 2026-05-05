@@ -59,9 +59,10 @@ async def process_test_pair(
 
     logging.info("process_test_pair: begin: query building")
     start_query_building = time.time()
-    query = builder.build_query(user_prompt_components)
+    query, subqueries_used = builder.build_query(user_prompt_components)
     end_query_building = time.time()
     logging.info("process_test_pair: end: query building")
+    logging.info("process_test_pair: Activated subqueries %s", subqueries_used)
     logging.info("SQL Query %s", query.as_string())
 
     logging.info("process_test_pair: begin: query execution")
@@ -89,20 +90,20 @@ async def process_test_pair(
         columns=[
             "DOI",
             "Overall Score",
-            "Similarity Score",
-            "Chunk Similarity Score",
-            "Full Match Score",
-            "Partial Match Score",
-            "Keyword Score",
+            "Document Score",
+            "Chunk Score",
+            "Conditions Full Score",
+            "Conditions Partial Score",
+            "Keywords Score",
         ],
     ).astype(
         {
             "Overall Score": float,
-            "Similarity Score": float,
-            "Chunk Similarity Score": float,
-            "Full Match Score": float,
-            "Partial Match Score": float,
-            "Keyword Score": float,
+            "Document Score": float,
+            "Chunk Score": float,
+            "Conditions Full Score": float,
+            "Conditions Partial Score": float,
+            "Keywords Score": float,
         }
     )
 
@@ -271,11 +272,11 @@ async def process_extended_test_pair(
             facility_name="",
             abstract="",
             overall_score=float(r["Overall Score"]),
-            similarity_score=0.0,
-            chunk_similarity_score=0.0,
-            full_match_score=0.0,
-            partial_match_score=0.0,
-            keyword_score=0.0,
+            document_score=0.0,
+            chunk_score=0.0,
+            conditions_full_score=0.0,
+            conditions_partial_score=0.0,
+            keywords_score=0.0,
         )
         for i, r in results["results_set"].iterrows()
     ]
@@ -587,13 +588,15 @@ async def main(hyperparameters: dict):
     builder = SearchQueryBuilder(
         sentence_transformer=sentence_transformer,
         pool=get_database_pool("default"),
-        rrf_k_similarity=hyperparameters["score_weights"].get("rrf_k_similarity", 60),
+        rrf_k_document=hyperparameters["score_weights"].get("rrf_k_document", 60),
         rrf_k_chunk=hyperparameters["score_weights"].get("rrf_k_chunk", 60),
-        rrf_k_full_match=hyperparameters["score_weights"].get("rrf_k_full_match", 60),
-        rrf_k_partial_match=hyperparameters["score_weights"].get(
-            "rrf_k_partial_match", 60
+        rrf_k_conditions_full=hyperparameters["score_weights"].get(
+            "rrf_k_conditions_full", 60
         ),
-        rrf_k_keyword=hyperparameters["score_weights"].get("rrf_k_keyword", 60),
+        rrf_k_conditions_partial=hyperparameters["score_weights"].get(
+            "rrf_k_conditions_partial", 60
+        ),
+        rrf_k_keywords=hyperparameters["score_weights"].get("rrf_k_keywords", 60),
         results_set_size=hyperparameters["results_set"].get("results_set_size", 20),
     )
 

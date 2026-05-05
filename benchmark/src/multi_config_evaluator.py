@@ -260,11 +260,11 @@ async def process_rrf_config(
     builder = SearchQueryBuilder(
         sentence_transformer=sentence_transformer,
         pool=get_database_pool("default"),
-        rrf_k_similarity=rrf_config.get("rrf_k_similarity", 60),
+        rrf_k_document=rrf_config.get("rrf_k_document", 60),
         rrf_k_chunk=rrf_config.get("rrf_k_chunk", 60),
-        rrf_k_full_match=rrf_config.get("rrf_k_full_match", 60),
-        rrf_k_partial_match=rrf_config.get("rrf_k_partial_match", 60),
-        rrf_k_keyword=rrf_config.get("rrf_k_keyword", 60),
+        rrf_k_conditions_full=rrf_config.get("rrf_k_conditions_full", 60),
+        rrf_k_conditions_partial=rrf_config.get("rrf_k_conditions_partial", 60),
+        rrf_k_keywords=rrf_config.get("rrf_k_keywords", 60),
         value_vector_keys=settings.value_vector_keys,
         logger=logging.getLogger("search_query_builder"),
     )

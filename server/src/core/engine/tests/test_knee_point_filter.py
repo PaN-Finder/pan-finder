@@ -18,11 +18,11 @@ with patch("src.config.get_settings") as mock_get_settings:
     mock_get_settings.return_value = MagicMock(
         enable_turnstile=False,
         turnstile_secret_key=None,
-        rrf_k_similarity=6,
+        rrf_k_document=6,
         rrf_k_chunk=6,
-        rrf_k_full_match=6,
-        rrf_k_partial_match=6,
-        rrf_k_keyword=10,
+        rrf_k_conditions_full=6,
+        rrf_k_conditions_partial=6,
+        rrf_k_keywords=10,
     )
     from src.core.engine.knee_point import KneePoint
     from src.db.models.search import EnhancedSearchResult

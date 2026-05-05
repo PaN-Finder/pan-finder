@@ -1,9 +1,9 @@
 SELECT
                     NULL::text AS doi,
-                    0 AS similarity_rank,
-                    0 AS chunk_similarity_rank,
-                    0 AS full_match_rank,
-                    0 AS partial_match_rank,
-                    0 AS keyword_rank
+                    0 AS document_rank,
+                    0 AS chunk_rank,
+                    0 AS conditions_full_rank,
+                    0 AS conditions_partial_rank,
+                    0 AS keywords_rank
                 WHERE FALSE -- Ensure this returns no rows
                 LIMIT 0

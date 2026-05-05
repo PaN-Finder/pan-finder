@@ -2,39 +2,39 @@
   {
     "test_name": "MatchFocus",
     "disabled": true,
-    "rrf_k_similarity": 8,
+    "rrf_k_document": 8,
     "rrf_k_chunk": 8,
-    "rrf_k_full_match": 1,
-    "rrf_k_partial_match": 1,
-    "rrf_k_keyword": 10,
+    "rrf_k_conditions_full": 1,
+    "rrf_k_conditions_partial": 1,
+    "rrf_k_keywords": 10,
     "notes": "Low k only for Match types, higher k for others."
   },
   {
     "test_name": "SimilarityFocus",
     "disabled": true,
-    "rrf_k_similarity": 1,
+    "rrf_k_document": 1,
     "rrf_k_chunk": 1,
-    "rrf_k_full_match": 6,
-    "rrf_k_partial_match": 6,
-    "rrf_k_keyword": 10,
+    "rrf_k_conditions_full": 6,
+    "rrf_k_conditions_partial": 6,
+    "rrf_k_keywords": 10,
     "notes": "Assume Similarity is most precise (low k), Matches less so, Keyword least precise (high k)."
   },
   {
     "test_name": "6_6_3_3_10",
-    "rrf_k_similarity": 6,
+    "rrf_k_document": 6,
     "rrf_k_chunk": 6,
-    "rrf_k_full_match": 3,
-    "rrf_k_partial_match": 3,
-    "rrf_k_keyword": 10,
+    "rrf_k_conditions_full": 3,
+    "rrf_k_conditions_partial": 3,
+    "rrf_k_keywords": 10,
     "notes": "Frontend's values."
   },
   {
     "test_name": "LessKeyword",
-    "rrf_k_similarity": 6,
+    "rrf_k_document": 6,
     "rrf_k_chunk": 6,
-    "rrf_k_full_match": 6,
-    "rrf_k_partial_match": 6,
-    "rrf_k_keyword": 10,
+    "rrf_k_conditions_full": 6,
+    "rrf_k_conditions_partial": 6,
+    "rrf_k_keywords": 10,
     "notes": "Baseline k=6, but extra smoothing (k=10) for Keyword Rank."
   }
 ]

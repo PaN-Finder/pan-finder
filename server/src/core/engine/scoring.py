@@ -13,25 +13,25 @@ class Scoring:
     These are used to normalize the search result scores.
     """
 
-    similarity_score_max = 1 / (1 + settings.rrf_k_similarity)
-    chunk_similarity_score_max = 1 / (1 + settings.rrf_k_chunk)
-    full_match_score_max = 1 / (1 + settings.rrf_k_full_match)
-    partial_match_score_max = 1 / (1 + settings.rrf_k_partial_match)
-    keyword_score_max = 1 / (1 + settings.rrf_k_keyword)
+    document_score_max = 1 / (1 + settings.rrf_k_document)
+    chunk_score_max = 1 / (1 + settings.rrf_k_chunk)
+    conditions_full_score_max = 1 / (1 + settings.rrf_k_conditions_full)
+    conditions_partial_score_max = 1 / (1 + settings.rrf_k_conditions_partial)
+    keywords_score_max = 1 / (1 + settings.rrf_k_keywords)
 
     @staticmethod
     def overall_score_max(subqueries_used: SubqueriesUsed) -> float:
         total_max_score = 0.0
-        if subqueries_used["similarity"]:
-            total_max_score += Scoring.similarity_score_max
-        if subqueries_used["chunk_similarity"]:
-            total_max_score += Scoring.chunk_similarity_score_max
-        if subqueries_used["keyword"]:
-            total_max_score += Scoring.keyword_score_max
-        if subqueries_used["full_match"]:
-            total_max_score += Scoring.full_match_score_max
-        if subqueries_used["partial_match"]:
-            total_max_score += Scoring.partial_match_score_max
+        if subqueries_used["document"]:
+            total_max_score += Scoring.document_score_max
+        if subqueries_used["chunk"]:
+            total_max_score += Scoring.chunk_score_max
+        if subqueries_used["keywords"]:
+            total_max_score += Scoring.keywords_score_max
+        if subqueries_used["conditions_full"]:
+            total_max_score += Scoring.conditions_full_score_max
+        if subqueries_used["conditions_partial"]:
+            total_max_score += Scoring.conditions_partial_score_max
         return total_max_score
 
     @staticmethod
@@ -48,13 +48,13 @@ class Scoring:
         enabled = Scoring.components_enabled(subqueries_used)
 
         logger.debug(
-            "Normalizing scores | enabled_components=%s | similarity_max=%.6f | chunk_similarity_max=%.6f | keyword_max=%.6f | full_match_max=%.6f | partial_match_max=%.6f | overall_max=%.6f | results_count=%d",
+            "Normalizing scores | enabled_components=%s | document_max=%.6f | chunk_max=%.6f | keywords_max=%.6f | conditions_full_max=%.6f | conditions_partial_max=%.6f | overall_max=%.6f | results_count=%d",
             enabled,
-            Scoring.similarity_score_max,
-            Scoring.chunk_similarity_score_max,
-            Scoring.keyword_score_max,
-            Scoring.full_match_score_max,
-            Scoring.partial_match_score_max,
+            Scoring.document_score_max,
+            Scoring.chunk_score_max,
+            Scoring.keywords_score_max,
+            Scoring.conditions_full_score_max,
+            Scoring.conditions_partial_score_max,
             Scoring.overall_score_max(subqueries_used),
             len(results),
         )
@@ -65,34 +65,35 @@ class Scoring:
             return value / denom
 
         for result in results:
-            if enabled["similarity"]:
-                result.similarity_score = safe_div(
-                    result.similarity_score, Scoring.similarity_score_max
+            if enabled["document"]:
+                result.document_score = safe_div(
+                    result.document_score, Scoring.document_score_max
                 )
-                result.chunk_similarity_score = safe_div(
-                    result.chunk_similarity_score, Scoring.chunk_similarity_score_max
+                result.chunk_score = safe_div(
+                    result.chunk_score, Scoring.chunk_score_max
                 )
             else:
-                result.similarity_score = 0.0
-                result.chunk_similarity_score = 0.0
+                result.document_score = 0.0
+                result.chunk_score = 0.0
 
-            if enabled["keyword"]:
-                result.keyword_score = safe_div(
-                    result.keyword_score, Scoring.keyword_score_max
+            if enabled["keywords"]:
+                result.keywords_score = safe_div(
+                    result.keywords_score, Scoring.keywords_score_max
                 )
             else:
-                result.keyword_score = 0.0
+                result.keywords_score = 0.0
 
-            if enabled["full_match"]:
-                result.full_match_score = safe_div(
-                    result.full_match_score, Scoring.full_match_score_max
+            if enabled["conditions_full"]:
+                result.conditions_full_score = safe_div(
+                    result.conditions_full_score, Scoring.conditions_full_score_max
                 )
-                result.partial_match_score = safe_div(
-                    result.partial_match_score, Scoring.partial_match_score_max
+                result.conditions_partial_score = safe_div(
+                    result.conditions_partial_score,
+                    Scoring.conditions_partial_score_max,
                 )
             else:
-                result.full_match_score = 0.0
-                result.partial_match_score = 0.0
+                result.conditions_full_score = 0.0
+                result.conditions_partial_score = 0.0
 
             overall_max = Scoring.overall_score_max(subqueries_used)
             result.overall_score = (

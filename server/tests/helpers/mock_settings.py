@@ -31,11 +31,11 @@ class MockSettings:
     api_host = "0.0.0.0"
     api_port = 8080
     embedding_model_path = "/tmp/models/all-MiniLM-L12-v2"
-    rrf_k_similarity = 6
+    rrf_k_document = 6
     rrf_k_chunk = 6
-    rrf_k_full_match = 6
-    rrf_k_partial_match = 6
-    rrf_k_keyword = 10
+    rrf_k_conditions_full = 6
+    rrf_k_conditions_partial = 6
+    rrf_k_keywords = 10
 
     def __init__(self, enable_turnstile=False):
         """Initialize with configurable Turnstile setting."""
