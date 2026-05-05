@@ -34,7 +34,7 @@ class AIPrompts:
   - "utilizes the ID23 instrument" -> `{"name": "instrument", "operator": "=", "value": "ID23"}`
   - "experiment conducted at the ID23 instrument" -> `{"name": "instrument", "operator": "=", "value": "ID23"}`
   - "data from beamline P03" -> `{"name": "beamline", "operator": "=", "value": "P03"}`
-  
+
   - Facilities and Organizations → publisher filter (special rule): When the query mentions a facility/organization (case-insensitive), add a filter with `name: "publisher"` and use the facility mention as the `value` exactly as it appears in the query. This rule is an exception to the "use the exact parameter names from the query" guideline specifically for facilities.
     - Preserve known abbreviations exactly as provided (do NOT expand abbreviations to full names). Likewise, preserve known full names as provided (do NOT abbreviate). Examples of known abbreviations include: `ESRF`, `PSI`, `ILL`, `ESS`, `MAX IV`, `MAXIV`, `DESY`, `PSI LMU`.
     - "datasets from ESRF" → `{"name": "publisher", "operator": "=", "value": "ESRF"}`
