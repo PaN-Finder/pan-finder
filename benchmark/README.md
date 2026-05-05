@@ -47,7 +47,7 @@ Create a `.env` file in `benchmark/` (the provided `run.sh` sources this file).
 Optional: adjust RRF parameters in `rrf_score_k_values_matrix.json`. Each object is a test configuration with:
 
 - `test_name`: label for the configuration
-- `rrf_k_similarity`, `rrf_k_chunk`, `rrf_k_full_match`, `rrf_k_partial_match`, `rrf_k_keyword`: RRF k values
+- `rrf_k_document`, `rrf_k_chunk`, `rrf_k_conditions_full`, `rrf_k_conditions_partial`, `rrf_k_keywords`: RRF k values
 
 The LLM system prompt is at `prompts/gpt-4.1-mini/1_0_7.md` by default.
 
