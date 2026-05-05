@@ -1,0 +1,1 @@
+MAX(CASE WHEN f.key IN ('dose') AND ((f.value_si BETWEEN to_unit(1, 'Gy') AND to_unit(10, 'Gy')) OR (f.value_si IS NULL AND f.value_numeric BETWEEN 1 AND 10)) THEN 1 ELSE 0 END) AS "has_condition_1"

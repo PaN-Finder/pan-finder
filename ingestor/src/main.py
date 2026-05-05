@@ -11,6 +11,7 @@ from document_ingestor import DocumentIngestor
 from filter_enricher import FilterEnricher
 from filter_ingestor import FilterIngestor
 from filter_value_converter import FilterValueConverter
+from filter_vector_ingestor import FilterVectorIngestor
 from numeric_filter_ingestor import NumericFilterIngestor
 from summary_ingestor import SummaryIngestor
 
@@ -47,7 +48,10 @@ def main():
     # 6. Enrich filter table with derived publisher data
     FilterEnricher(get_database_connection, settings).run()
 
-    # 7. Populate document summaries
+    # 7. Compute embeddings for selected filter values
+    FilterVectorIngestor(get_database_connection, settings).run()
+
+    # 8. Populate document summaries
     SummaryIngestor(get_database_connection, settings).run()
 
     logging.info("Ingestor finished.")

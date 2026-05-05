@@ -117,7 +117,7 @@
                 FROM document d
                 WHERE
                     '' != '' -- Avoid error if keywords are empty
-                    AND title_text_search_vector @@ to_tsquery('english', '')                    
+                    AND title_text_search_vector @@ to_tsquery('english', '')
                 -- NO ORDER BY here, as we will use the rank to calculate the score
                 -- NO LIMIT here: we want all DOIs with at least one keyword match
             )

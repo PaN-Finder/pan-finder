@@ -26,6 +26,19 @@ class SearchResult(TypedDict):
     keyword_score: float
 
 
+class SubqueriesUsed(TypedDict):
+    """
+    Tracks which search subqueries were actually activated during build_query().
+    Returned alongside the SQL.
+    """
+
+    similarity: bool
+    chunk_similarity: bool
+    full_match: bool
+    partial_match: bool
+    keyword: bool
+
+
 class SearchQueryBuilder:
     """
     Builds a complex SQL query for searching documents based on user input.
@@ -49,6 +62,8 @@ class SearchQueryBuilder:
     _SIMILARITY_THRESHOLD_DOCS: float = 0.5
     # Similarity threshold for document chunks vs intention
     _SIMILARITY_THRESHOLD_CHUNKS: float = 0.5
+    # Similarity threshold for filter value vector similarity search
+    _SIMILARITY_THRESHOLD_FILTER_VALUE: float = 0.35
     # Final result limit
     _RESULTS_SET_SIZE: int = 20
     # Default RRF K value (can be used as a common default)
@@ -64,8 +79,8 @@ class SearchQueryBuilder:
         rrf_k_partial_match: int = _DEFAULT_RRF_K,
         rrf_k_keyword: int = _DEFAULT_RRF_K,
         results_set_size: int = _RESULTS_SET_SIZE,
+        value_vector_keys: tuple[str, ...] = (),
         logger: Logger | None = None,
-        capture_similar_names: bool = False,
     ):
         self.sentence_transformer = sentence_transformer
         self.pool = pool
@@ -75,35 +90,25 @@ class SearchQueryBuilder:
         self.rrf_k_partial_match = rrf_k_partial_match
         self.rrf_k_keyword = rrf_k_keyword
         self.results_set_size = results_set_size
+        self.value_vector_keys = value_vector_keys
         self._logger = logger or getLogger(__name__)
-        self._capture_similar_names = capture_similar_names
-        self._similar_names = {}  # For debugging purposes, stores similar names found during query building
-
-    @property
-    def similar_names(self) -> dict[str, list[dict[str, Any]]]:
-        """
-        Returns the dictionary of similar names found during query building.
-        Only populated if capture_similar_names was set to True in the constructor.
-        """
-        return self._similar_names
 
     # --- Public Methods ---
-    def build_query(self, params: dict[str, Any]) -> Composed:
+    def build_query(self, params: dict[str, Any]) -> tuple[Composed, SubqueriesUsed]:
         """
         Constructs the final SQL search query based on the input data.
 
         Args:
-            data: A dictionary containing search parameters like 'intention',
-                  'keywords', and 'filters'.
+            params: A dictionary containing search parameters like 'intention',
+                    'keywords', and 'filters'.
 
         Returns:
-            A psycopg Composed object representing the full SQL query.
+            A tuple of (Composed SQL query, SubqueriesUsed flags). The flags
+            reflect which subqueries were actually activated — safe for concurrent
+            use because no instance state is written.
         """
         if not isinstance(params, dict):
             raise ValueError("Input 'params' must be a dictionary.")
-
-        if self._capture_similar_names:
-            self._similar_names.clear()  # Clear previous similar names if capturing
 
         self._logger.info(f"Building query with params: {params}")
         # 1. Preprocess: Update filter names with similar ones
@@ -125,7 +130,17 @@ class SearchQueryBuilder:
         keywords_tsquery_text = self._build_keywords_tsquery_text(
             normalized_params.get("keywords", [])
         )
-        filter_subquery = self._build_filter_subquery(normalized_params.get("filters"))
+        filter_subquery, filter_used = self._build_filter_subquery(
+            normalized_params.get("filters")
+        )
+
+        subqueries_used: SubqueriesUsed = {
+            "similarity": intent_embedding is not None,
+            "chunk_similarity": intent_embedding is not None,
+            "keyword": bool(keywords_tsquery_text),
+            "full_match": filter_used,
+            "partial_match": filter_used,
+        }
 
         # 3. Assemble the final query with composables and sanitized values
         search_sql = SQL(
@@ -201,7 +216,7 @@ class SearchQueryBuilder:
             results_set_size=self.results_set_size,
         )
 
-        return search_sql
+        return search_sql, subqueries_used
 
     def _build_similarity_query(self, intention_vector: list | None) -> Composed | SQL:
         """
@@ -290,6 +305,75 @@ class SearchQueryBuilder:
             intention_vector=intention_vector,
             _SIMILARITY_THRESHOLD_CHUNKS=self._SIMILARITY_THRESHOLD_CHUNKS,
         )
+
+    def _extract_filter_value_strings(self, condition: dict) -> list[str]:
+        """
+        Extract string values from a single condition that is eligible for
+        filter-value vector matching.
+        """
+        _STRING_OPS = {
+            "=",
+            "!=",
+            "LIKE",
+            "ILIKE",
+            "NOT LIKE",
+            "NOT ILIKE",
+            "IN",
+            "NOT IN",
+        }
+
+        name_list = condition.get("name")
+        operator = str(condition.get("operator", "")).upper()
+        value = condition.get("value")
+
+        if not isinstance(name_list, list) or operator not in _STRING_OPS:
+            return []
+
+        if not any(name in self.value_vector_keys for name in name_list):
+            return []
+
+        if isinstance(value, str) and value.strip():
+            return [value.strip()]
+
+        if operator in ("IN", "NOT IN") and isinstance(value, list):
+            return [
+                item.strip() for item in value if isinstance(item, str) and item.strip()
+            ]
+
+        return []
+
+    def _build_condition_vector_map(
+        self, filters: dict | None
+    ) -> dict[int, list[float]]:
+        """
+        Precompute one averaged embedding per eligible filter condition.
+        """
+        condition_values: dict[int, list[str]] = {}
+
+        def _collect(condition: dict | None) -> None:
+            if not isinstance(condition, dict):
+                return
+
+            if "logic" in condition and "conditions" in condition:
+                for sub_condition in condition.get("conditions", []):
+                    _collect(sub_condition)
+                return
+
+            values = self._extract_filter_value_strings(condition)
+            if values:
+                condition_values[id(condition)] = values
+
+        _collect(filters)
+
+        if not condition_values:
+            return {}
+
+        condition_vectors: dict[int, list[float]] = {}
+        for condition_id, values in condition_values.items():
+            embeddings = self.sentence_transformer.encode(values)
+            condition_vectors[condition_id] = embeddings.mean(axis=0).tolist()
+
+        return condition_vectors
 
     # --- Private Helper Methods ---
     def _parse_datetime_strict(self, value: Any) -> datetime | None:
@@ -418,9 +502,6 @@ class SearchQueryBuilder:
             self._logger.info(
                 f"Finding similar names for '{raw_name}'. Found: {[row['name'] for row in result[:5]]}"
             )
-            if self._capture_similar_names:
-                self._similar_names[raw_name] = result
-
             if len(result) == 0:
                 return [raw_name]
 
@@ -506,7 +587,9 @@ class SearchQueryBuilder:
         return data
 
     # --- Filter Subquery Construction ---
-    def _build_filter_subquery(self, filters: dict | None) -> Composed | SQL:
+    def _build_filter_subquery(
+        self, filters: dict | None
+    ) -> tuple[Composed | SQL, bool]:
         """
         Builds the SQL subquery for filtering documents based on the filter object.
 
@@ -517,25 +600,28 @@ class SearchQueryBuilder:
             filters: The dictionary representing the filter structure.
 
         Returns:
-            A Composed or SQL object for the filter subquery.
+            A tuple of (subquery SQL, activated). activated is True only when
+            valid filter conditions were found and the subquery will produce real rows.
         """
         if not filters or not filters.get("conditions"):
             self._logger.info(
                 "No valid filters provided, creating empty filter subquery."
             )
-            return self._get_empty_subquery()
+            return self._get_empty_subquery(), False
 
         try:
+            condition_vectors = self._build_condition_vector_map(filters)
+
             # 1. Generate flag definitions using MAX(CASE WHEN ...) AS has_condition_N
             # Also capture which base condition dicts produced a valid flag so logic indexing stays aligned.
             flag_definitions, flag_count, valid_condition_ids = (
-                self._generate_filter_flags(filters)
+                self._generate_filter_flags(filters, condition_vectors)
             )
             if not flag_definitions:
                 self._logger.info(
                     "Could not generate any filter flags from the provided structure."
                 )
-                return self._get_empty_subquery()
+                return self._get_empty_subquery(), False
 
             # Join flags with newline and indentation so the generated SQL places
             # each flag definition on its own aligned line for readability.
@@ -546,7 +632,7 @@ class SearchQueryBuilder:
             self._collect_keys_recursive(filters, filter_key_names)
             if not filter_key_names:
                 self._logger.info("No filter keys found in the provided structure.")
-                return self._get_empty_subquery()
+                return self._get_empty_subquery(), False
 
             # Sort keys for deterministic SQL generation
             sorted_filter_keys = sorted(list(filter_key_names))
@@ -618,7 +704,7 @@ class SearchQueryBuilder:
                 filter_logic_expr=filter_logic_expr,
                 partial_match_sum_expr=partial_match_sum_expr,
                 any_flag_match_expr=any_flag_match_expr,
-            )
+            ), True
         except Exception as e:
             self._logger.info(f"Unexpected error building filter subquery: {e}")
             raise
@@ -649,6 +735,7 @@ class SearchQueryBuilder:
         flag_counter: list[int],
         all_flags: list[Composable],
         valid_condition_ids: set[int],
+        condition_vectors: dict[int, list[float]],
     ) -> None:
         """
         Recursively traverses the filter structure to generate SQL 'flag' expressions.
@@ -666,7 +753,11 @@ class SearchQueryBuilder:
             for sub in condition.get("conditions", []):
                 if isinstance(sub, dict):
                     self._build_flags_recursive(
-                        sub, flag_counter, all_flags, valid_condition_ids
+                        sub,
+                        flag_counter,
+                        all_flags,
+                        valid_condition_ids,
+                        condition_vectors,
                     )
             return
 
@@ -692,6 +783,19 @@ class SearchQueryBuilder:
         key_in_clause: Composed = Composed(
             [SQL("f.key IN ("), key_values_sql, SQL(")")]
         )
+        vector_key_names = [
+            name for name in name_list if name in self.value_vector_keys
+        ]
+        vector_key_in_clause: Composed | None = None
+        if vector_key_names:
+            vector_key_values_sql = SQL(", ").join(
+                [Literal(v) for v in vector_key_names]
+            )
+            vector_key_in_clause = Composed(
+                [SQL("f.key IN ("), vector_key_values_sql, SQL(")")]
+            )
+
+        condition_vector = condition_vectors.get(id(condition))
         flag_sql_to_add: Composable | None = None
         comparison_clause: Composable | None = None
         op_sql = SQL(cast(LiteralString, operator_raw))
@@ -782,7 +886,7 @@ class SearchQueryBuilder:
                     flag_counter[0] -= 1
                     return
 
-            elif operator_raw in ("IN", "NOT IN"):
+            elif operator_raw == "IN":
                 if isinstance(value, list) and value:
                     if all(isinstance(v, NUMBER_TYPES) for v in value):
                         # If a unit is specified, compare using value_si; fallback to value_numeric when value_si is NULL
@@ -826,8 +930,102 @@ class SearchQueryBuilder:
                             )
                     elif all(isinstance(v, str) for v in value):
                         values_sql = SQL(", ").join([Literal(v) for v in value])
-                        comparison_clause = Composed(
-                            [SQL("f.value "), op_sql, SQL(" ("), values_sql, SQL(")")]
+                        vector_branch = SQL("")
+                        if (
+                            vector_key_in_clause is not None
+                            and condition_vector is not None
+                        ):
+                            vector_branch = SQL(
+                                "\n                        WHEN {vector_key_in_clause} AND f.value_vector IS NOT NULL AND f.value_vector <=> {condition_vector}::vector < {threshold} THEN 1"
+                            ).format(
+                                vector_key_in_clause=vector_key_in_clause,
+                                condition_vector=condition_vector,
+                                threshold=self._SIMILARITY_THRESHOLD_FILTER_VALUE,
+                            )
+
+                        flag_sql_to_add = SQL(
+                            """MAX(CASE
+                        WHEN {key_in_clause} AND f.value IN ({values_sql}) THEN 1{vector_branch}
+                        ELSE 0
+                    END) AS {flag_name}"""
+                        ).format(
+                            key_in_clause=key_in_clause,
+                            values_sql=values_sql,
+                            vector_branch=vector_branch,
+                            flag_name=Identifier(flag_name),
+                        )
+                    else:
+                        flag_counter[0] -= 1
+                        return
+                else:
+                    flag_counter[0] -= 1
+                    return
+            elif operator_raw == "NOT IN":
+                if isinstance(value, list) and value:
+                    if all(isinstance(v, NUMBER_TYPES) for v in value):
+                        # If a unit is specified, compare using value_si; fallback to value_numeric when value_si is NULL
+                        if isinstance(unit_text, str) and unit_text.strip():
+                            values_sql_units = SQL(", ").join(
+                                [
+                                    SQL("to_unit({v}, {u})").format(
+                                        v=Literal(v), u=Literal(unit_text.strip())
+                                    )
+                                    for v in value
+                                ]
+                            )
+                            values_sql_raw = SQL(", ").join([Literal(v) for v in value])
+                            comparison_clause = Composed(
+                                [
+                                    SQL("("),
+                                    SQL("f.value_si "),
+                                    op_sql,
+                                    SQL(" ("),
+                                    values_sql_units,
+                                    SQL(")"),
+                                    SQL(" OR (f.value_si IS NULL AND f.value_numeric "),
+                                    op_sql,
+                                    SQL(" ("),
+                                    values_sql_raw,
+                                    SQL("))"),
+                                    SQL(")"),
+                                ]
+                            )
+                        else:
+                            values_sql = SQL(", ").join([Literal(v) for v in value])
+                            comparison_clause = Composed(
+                                [
+                                    SQL("f.value_numeric "),
+                                    op_sql,
+                                    SQL(" ("),
+                                    values_sql,
+                                    SQL(")"),
+                                ]
+                            )
+                    elif all(isinstance(v, str) for v in value):
+                        values_sql = SQL(", ").join([Literal(v) for v in value])
+                        vector_branch = SQL("")
+                        if (
+                            vector_key_in_clause is not None
+                            and condition_vector is not None
+                        ):
+                            vector_branch = SQL(
+                                "\n                        WHEN {vector_key_in_clause} AND f.value_vector IS NOT NULL AND f.value_vector <=> {condition_vector}::vector > {threshold} THEN 1"
+                            ).format(
+                                vector_key_in_clause=vector_key_in_clause,
+                                condition_vector=condition_vector,
+                                threshold=self._SIMILARITY_THRESHOLD_FILTER_VALUE,
+                            )
+
+                        flag_sql_to_add = SQL(
+                            """MAX(CASE
+                        WHEN {key_in_clause} AND f.value NOT IN ({values_sql}) THEN 1{vector_branch}
+                        ELSE 0
+                    END) AS {flag_name}"""
+                        ).format(
+                            key_in_clause=key_in_clause,
+                            values_sql=values_sql,
+                            vector_branch=vector_branch,
+                            flag_name=Identifier(flag_name),
                         )
                     else:
                         flag_counter[0] -= 1
@@ -847,16 +1045,27 @@ class SearchQueryBuilder:
                 value
             ) is None:  # Ensure we don't treat timestamps as strings
                 # Aggregated priority: 2 if any value has prefix match, else 1 if any value contains, else 0
+                vector_branch = SQL("")
+                if vector_key_in_clause is not None and condition_vector is not None:
+                    vector_branch = SQL(
+                        "\n                        WHEN {vector_key_in_clause} AND f.value_vector IS NOT NULL AND f.value_vector <=> {condition_vector}::vector < {threshold} THEN 1"
+                    ).format(
+                        vector_key_in_clause=vector_key_in_clause,
+                        condition_vector=condition_vector,
+                        threshold=self._SIMILARITY_THRESHOLD_FILTER_VALUE,
+                    )
+
                 flag_sql_to_add = SQL(
                     """MAX(CASE
                         WHEN {key_in_clause} AND f.value ILIKE {prefix} THEN 2
-                        WHEN {key_in_clause} AND f.value ILIKE {contains} THEN 1
+                        WHEN {key_in_clause} AND f.value ILIKE {contains} THEN 1{vector_branch}
                         ELSE 0
                     END) AS {flag_name}"""
                 ).format(
                     key_in_clause=key_in_clause,
                     prefix=Literal(str(value) + "%"),
                     contains=Literal("%" + str(value) + "%"),
+                    vector_branch=vector_branch,
                     flag_name=Identifier(flag_name),
                 )
 
@@ -866,9 +1075,26 @@ class SearchQueryBuilder:
             ) and self._parse_datetime_strict(
                 value
             ) is None:  # Ensure we don't treat timestamps as strings
-                comparison_clause = SQL("f.value NOT ILIKE {v}").format(
-                    op=op_sql,
-                    v=Literal("%" + str(value) + "%"),
+                vector_branch = SQL("")
+                if vector_key_in_clause is not None and condition_vector is not None:
+                    vector_branch = SQL(
+                        "\n                        WHEN {vector_key_in_clause} AND f.value_vector IS NOT NULL AND f.value_vector <=> {condition_vector}::vector > {threshold} THEN 1"
+                    ).format(
+                        vector_key_in_clause=vector_key_in_clause,
+                        condition_vector=condition_vector,
+                        threshold=self._SIMILARITY_THRESHOLD_FILTER_VALUE,
+                    )
+
+                flag_sql_to_add = SQL(
+                    """MAX(CASE
+                        WHEN {key_in_clause} AND f.value NOT ILIKE {contains} THEN 1{vector_branch}
+                        ELSE 0
+                    END) AS {flag_name}"""
+                ).format(
+                    key_in_clause=key_in_clause,
+                    contains=Literal("%" + str(value) + "%"),
+                    vector_branch=vector_branch,
+                    flag_name=Identifier(flag_name),
                 )
 
             # Comparison operators
@@ -976,7 +1202,9 @@ class SearchQueryBuilder:
             flag_counter[0] -= 1
 
     def _generate_filter_flags(
-        self, filt: dict
+        self,
+        filt: dict,
+        condition_vectors: dict[int, list[float]] | None = None,
     ) -> tuple[list[Composable], int, set[int]]:
         """
         Generates all filter flag expressions for a given filter structure.
@@ -991,9 +1219,15 @@ class SearchQueryBuilder:
         flag_counter = [0]
         all_flags: list[Composable] = []
         valid_condition_ids: set[int] = set()
+        if condition_vectors is None:
+            condition_vectors = {}
         try:
             self._build_flags_recursive(
-                filt, flag_counter, all_flags, valid_condition_ids
+                filt,
+                flag_counter,
+                all_flags,
+                valid_condition_ids,
+                condition_vectors,
             )
         except Exception as e:
             self._logger.info(f"Unexpected error during recursive flag building: {e}")

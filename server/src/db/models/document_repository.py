@@ -89,14 +89,15 @@ class DocumentRepository:
             for key, value in rows:
                 if key not in valid_keys:
                     continue
-                normalized_value = value.strip()
-                if not normalized_value:
-                    continue
-                dedupe_key = normalized_value.casefold()
-                if dedupe_key in seen_values:
-                    continue
-                seen_values.add(dedupe_key)
-                values.append(normalized_value)
+                for part in value.split(","):
+                    part = part.strip()
+                    if not part:
+                        continue
+                    dedupe_key = part.casefold()
+                    if dedupe_key in seen_values:
+                        continue
+                    seen_values.add(dedupe_key)
+                    values.append(part)
 
             detail_values[field_name] = " - ".join(values) if values else None
 

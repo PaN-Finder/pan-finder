@@ -1,0 +1,1 @@
+("has_condition_1" > 0 AND ("has_condition_2" > 0 OR "has_condition_3" > 0))

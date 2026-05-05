@@ -1,6 +1,7 @@
 import csv
 import json
 import logging
+import os
 import time
 from datetime import datetime
 from typing import Any
@@ -28,7 +29,7 @@ CACHE_FILE_PATH = benchmark_dir() / "cache" / "llm_cache.json"
 settings = get_settings()
 
 llm_model = "gpt-4.1-mini"
-system_prompt_version = "1_0_9.md"
+system_prompt_version = "1_0_10.md"
 
 # Global LLM client with file caching
 llm_client: LLMClient = get_llm_client(llm_model)
@@ -39,7 +40,15 @@ extract_prompt = load_system_prompt(llm_model, system_prompt_version)
 
 def load_rrf_score_k_values() -> list[dict[str, Any]]:
     filepath = benchmark_dir() / "rrf_score_k_values_matrix.json"
-    return json.loads(filepath.read_text())
+    configs: list[dict[str, Any]] = json.loads(filepath.read_text())
+    disabled_configs = [
+        config.get("test_name", "unknown_test")
+        for config in configs
+        if config.get("disabled", False)
+    ]
+    if disabled_configs:
+        logging.info("Skipping disabled RRF configs: %s", ", ".join(disabled_configs))
+    return [config for config in configs if not config.get("disabled", False)]
 
 
 def load_datasets() -> dict[str, list[dict[str, Any]]]:
@@ -101,7 +110,8 @@ async def process_query(
     logging.info("Query: %s", query_text)
 
     data = json.loads(response)
-    query = builder.build_query(data)
+    query, subqueries_used = builder.build_query(data)
+    logging.debug("Activated subqueries: %s", subqueries_used)
     try:
         logging.debug("SQL Query: %s", query.as_string())
     except Exception:
@@ -109,6 +119,7 @@ async def process_query(
 
     with get_database_connection() as conn, conn.cursor() as cursor:
         start_time = time.time()
+        # print(query.as_string())
         cursor.execute(query)
         results = cursor.fetchall()
         elapsed_time = time.time() - start_time
@@ -254,6 +265,7 @@ async def process_rrf_config(
         rrf_k_full_match=rrf_config.get("rrf_k_full_match", 60),
         rrf_k_partial_match=rrf_config.get("rrf_k_partial_match", 60),
         rrf_k_keyword=rrf_config.get("rrf_k_keyword", 60),
+        value_vector_keys=settings.value_vector_keys,
         logger=logging.getLogger("search_query_builder"),
     )
 
@@ -303,11 +315,13 @@ async def process_rrf_config(
 
 async def main() -> None:
     # Basic logging setup for the benchmark script
+    log_level = os.getenv("LOG_LEVEL", "INFO").upper()
     logging.basicConfig(
-        level=logging.INFO,
+        level=getattr(logging, log_level, logging.INFO),
         format="%(asctime)s | %(levelname)s | %(message)s",
         datefmt="%H:%M:%S",
     )
+    logging.getLogger("matplotlib.font_manager").setLevel(logging.WARNING)
 
     # Load inputs (LLM client will handle its own caching)
     rrf_score_k_values = load_rrf_score_k_values()

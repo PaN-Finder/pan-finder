@@ -1,0 +1,1 @@
+MAX(CASE WHEN f.key IN ('dose_rate') AND (f.value_si IN (to_unit(1, 'Gy/s'), to_unit(2, 'Gy/s'), to_unit(5, 'Gy/s')) OR (f.value_si IS NULL AND f.value_numeric IN (1, 2, 5))) THEN 1 ELSE 0 END) AS "has_condition_1"

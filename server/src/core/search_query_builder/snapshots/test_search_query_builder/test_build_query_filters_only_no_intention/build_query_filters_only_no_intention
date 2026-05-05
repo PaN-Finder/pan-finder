@@ -48,7 +48,7 @@
                 SELECT
                     f.document_id,
                     MAX(CASE WHEN f.key IN ('year') AND f.value_numeric > 2021 THEN 1 ELSE 0 END) AS "has_condition_1",
-                    MAX(CASE 
+                    MAX(CASE
                         WHEN f.key IN ('journal') AND f.value ILIKE 'Science%' THEN 2
                         WHEN f.key IN ('journal') AND f.value ILIKE '%Science%' THEN 1
                         ELSE 0
@@ -101,7 +101,7 @@
                 FROM document d
                 WHERE
                     '' != '' -- Avoid error if keywords are empty
-                    AND title_text_search_vector @@ to_tsquery('english', '')                    
+                    AND title_text_search_vector @@ to_tsquery('english', '')
                 -- NO ORDER BY here, as we will use the rank to calculate the score
                 -- NO LIMIT here: we want all DOIs with at least one keyword match
             )

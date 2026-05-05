@@ -149,6 +149,64 @@ def test_document_repository_get_by_doi_loads_mapped_detail_fields():
     ]
 
 
+def test_document_repository_get_by_doi_deduplicates_combined_and_individual_author_rows():
+    """When the DB contains both a combined comma-separated row and individual rows
+    for the same authors (a known ingestor artifact), the result must only list each
+    name once."""
+    document_cursor = MagicMock()
+    document_cursor.fetchone.return_value = (
+        5,
+        "10.1000/test-combined",
+        "Test Doc Combined",
+        "Some text",
+        None,
+        None,
+        2,
+        "Facility B",
+    )
+    document_cursor.description = [
+        ("id",),
+        ("doi",),
+        ("title",),
+        ("abstract",),
+        ("summary",),
+        ("raw",),
+        ("facility_id",),
+        ("facility_name",),
+    ]
+
+    detail_cursor = MagicMock()
+    # Combined row comes first (lower id), then individual rows
+    detail_cursor.fetchall.return_value = [
+        (
+            "creator",
+            "Else Marie Friis, Peter R. Crane, Kaj Raunsgaard Pedersen, Federica Marone",
+        ),
+        ("creator", "Else Marie Friis"),
+        ("creator", "Peter R. Crane"),
+        ("creator", "Kaj Raunsgaard Pedersen"),
+        ("creator", "Federica Marone"),
+    ]
+
+    conn = MagicMock()
+    conn.execute.side_effect = [document_cursor, detail_cursor]
+
+    context_manager = MagicMock()
+    context_manager.__enter__.return_value = conn
+    context_manager.__exit__.return_value = None
+
+    with patch(
+        "src.db.models.document_repository.get_database_connection",
+        return_value=context_manager,
+    ):
+        document = DocumentRepository.get_by_doi("10.1000/test-combined")
+
+    assert (
+        document.authors
+        == "Else Marie Friis - Peter R. Crane - Kaj Raunsgaard Pedersen - Federica Marone"
+    )
+
+
 def test_document_repository_get_by_doi_deduplicates_multi_row_author_values():
     document_cursor = MagicMock()
     document_cursor.fetchone.return_value = (

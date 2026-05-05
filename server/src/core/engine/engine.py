@@ -81,6 +81,7 @@ class SearchEngine:
                 rrf_k_full_match=settings.rrf_k_full_match,
                 rrf_k_partial_match=settings.rrf_k_partial_match,
                 rrf_k_keyword=settings.rrf_k_keyword,
+                value_vector_keys=settings.value_vector_keys,
                 logger=get_logger("SearchQueryBuilder"),
             )
         return self._query_builder
@@ -189,12 +190,12 @@ class SearchEngine:
         """
         try:
             # Generate SQL query
-            query_build_start = time.time()
-            sql_query = self.query_builder.build_query(search_data.model_dump())
-            query_build_time = time.time() - query_build_start
-            self._logger.debug(
-                f"SQL query building took {query_build_time:.3f} seconds"
+            sql_query, subqueries_used = self.query_builder.build_query(
+                search_data.model_dump()
             )
+
+            # Log the generated SQL query for debugging
+            self._logger.debug(f"Generated SQL query: {sql_query.as_string()}")
 
             # Execute the query
             db_execution_start = time.time()
@@ -205,7 +206,7 @@ class SearchEngine:
             )
 
             # Normalize scores to a 0-1 range
-            Scoring.normalize_scores(results, search_data)
+            Scoring.normalize_scores(results, subqueries_used)
 
             # Apply knee-point filtering to discard low-relevance tail
             knee_result = self._knee_point.filter_with_stats(results)
@@ -328,7 +329,7 @@ class SearchEngine:
         if structured_data.keywords and len(structured_data.keywords) > 0:
             result_dict["keyword_score"] = result.keyword_score
 
-        # Include full_match and partial_match scores only if filters are provided
+        # Include filter scores only if filters are provided
         if structured_data.filters and len(structured_data.filters) > 0:
             # Preserve numeric scores; *add* boolean convenience flag
             result_dict["full_match_score"] = result.full_match_score

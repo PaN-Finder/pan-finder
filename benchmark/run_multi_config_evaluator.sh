@@ -21,6 +21,9 @@ fi
 # activate virtual environment
 source .venv/bin/activate
 
+# enable verbose application and benchmark logging for this run
+export LOG_LEVEL=DEBUG
+
 # run the benchmark script
 python src/multi_config_evaluator.py
 
