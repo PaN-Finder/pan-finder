@@ -3,79 +3,15 @@ Populate the `filter` and `filter_key` tables from document raw metadata.
 """
 
 import logging
-import re
-from collections.abc import Callable, Iterable
-from contextlib import AbstractContextManager
 from typing import Any
 
-from sentence_transformers import SentenceTransformer
+from base_filter_ingestor import BaseFilterIngestor
 
 
-class FilterIngestor:
+class FilterIngestor(BaseFilterIngestor):
     """Extract metadata filters from `document.raw` and persist them."""
 
     logger = logging.getLogger("FilterIngestor")
-
-    def __init__(
-        self,
-        db_conn_factory: Callable[[], AbstractContextManager[Any]],
-        settings,
-    ) -> None:
-        self.db_conn_factory = db_conn_factory
-        self.settings = settings
-        self.encoder = SentenceTransformer(settings.embedding_model_path, device="cpu")
-
-    # --- Normalization helpers ---
-    @staticmethod
-    def camel_case_to_spaces(text: str) -> str:
-        """Convert CamelCase to space separated words."""
-        return re.sub(r"(?<=[a-z])(?=[A-Z])", " ", text)
-
-    @classmethod
-    def normalize_filter_key(cls, filter_key: str) -> str:
-        """Normalize filter key by converting various casings and delimiters to lowercase spaces."""
-        return (
-            cls.camel_case_to_spaces(filter_key)
-            .replace("_", " ")
-            .replace("/", " ")
-            .replace(".", " ")
-            .lower()
-        )
-
-    @staticmethod
-    def safe_strip(value: Any) -> Any:
-        """Safely strip strings; pass through None and non-strings."""
-        return str(value).strip() if value is not None else value
-
-    @classmethod
-    def flatten_json(
-        cls, data: Any, parent_key: str = "", sep: str = "."
-    ) -> list[tuple[str, dict[str, Any]]]:
-        items: list[tuple[str, dict[str, Any]]] = []
-        if isinstance(data, dict):
-            if "v" in data and "u" in data:
-                items.append((parent_key, {"value": data["v"], "unit": data["u"]}))
-            elif "value" in data and "unit" in data:
-                items.append(
-                    (parent_key, {"value": data["value"], "unit": data["unit"]})
-                )
-            elif "value" in data and "units" in data and "name" in data:
-                items.append(
-                    (
-                        parent_key + sep + data["name"],
-                        {"value": data["value"], "unit": data["units"]},
-                    )
-                )
-            else:
-                for k, v in data.items():
-                    new_key = f"{parent_key}{sep}{k}" if parent_key else k
-                    items.extend(cls.flatten_json(v, new_key, sep=sep))
-        elif isinstance(data, list):
-            for v in data:
-                items.extend(cls.flatten_json(v, parent_key, sep=sep))
-        else:
-            items.append((parent_key, {"value": data, "unit": None}))
-        return items
 
     # --- DB operations ---
     def fetch_documents_without_filters(
@@ -87,7 +23,9 @@ class FilterIngestor:
             FROM document d
             LEFT JOIN filter f ON d.id = f.document_id
             WHERE f.document_id IS NULL
-            """
+              AND NOT (d.raw ? %s)
+            """,
+            (self.PUBLICATION_ROOT_KEY,),
         )
         return cursor.fetchall()
 
@@ -101,73 +39,4 @@ class FilterIngestor:
             + self.flatten_json(raw.get("datacite", {}))
             + self.flatten_json(raw.get("catalogue", {}))
         )
-        filter_rows: list[tuple] = []
-        keys: list[str] = []
-        for prop, item in filters:
-            if not prop or prop.strip() == "":
-                continue
-            filter_rows.append(
-                (doc_id, prop, self.safe_strip(item["value"]), item["unit"], "EXPLICIT")
-            )
-            keys.append(prop)
-        return filter_rows, keys
-
-    def insert_filters(self, cursor, filter_rows: list[tuple]) -> None:
-        if filter_rows:
-            cursor.executemany(
-                """
-                INSERT INTO filter (document_id, key, value, unit, type)
-                VALUES (%s, %s, %s, %s, %s)
-                """,
-                filter_rows,
-            )
-
-    def insert_filter_keys_with_embeddings(self, cursor, keys: Iterable[str]) -> None:
-        """
-        Normalize filter keys, generate embeddings, and insert into filter_key table.
-
-        Args:
-            cursor: Database cursor for executing SQL
-            keys: Iterable of filter key names to process
-        """
-        unique_keys = list(set(keys))
-        if not unique_keys:
-            return
-
-        normalized = [self.normalize_filter_key(k) for k in unique_keys]
-        vectors = self.encoder.encode(normalized)
-        if hasattr(vectors, "tolist"):
-            vectors = vectors.tolist()
-        key_embeddings = list(zip(unique_keys, vectors, strict=True))
-        cursor.executemany(
-            """
-            INSERT INTO filter_key (name, name_vector)
-            VALUES (%s, %s)
-            ON CONFLICT (name) DO NOTHING
-            """,
-            key_embeddings,
-        )
-
-    def process_documents(self, documents: list[tuple[int, dict[str, Any]]]) -> None:
-        """Insert flattened metadata filters and corresponding key embeddings."""
-        with self.db_conn_factory() as conn:
-            with conn.cursor() as cursor:
-                all_rows: list[tuple] = []
-                all_keys: list[str] = []
-                for doc_id, raw in documents:
-                    self.logger.info("Store filters for document ID: %s", doc_id)
-                    rows, keys = self.build_filters(doc_id, raw)
-                    all_rows.extend(rows)
-                    all_keys.extend(keys)
-                self.insert_filters(cursor, all_rows)
-                self.insert_filter_keys_with_embeddings(cursor, all_keys)
-            conn.commit()
-
-    def run(self) -> None:
-        try:
-            with self.db_conn_factory() as conn, conn.cursor() as cursor:
-                documents = self.fetch_documents_without_filters(cursor)
-            self.process_documents(documents)
-        except Exception as e:
-            self.logger.exception("Error during populating filter table: %s", e)
-            raise
+        return self.build_filter_rows(doc_id, filters)

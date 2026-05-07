@@ -21,3 +21,7 @@ dependencies = [
   "ruff",
 ]
 
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests", "src"]
+
