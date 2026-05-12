@@ -136,19 +136,31 @@ class BaseFilterIngestor:
             key_embeddings,
         )
 
+    BATCH_SIZE = 100
+
     def process_documents(self, documents: list[tuple[int, dict[str, Any]]]) -> None:
         """Insert flattened metadata filters and corresponding key embeddings."""
         with self.db_conn_factory() as conn:
             with conn.cursor() as cursor:
-                all_rows: list[tuple] = []
-                all_keys: list[str] = []
-                for doc_id, raw in documents:
+                batch_rows: list[tuple] = []
+                batch_keys: list[str] = []
+                for i, (doc_id, raw) in enumerate(documents):
                     self.logger.info("Store filters for document ID: %s", doc_id)
                     rows, keys = self.build_filters(doc_id, raw)
-                    all_rows.extend(rows)
-                    all_keys.extend(keys)
-                self.insert_filters(cursor, all_rows)
-                self.insert_filter_keys_with_embeddings(cursor, all_keys)
+                    batch_rows.extend(rows)
+                    batch_keys.extend(keys)
+                    if (i + 1) % self.BATCH_SIZE == 0:
+                        self.insert_filters(cursor, batch_rows)
+                        self.insert_filter_keys_with_embeddings(cursor, batch_keys)
+                        conn.commit()
+                        self.logger.info(
+                            "Committed batch ending at document ID: %s", doc_id
+                        )
+                        batch_rows = []
+                        batch_keys = []
+                if batch_rows or batch_keys:
+                    self.insert_filters(cursor, batch_rows)
+                    self.insert_filter_keys_with_embeddings(cursor, batch_keys)
             conn.commit()
 
     def run(self) -> None:
