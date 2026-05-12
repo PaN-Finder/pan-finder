@@ -16,7 +16,7 @@ class DocumentRepository:
             2: ["publicationYear"],
             3: ["publicationYear"],
             4: ["publicationYear"],
-            5: ["publicationYear"],
+            5: ["publicationYear", "attributes.publicationYear"],
             6: ["publicationYear"],
         },
         "instrument_name": {
@@ -24,7 +24,7 @@ class DocumentRepository:
             2: ["creationLocation"], # ESS
             3: ["beamline"], # PSI
             4: ["creationLocation"], # MAX IV
-            5: ["beamline"], # ESRF
+            5: ["beamline", "instruments.name"], # ESRF
             6: ["scientificMetadata.instrument.name"], # DESY
         },
         "authors": {
@@ -32,7 +32,7 @@ class DocumentRepository:
             2: ["creator", "authors"],
             3: ["creator"],
             4: ["creator"],
-            5: ["creators.name"],
+            5: ["creators.name", "users.fullName", "attributes.creators.name"],
             6: ["creator"],
         },
     }

@@ -16,6 +16,8 @@ DEFAULT_VALUE_VECTOR_KEYS: tuple[str, ...] = (
     "principalInvestigator",
     "investigator",
     "scientificMetadata.measurement.team",
+    "users.fullName",
+    "attributes.creators.name",
 )
 
 

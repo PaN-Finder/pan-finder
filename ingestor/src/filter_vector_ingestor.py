@@ -118,7 +118,7 @@ class FilterVectorIngestor:
                 zip(vectors, batch_ids, strict=True),
             )
             self.logger.info(
-                "Updated single-name rows %d–%d", start + 1, start + len(batch_ids)
+                "Updated single-name rows %d-%d", start + 1, start + len(batch_ids)
             )
 
     def _process_multi_names(
