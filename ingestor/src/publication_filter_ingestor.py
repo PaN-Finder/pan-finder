@@ -92,5 +92,11 @@ class PublicationFilterIngestor(BaseFilterIngestor):
     def build_filters(
         self, doc_id: int, raw: dict[str, Any]
     ) -> tuple[list[tuple], list[str]]:
-        filters = self.flatten_json(self.normalize_raw(raw))
+        normalized = self.normalize_raw(raw)
+        filters = (
+            self.flatten_json(normalized.get("panosc", {}))
+            + self.flatten_json(normalized.get("samples", []))
+            + self.flatten_json(normalized.get("datasets", []))
+            + self.flatten_json(normalized.get("datacite", []))
+        )
         return self.build_filter_rows(doc_id, filters)
