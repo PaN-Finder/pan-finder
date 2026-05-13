@@ -18,6 +18,8 @@ DEFAULT_VALUE_VECTOR_KEYS: tuple[str, ...] = (
     "scientificMetadata.measurement.team",
     "users.fullName",
     "attributes.creators.name",
+    "publisher",
+    "attributes.publisher",
 )
 
 
