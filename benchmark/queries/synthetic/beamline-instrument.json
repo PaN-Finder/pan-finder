@@ -1,14 +1,14 @@
 [
   {
-    "doi": "10.15151/ESRF-ES-1122970732",
+    "doi": "10.15151/ESRF-DC-2008703197",
     "queries": [
       {
         "query": "Datasets from ESRF beamline ID29",
-        "min_position": 0
+        "min_position": 20
       },
       {
         "query": "Datasets from ESRF instrument ID29",
-        "min_position": 0
+        "min_position": 20
       }
     ]
   },
@@ -35,7 +35,7 @@
     "queries": [
       {
         "query": "Datasets where the beamline is TOMCAT",
-        "min_position": 0
+        "min_position": 20
       }
     ]
   }

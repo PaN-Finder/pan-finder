@@ -13,7 +13,7 @@
     "queries": [
       {
         "query": "Look for research where the description includes both viral and synthetic protein and the publisher is European Synchrotron and the instrument is ID30A-3.",
-        "min_position": 0
+        "min_position": 7
       }
     ]
   },
@@ -40,7 +40,7 @@
     "queries": [
       {
         "query": "Studies where the publication year is 2027 and the title is about Norway bag.",
-        "min_position": 0
+        "min_position": 14
       }
     ]
   },
@@ -58,12 +58,12 @@
     "queries": [
       {
         "query": "Studies where the EM sampling rate is less than 0.54 and the publication year is 2024.",
-        "min_position": 0
+        "min_position": 19
       }
     ]
   },
   {
-    "doi": "10.15151/ESRF-ES-510968852",
+    "doi": "10.15151/ESRF-ES-517495875",
     "queries": [
       {
         "query": "Look for research where the publication year is 2024 and the description is about 'X-ray reflectivity'.",
@@ -76,7 +76,7 @@
     "queries": [
       {
         "query": "Look for studies where one of the creator was Bendes.",
-        "min_position": 0
+        "min_position": 6
       }
     ]
   },
@@ -85,7 +85,7 @@
     "queries": [
       {
         "query": "Look for studies where the description includes the term 'X-ray scattering' and the publication year is 2025 and the instrument is ID02.",
-        "min_position": 0
+        "min_position": 5
       }
     ]
   },
@@ -121,7 +121,7 @@
     "queries": [
       {
         "query": "Find studies where the sample mass is 5000 and the enviroment temperature is K and the publication year is 2012.",
-        "min_position": 0
+        "min_position": 2
       }
     ]
   },
@@ -130,7 +130,7 @@
     "queries": [
       {
         "query": "Look for studies where sample container is cylinder and instrument is IN4.",
-        "min_position": 0
+        "min_position": 7
       }
     ]
   }

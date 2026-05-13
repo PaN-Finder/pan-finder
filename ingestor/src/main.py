@@ -8,11 +8,14 @@ sys.path.insert(0, str(server_dir))
 # ruff: noqa: E402
 from chunk_ingestor import ChunkIngestor
 from document_ingestor import DocumentIngestor
+from filter_description_ingestor import FilterDescriptionIngestor
 from filter_enricher import FilterEnricher
 from filter_ingestor import FilterIngestor
 from filter_value_converter import FilterValueConverter
 from filter_vector_ingestor import FilterVectorIngestor
 from numeric_filter_ingestor import NumericFilterIngestor
+from publication_document_ingestor import PublicationDocumentIngestor
+from publication_filter_ingestor import PublicationFilterIngestor
 from summary_ingestor import SummaryIngestor
 
 from src.config import get_settings
@@ -30,14 +33,20 @@ def main():
 
     settings = get_settings()
 
-    # 1. Store data
+    # 1.a. Standard document schemas
     DocumentIngestor(get_database_connection).run()
+
+    # 1.b. Publication document schema
+    PublicationDocumentIngestor(get_database_connection).run()
 
     # 2. Create chunks
     ChunkIngestor(get_database_connection, settings).run()
 
-    # 3. Populate filters
+    # 3.a. Populate filters for standard document schemas
     FilterIngestor(get_database_connection, settings).run()
+
+    # 3.b. Populate filters for publication document schema
+    PublicationFilterIngestor(get_database_connection, settings).run()
 
     # 4. Derive numeric filters
     NumericFilterIngestor(get_database_connection, settings).run()
@@ -53,6 +62,9 @@ def main():
 
     # 8. Populate document summaries
     SummaryIngestor(get_database_connection, settings).run()
+
+    # 9. Populate filter descriptions and embed them
+    FilterDescriptionIngestor(get_database_connection, settings).run()
 
     logging.info("Ingestor finished.")
 

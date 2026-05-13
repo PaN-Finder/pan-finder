@@ -60,6 +60,14 @@ class NumericFilterIngestor:
                                     AND
                                     regexp_like(value, '^(-?\\d*\\.{0,1}\\d+)\\s?(um|K|mm|m|°C|A|keV|meV|mA|g|k|mg)$')
                             ) AS subquery
+                            WHERE NOT EXISTS (
+                                SELECT 1 FROM filter f
+                                WHERE f.document_id = subquery.document_id
+                                  AND f.key = subquery.key
+                                  AND f.value = subquery.value_unit[1]
+                                  AND f.unit = subquery.value_unit[2]
+                                  AND f.type = 'DERIVED'
+                            )
                         """
                     )
                 conn.commit()
@@ -89,6 +97,14 @@ class NumericFilterIngestor:
                                     AND
                                     regexp_like(value, '^(-?\\d*\\.?\\d+)-(-?\\d*\\.?\\d+)([a-zA-Z]+)$')
                             ) AS subquery
+                            WHERE NOT EXISTS (
+                                SELECT 1 FROM filter f
+                                WHERE f.document_id = subquery.document_id
+                                  AND f.key = CONCAT(subquery.key, '.min')
+                                  AND f.value = subquery.value_unit[1]
+                                  AND f.unit = subquery.value_unit[3]
+                                  AND f.type = 'DERIVED'
+                            )
                         """
                 )
 
@@ -107,6 +123,14 @@ class NumericFilterIngestor:
                                     AND
                                     regexp_like(value, '^(-?\\d*\\.?\\d+)-(-?\\d*\\.?\\d+)([a-zA-Z]+)$')
                             ) AS subquery
+                            WHERE NOT EXISTS (
+                                SELECT 1 FROM filter f
+                                WHERE f.document_id = subquery.document_id
+                                  AND f.key = CONCAT(subquery.key, '.max')
+                                  AND f.value = subquery.value_unit[2]
+                                  AND f.unit = subquery.value_unit[3]
+                                  AND f.type = 'DERIVED'
+                            )
                         """
                 )
                 conn.commit()
