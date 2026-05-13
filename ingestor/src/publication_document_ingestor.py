@@ -13,7 +13,7 @@ class PublicationDocumentIngestor(BaseDocumentIngestor):
 
     DATASETS = [
         {
-            "filename": "oscars_pan_finder_publications_20260427115632932727050.skip",
+            "filename": "oscars_pan_finder_publications_20260427115632932727050.json",
             "facility": "ESRF",
         },
     ]
