@@ -1,5 +1,7 @@
-FROM node:20-alpine AS build
+FROM node:20.20.2-alpine AS build
 WORKDIR /app
+
+RUN npm install --global npm@11.14.1
 
 ARG API
 ENV REACT_APP_API=$API

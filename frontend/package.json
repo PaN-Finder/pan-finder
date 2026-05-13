@@ -2,9 +2,11 @@
   "name": "panosc-frontend",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "npm@11.14.1",
   "homepage": "https://data.panosc.eu/",
   "engines": {
-    "node": "20.x",
+    "node": "20.20.2",
+    "npm": "11.14.1",
     "yarn": "*"
   },
   "scripts": {
