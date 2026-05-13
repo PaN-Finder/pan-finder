@@ -3,6 +3,19 @@ import { FiDownload } from 'react-icons/fi'
 
 import { Box } from '../../Primitives'
 
+function getResultLabel(resultType) {
+  switch (resultType) {
+    case 'matched':
+      return 'Matched'
+    case 'relevant':
+      return 'Relevant'
+    case 'weakly_relevant':
+      return 'Suggested'
+    default:
+      return 'Uncategorized'
+  }
+}
+
 function ExportCSVButton({ results }) {
   const exportToCSV = () => {
     if (!results || results.length === 0) return
@@ -15,7 +28,7 @@ function ExportCSVButton({ results }) {
       result.doi || '',
       `"${(result.title || '').replace(/"/g, '""')}"`, // Escape quotes in title
       result.facility_name,
-      result.resultType === 'relevant' ? 'Relevant' : 'Weakly Relevant',
+      getResultLabel(result.resultType),
       result.overall_score,
     ])
 

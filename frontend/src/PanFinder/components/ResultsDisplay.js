@@ -4,6 +4,8 @@ import ExportCSVButton from './ExportCSVButton'
 import NoResults from './NoResults'
 import ResultsTable from './ResultsTable'
 
+const MATCH_THRESHOLD = 0.95
+
 function ResultsDisplay({
   data,
   expandedRows,
@@ -13,17 +15,29 @@ function ResultsDisplay({
 }) {
   const lastAutoExpandedId = useRef(null)
 
-  // Separate relevant and weakly relevant results with metadata
-  const relevantResults = useMemo(
+  const matchedResults = useMemo(
     () =>
-      (data?.relevant_results || []).map((result) => ({
-        ...result,
-        resultType: 'relevant',
-      })),
+      (data?.relevant_results || [])
+        .filter((result) => (result.overall_score || 0) >= MATCH_THRESHOLD)
+        .map((result) => ({
+          ...result,
+          resultType: 'matched',
+        })),
     [data?.relevant_results],
   )
 
-  const weaklyRelevantResults = useMemo(
+  const relevantResults = useMemo(
+    () =>
+      (data?.relevant_results || [])
+        .filter((result) => (result.overall_score || 0) < MATCH_THRESHOLD)
+        .map((result) => ({
+          ...result,
+          resultType: 'relevant',
+        })),
+    [data?.relevant_results],
+  )
+
+  const suggestedResults = useMemo(
     () =>
       (data?.weakly_relevant_results || []).map((result) => ({
         ...result,
@@ -33,24 +47,26 @@ function ResultsDisplay({
   )
 
   const allResults = useMemo(
-    () => [...relevantResults, ...weaklyRelevantResults],
-    [relevantResults, weaklyRelevantResults],
+    () => [...matchedResults, ...relevantResults, ...suggestedResults],
+    [matchedResults, relevantResults, suggestedResults],
   )
 
   // Automatically expand the first row when new results are loaded
   useEffect(() => {
+    const firstExpandableResult = matchedResults[0] || relevantResults[0]
+
     if (
       data?.id &&
       data.id !== lastAutoExpandedId.current &&
-      relevantResults.length > 0
+      firstExpandableResult
     ) {
-      const firstDoi = relevantResults[0].doi
+      const firstDoi = firstExpandableResult.doi
       if (firstDoi) {
         lastAutoExpandedId.current = data.id
         handleRowExpand(firstDoi)
       }
     }
-  }, [data?.id, relevantResults, handleRowExpand])
+  }, [data?.id, matchedResults, relevantResults, handleRowExpand])
 
   if (!data) {
     return null
@@ -77,9 +93,18 @@ function ResultsDisplay({
           <ExportCSVButton results={allResults} />
         </Box>
 
-        {/* Relevant Results Table */}
         <ResultsTable
-          title="Most Relevant Documents"
+          title="Match"
+          results={matchedResults}
+          expandedRows={expandedRows}
+          documentDetails={documentDetails}
+          loadingDetails={loadingDetails}
+          handleRowExpand={handleRowExpand}
+          statisticId={data.id}
+        />
+
+        <ResultsTable
+          title="Relevant Documents"
           results={relevantResults}
           expandedRows={expandedRows}
           documentDetails={documentDetails}
@@ -89,10 +114,9 @@ function ResultsDisplay({
         />
       </Box>
 
-      {/* Suggested Results Table (Weakly Relevant) */}
       <ResultsTable
         title="Suggested Documents"
-        results={weaklyRelevantResults}
+        results={suggestedResults}
         expandedRows={expandedRows}
         documentDetails={documentDetails}
         loadingDetails={loadingDetails}
