@@ -28,7 +28,7 @@
     ]
   },
   {
-    "doi": "10.15151/ESRF-ES-1000540347",
+    "doi": "10.15151/ESRF-DC-1033968469",
     "queries": [
       { "query": "datasets from ESRF", "min_position": 20 },
       { "query": "data at ESRF", "min_position": 20 },
@@ -47,7 +47,7 @@
     ]
   },
   {
-    "doi": "10.15151/ESRF-ES-1000540347",
+    "doi": "10.15151/ESRF-DC-1033968469",
     "queries": [
       { "query": "synchrotron datasets from esrf", "min_position": 20 }
     ]
