@@ -38,17 +38,17 @@ function ResultTableRow({
   statisticId,
 }) {
   const relevanceInfo = getRelevanceDisplay(result.overall_score)
+  const isPrimaryResult = resultType === 'matched' || resultType === 'relevant'
 
   // Adjust row colors based on relevance
-  const baseRowColor =
-    resultType === 'relevant'
-      ? index % 2 === 0
-        ? '#2d3748'
-        : '#374151'
-      : index % 2 === 0
-      ? '#2a2e35'
-      : '#31363d'
-  const hoverRowColor = resultType === 'relevant' ? '#4a5568' : '#3a3f46'
+  const baseRowColor = isPrimaryResult
+    ? index % 2 === 0
+      ? '#2d3748'
+      : '#374151'
+    : index % 2 === 0
+    ? '#2a2e35'
+    : '#31363d'
+  const hoverRowColor = isPrimaryResult ? '#4a5568' : '#3a3f46'
 
   return (
     <>
