@@ -5,7 +5,7 @@ import { useDocumentData } from '../../contexts/DocumentDataContext'
 import { useFeedback } from '../../contexts/FeedbackContext'
 import { usePanFinderApi } from '../../hooks/usePanFinderApi'
 import ExplanationDisplay from '../ExplanationDisplay'
-import FeedbackButtons from './FeedbackButtons'
+import FeedbackClassifier from './FeedbackClassifier'
 import RawDataViewer from './RawDataViewer'
 
 function LoadingRow() {
@@ -90,16 +90,15 @@ function DocumentDetails({ details, isLoading, doi, statisticId }) {
   useEffect(() => {
     if (details?.doi && currentQueryId && feedbacks) {
       const stored = feedbacks[`${currentQueryId}|${details.doi}`]
-      if (stored === 'positive' || stored === 'negative') {
-        setFeedbackStatus(stored)
-      } else {
-        setFeedbackStatus(null)
-      }
+      setFeedbackStatus(stored ?? null)
     }
   }, [details?.doi, feedbacks, currentQueryId])
 
   const handleFeedback = async (type) => {
     if (!details?.doi || !currentQueryId) {
+      return
+    }
+    if (type === feedbackStatus) {
       return
     }
     setFeedbackLoading(true)
@@ -225,7 +224,7 @@ function DocumentDetails({ details, isLoading, doi, statisticId }) {
             explanation={explanation}
             explanationError={explanationError}
           />
-          <FeedbackButtons
+          <FeedbackClassifier
             feedbackLoading={feedbackLoading}
             feedbackStatus={feedbackStatus}
             handleFeedback={handleFeedback}
