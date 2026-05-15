@@ -459,13 +459,16 @@ def make_statistic_with_results(doi_list):
 
 
 @pytest.mark.asyncio
-async def test_feedback_submit_success(async_client: AsyncClient):
+@pytest.mark.parametrize(
+    "classification", ["Match", "Relevant", "Suggested", "Not_Fit"]
+)
+async def test_feedback_submit_success(async_client: AsyncClient, classification: str):
     statistic = make_statistic_with_results(["10.1000/xyz123"])
     feedback_obj = MagicMock()
     feedback_obj.to_dict.return_value = {
         "id": "fb1",
         "statistic_id": "stat1",
-        "feedback_type": "positive",
+        "feedback_type": classification,
         "metadata": {"doi": "10.1000/xyz123"},
         "created_at": str(datetime.datetime.now()),
     }
@@ -486,13 +489,26 @@ async def test_feedback_submit_success(async_client: AsyncClient):
             "/feedback/submit",
             json={
                 "statistic_id": "stat1",
-                "feedback_type": "positive",
+                "feedback_type": classification,
                 "doi": "10.1000/xyz123",
             },
         )
     assert response.status_code == 200
     assert response.json()["id"] == "fb1"
-    assert response.json()["feedback_type"] == "positive"
+    assert response.json()["feedback_type"] == classification
+
+
+@pytest.mark.asyncio
+async def test_feedback_submit_invalid_value_rejected(async_client: AsyncClient):
+    response = await async_client.post(
+        "/feedback/submit",
+        json={
+            "statistic_id": "stat1",
+            "feedback_type": "positive",
+            "doi": "10.1000/xyz123",
+        },
+    )
+    assert response.status_code == 422
 
 
 # ----------------------------

@@ -72,7 +72,7 @@ async def test_feedback_endpoint_requires_session(async_client: AsyncClient):
         "/feedback/submit",
         json={
             "statistic_id": "test-id",
-            "feedback_type": "positive",
+            "feedback_type": "Match",
             "doi": "10.1000/test",
         },
     )

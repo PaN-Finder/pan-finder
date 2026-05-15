@@ -18,8 +18,8 @@ class FeedbackRequest(BaseModel):
     )
     feedback_type: str = Field(
         ...,
-        description="Type of feedback: 'positive' or 'negative'",
-        pattern=r"^(positive|negative)$",
+        description="Classification: 'Match', 'Relevant', 'Suggested', or 'Not_Fit'",
+        pattern=r"^(Match|Relevant|Suggested|Not_Fit)$",
     )
     doi: str = Field(..., description="DOI to which the feedback is related")
 
