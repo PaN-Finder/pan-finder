@@ -22,9 +22,11 @@ class SummaryIngestor:
         self,
         db_conn_factory: Callable[[], AbstractContextManager[Any]],
         settings,
+        model_name: str | None = None,
     ) -> None:
         self.db_conn_factory = db_conn_factory
         self.settings = settings
+        self.model_name = model_name or self.settings.default_model_name
         if settings.llm_provider == "openai":
             self.llm = OpenAI(
                 api_key=settings.openai_api_key,
@@ -51,18 +53,32 @@ class SummaryIngestor:
         """Generate a short summary; return `title` if `text` is empty."""
         if not text or text.strip() == "":
             return title
-        prompt_system = (
-            "You are a helpful assistant that summarizes scientific texts in <= 100 words. "
-            "If you cannot summarize, return the provided title. Output only the summary text."
-        )
-        prompt_user = f"Title: {title}\n\nText: {text}"
+        prompt_system = """You write short retrieval text for embedding-based similarity search over scientific documents and datasets.
+
+    Goal:
+    - Populate a `summary` field used only for semantic search quality, not for human reading.
+
+    Instructions:
+    - Write one compact text block in at most 80 words.
+    - Make it dense with the most search-relevant facts explicitly supported by the input.
+    - Prefer concrete scientific anchors such as the main topic, organ or specimen, disease or condition, modality, anatomical region, scale or resolution, acquisition details, and notable identifiers.
+    - If the input is noisy or repetitive, remove low-signal repetition and keep the strongest retrieval cues.
+    - Prefer explicit domain terms and noun phrases over narrative filler.
+    - Do not invent, infer, or normalize facts that are not clearly stated.
+    - Do not mention missing information.
+    - Do not use bullets, labels, markdown, or quotation marks.
+    - If you cannot produce text better than the title for search, return the title verbatim.
+
+    Output only the summary text.
+    """
+        prompt_user = f"<title>\n{title}\n</title>\n\n<text>\n{text}\n</text>"
         resp = self.llm.chat.completions.create(
-            model=self.settings.default_model_name,
+            model=self.model_name,
             messages=[
                 {"role": "system", "content": prompt_system},
                 {"role": "user", "content": prompt_user},
             ],
-            max_tokens=500,
+            max_completion_tokens=300,
         )
         content = resp.choices[0].message.content if resp and resp.choices else None
         return content or title
