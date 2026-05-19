@@ -7,19 +7,20 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-DEFAULT_VALUE_VECTOR_KEYS: tuple[str, ...] = (
-    "authors",
-    "creator",
-    "scientificMetadata.author",
-    "owner",
-    "metadata.authors.name",
-    "principalInvestigator",
-    "investigator",
-    "scientificMetadata.measurement.team",
-    "users.fullName",
-    "attributes.creators.name",
-    "publisher",
-    "attributes.publisher",
+DEFAULT_VALUE_VECTOR_KEYS: tuple[tuple[str, bool], ...] = (
+    ("authors", True),
+    ("creator", True),
+    ("scientificMetadata.author", True),
+    ("owner", True),
+    ("metadata.authors.name", True),
+    ("principalInvestigator", True),
+    ("investigator", True),
+    ("scientificMetadata.measurement.team", True),
+    ("users.fullName", True),
+    ("attributes.creators.name", True),
+    ("publisher", False),
+    ("attributes.publisher", False),
+    ("parameters.SamplePatient_info", False),
 )
 
 
@@ -76,7 +77,12 @@ class Settings:
         self.rrf_k_conditions_partial = int(os.getenv("RRF_K_CONDITIONS_PARTIAL", "6"))
         self.rrf_k_keywords = int(os.getenv("RRF_K_KEYWORDS", "10"))
         self.value_vector_keys = self._parse_csv_env(
-            "VALUE_VECTOR_KEYS", DEFAULT_VALUE_VECTOR_KEYS
+            "VALUE_VECTOR_KEYS", self._default_value_vector_keys()
+        )
+        self.value_vector_split_keys = tuple(
+            key
+            for key in self.value_vector_keys
+            if self._default_value_vector_split_flags().get(key, False)
         )
 
     def _parse_cors_origins(self) -> list[str]:
@@ -126,6 +132,14 @@ class Settings:
             parsed_values.append(normalized_value)
 
         return tuple(parsed_values)
+
+    def _default_value_vector_keys(self) -> tuple[str, ...]:
+        """Return configured default value-vector keys without their split flags."""
+        return tuple(key for key, _ in DEFAULT_VALUE_VECTOR_KEYS)
+
+    def _default_value_vector_split_flags(self) -> dict[str, bool]:
+        """Return the default split behavior for each value-vector key."""
+        return dict(DEFAULT_VALUE_VECTOR_KEYS)
 
 
 @lru_cache
