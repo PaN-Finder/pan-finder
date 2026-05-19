@@ -13,6 +13,7 @@ from filter_enricher import FilterEnricher
 from filter_ingestor import FilterIngestor
 from filter_value_converter import FilterValueConverter
 from filter_vector_ingestor import FilterVectorIngestor
+from inferred_filter_ingestor import InferredFilterIngestor
 from numeric_filter_ingestor import NumericFilterIngestor
 from publication_document_ingestor import PublicationDocumentIngestor
 from publication_filter_ingestor import PublicationFilterIngestor
@@ -48,23 +49,36 @@ def main():
     # 3.b. Populate filters for publication document schema
     PublicationFilterIngestor(get_database_connection, settings).run()
 
-    # 4. Derive numeric filters
-    NumericFilterIngestor(get_database_connection, settings).run()
-
-    # 5. Convert filter values to structured types
-    FilterValueConverter(get_database_connection).run()
-
-    # 6. Enrich filter table with derived publisher data
+    # 4. Enrich filter table with derived publisher data
     FilterEnricher(get_database_connection, settings).run()
 
-    # 7. Compute embeddings for selected filter values
+    # 5. Compute embeddings for selected filter values
     FilterVectorIngestor(get_database_connection, settings).run()
 
-    # 8. Populate document summaries
-    SummaryIngestor(get_database_connection, settings).run()
+    # 6. Populate document summaries
+    SummaryIngestor(
+        get_database_connection,
+        settings,
+        model_name="gpt-5.4-mini",
+    ).run()
 
-    # 9. Populate filter descriptions and embed them
+    # 7. Populate filter descriptions and embed them
     FilterDescriptionIngestor(get_database_connection, settings).run()
+
+    # 8. Populate LLM-inferred filters from selected text metadata
+    InferredFilterIngestor(
+        get_database_connection,
+        settings,
+        document_ids=[16679, 4536, 11318, 9269],
+        dry_run=True,
+        model_name="gpt-5.4-mini",
+    ).run()
+
+    # 9. Convert filter values to structured types
+    FilterValueConverter(get_database_connection).run()
+
+    # 10. Derive numeric filters
+    NumericFilterIngestor(get_database_connection, settings).run()
 
     logging.info("Ingestor finished.")
 
