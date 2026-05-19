@@ -47,7 +47,7 @@ class InferredFilterIngestor(BaseFilterIngestor):
 
     _INFERENCE_BATCH_SIZE: int = 25
     _MAX_INFERRED_FILTERS_PER_DOCUMENT: int = 12
-    _MAX_SOURCE_ROWS_PER_CLUSTER: int = 20
+    _MAX_SOURCE_ROWS_PER_CLUSTER: int = 10
     _STRICT_SIMILARITY_THRESHOLD: float = 0.2
     _MIN_DISTANCE_GAP: float = 0.04
 
