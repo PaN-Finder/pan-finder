@@ -7,5 +7,14 @@
         "min_position": 0
       }
     ]
+  },
+  {
+    "doi": "10.15151/ESRF-DC-1659306682",
+    "queries": [
+      {
+        "query": "datasets where the donor was female",
+        "min_position": 20
+      }
+    ]
   }
 ]

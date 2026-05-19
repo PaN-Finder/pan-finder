@@ -1,24 +1,16 @@
-"""
-Populate `filter.value_vector` for author-related filter rows.
+"""Populate `filter.value_vector` for configured filter rows.
 
-Two cases are handled:
+Two behaviors are supported:
 
-Single name — the value contains one person (e.g. "Zurab Guguchia" or
-"Marone, Federica" in Last, First format).  The embedding is written
-directly to `value_vector` on the original row.
+- direct vectorization for normal text fields, where the original value is
+    embedded and written to `value_vector` on the same row
+- author-like splitting for configured name-list keys, where multi-name values
+    are split into individual names and written as DERIVED rows with their own
+    `value_vector`
 
-Multi-name list — the value contains several comma-separated full names
-(e.g. "Else Marie Friis, Peter R. Crane, Kaj Raunsgaard Pedersen").
-A DERIVED filter row is inserted for each individual name with its own
-`value_vector`.  The original row is left without a vector so it is not
-re-processed on subsequent runs once its children exist.
-
-Detection heuristic
--------------------
-Split the value on ", ".  If there is only one segment, or if there are
-exactly two segments and the first contains no spaces (indicating a
-"Surname, Firstname" format), treat the value as a single name.
-Otherwise treat it as a list of full names.
+Only keys marked as split-enabled in the configured value-vector key defaults use
+the comma/semicolon name splitting heuristic. All other configured
+`VALUE_VECTOR_KEYS` are embedded as-is.
 """
 
 import logging
@@ -55,16 +47,13 @@ def _split_names(value: str) -> list[str] | None:
     #   - the surname has no spaces: "Marone, Federica"
     #   - the given-name part has no spaces: "da Silva, MA" / "Cuevas Arenas, Rodrigo"
     # Only when BOTH parts contain spaces is it two full names: "Else Marie Friis, Federica Marone"
-    if len(parts) == 2:
-        if " " not in parts[0] or " " not in parts[1]:
-            print(f"[single] {value!r}")
-            return None
-        print(f"[multi]  {value!r}")
+    if len(parts) == 2 and (" " not in parts[0] or " " not in parts[1]):
+        return None
     return parts
 
 
 class FilterVectorIngestor:
-    """Compute and store embeddings in `filter.value_vector` for author-related rows."""
+    """Compute and store embeddings in `filter.value_vector` for configured rows."""
 
     logger = logging.getLogger("FilterVectorIngestor")
 
@@ -75,6 +64,7 @@ class FilterVectorIngestor:
     ) -> None:
         self.db_conn_factory = db_conn_factory
         self.value_vector_keys = settings.value_vector_keys
+        self.value_vector_split_keys = set(settings.value_vector_split_keys)
         model_path = Path(settings.embedding_model_path)
         if not model_path.exists():
             self.logger.warning("Embedding model path does not exist: %s", model_path)
@@ -157,7 +147,7 @@ class FilterVectorIngestor:
                 )
 
     def process(self, rows: list[tuple[int, int, str, str]]) -> None:
-        """Route each row to single-name or multi-name handling."""
+        """Route each row to direct embedding or author-style splitting."""
         if not rows:
             self.logger.info("No filter rows to embed.")
             return
@@ -166,7 +156,7 @@ class FilterVectorIngestor:
         multi: list[tuple[int, str, list[str]]] = []
 
         for row_id, doc_id, key, value in rows:
-            names = _split_names(value)
+            names = _split_names(value) if key in self.value_vector_split_keys else None
             if names is None:
                 single.append((row_id, value))
             else:
