@@ -2,10 +2,10 @@ import { useState, useRef, useEffect } from 'react'
 import { Box, Text } from '../../../Primitives'
 
 const CLASSIFICATION_OPTIONS = [
-  { label: 'Strong match', value: 'Match' },
+  { label: 'Match', value: 'Match' },
   { label: 'Relevant', value: 'Relevant' },
-  { label: 'Worth a look', value: 'Suggested' },
-  { label: 'Not a fit', value: 'Not_Fit' },
+  { label: 'Suggested', value: 'Suggested' },
+  { label: 'Not relevant', value: 'Not_Relevant' },
 ]
 
 function FeedbackClassifier({
