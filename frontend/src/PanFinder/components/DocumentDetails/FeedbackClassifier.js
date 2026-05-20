@@ -52,7 +52,7 @@ function FeedbackClassifier({
         }}
       >
         <Text sx={{ fontSize: '12px', color: '#718096', flexShrink: 0 }}>
-          How well did this result fit your search?
+          Is this result
         </Text>
 
         <Box ref={ref} style={{ position: 'relative' }}>
