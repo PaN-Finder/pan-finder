@@ -9,34 +9,40 @@ import {
 
 import { Box, Text, Button, Flex } from '../../Primitives'
 
-function QueryDetails({ data, onStructuredSearch }) {
+function QueryDetails({ data, onQueryComponentsSearch }) {
   const [isEditing, setIsEditing] = useState(false)
-  const [editedData, setEditedData] = useState('')
+  const [editedQueryComponents, setEditedQueryComponents] = useState('')
   const [error, setError] = useState(null)
   const [isExpanded, setIsExpanded] = useState(false)
+  const queryComponents = data?.raw_structured_data
 
-  if (!data || !data.raw_structured_data || !data.id) {
+  if (!data || !queryComponents || !data.id) {
     return null
   }
 
   const handleEditStart = () => {
-    setEditedData(JSON.stringify(data.raw_structured_data, null, 2))
+    setEditedQueryComponents(JSON.stringify(queryComponents, null, 2))
+    setError(null)
     setIsEditing(true)
   }
 
   const handleSearch = () => {
     try {
-      const parsedData = JSON.parse(editedData)
-      onStructuredSearch(data.id, parsedData)
+      const parsedQueryComponents = JSON.parse(editedQueryComponents)
+      onQueryComponentsSearch(data.id, parsedQueryComponents)
+      setError(null)
       setIsEditing(false)
     } catch (error) {
-      setError(error.message || 'Please enter valid JSON data.')
+      setError(
+        error.message || 'Please enter valid JSON for the query components.',
+      )
     }
   }
 
   const handleCancel = () => {
     setIsEditing(false)
-    setEditedData('')
+    setEditedQueryComponents('')
+    setError(null)
   }
 
   return (
@@ -80,7 +86,7 @@ function QueryDetails({ data, onStructuredSearch }) {
             p: 3,
           }}
         >
-          {data.raw_structured_data && (
+          {queryComponents && (
             <Box>
               <Flex
                 sx={{
@@ -98,7 +104,7 @@ function QueryDetails({ data, onStructuredSearch }) {
                     letterSpacing: '0.05em',
                   }}
                 >
-                  Structured Data
+                  Query Components
                 </Text>
                 {!isEditing && (
                   <Button
@@ -116,7 +122,7 @@ function QueryDetails({ data, onStructuredSearch }) {
                         color: '#e2e8f0',
                       },
                     }}
-                    title="Edit structured data"
+                    title="Edit query components"
                   >
                     <FiEdit3 size={14} />
                     Edit JSON
@@ -160,9 +166,9 @@ function QueryDetails({ data, onStructuredSearch }) {
                 {isEditing ? (
                   <>
                     <textarea
-                      value={editedData}
-                      onChange={(e) => setEditedData(e.target.value)}
-                      aria-label="Edit structured data JSON"
+                      value={editedQueryComponents}
+                      onChange={(e) => setEditedQueryComponents(e.target.value)}
+                      aria-label="Edit query components JSON"
                       style={{
                         width: '100%',
                         minHeight: '200px',
@@ -219,7 +225,7 @@ function QueryDetails({ data, onStructuredSearch }) {
                             color: '#68d391',
                           },
                         }}
-                        title="Save and search"
+                        title="Save query components and search"
                       >
                         <FiSearch size={14} />
                         Save and Search
@@ -236,7 +242,7 @@ function QueryDetails({ data, onStructuredSearch }) {
                       lineHeight: 1.4,
                     }}
                   >
-                    {JSON.stringify(data.raw_structured_data, null, 2)}
+                    {JSON.stringify(queryComponents, null, 2)}
                   </pre>
                 )}
               </Box>

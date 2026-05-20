@@ -35,7 +35,7 @@ function PanFinderPage() {
     isLoading,
     streamingSteps,
     search,
-    searchWithStructuredData,
+    searchWithQueryComponents,
     fetchDocumentDetails,
     explainDocument,
     createSession: createSessionApi,
@@ -135,13 +135,13 @@ function PanFinderPage() {
     await search(inputValue)
   }
 
-  const handleStructuredSearch = async (id, structuredData) => {
+  const handleQueryComponentsSearch = async (id, queryComponents) => {
     // Clear previous results state to prepare for new search
     setExpandedRows(new Set())
     setLoadingDetails(new Set())
     clearDocumentData()
 
-    await searchWithStructuredData(id, structuredData)
+    await searchWithQueryComponents(id, queryComponents)
   }
 
   function handleSubmit(evt) {
@@ -194,7 +194,10 @@ function PanFinderPage() {
           loadingDetails={loadingDetails}
           handleRowExpand={handleRowExpand}
         />
-        <QueryDetails data={data} onStructuredSearch={handleStructuredSearch} />
+        <QueryDetails
+          data={data}
+          onQueryComponentsSearch={handleQueryComponentsSearch}
+        />
 
         <FacilitiesSection
           only={['ESS', 'ESRF', 'ILL', 'PSI', 'MAXIV', 'DESY']}
