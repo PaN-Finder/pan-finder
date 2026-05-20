@@ -38,7 +38,7 @@ function FacilitiesSection({ only = [] }) {
           fontSize: '1.25rem',
         }}
       >
-        Open Data from facilities
+        Open data from the following data sources
       </Heading>
       <ul>
         {providers
