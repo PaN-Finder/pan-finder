@@ -5,6 +5,8 @@ import {
   FiX,
   FiChevronDown,
   FiChevronRight,
+  FiCopy,
+  FiCheck,
 } from 'react-icons/fi'
 
 import { Box, Text, Button, Flex } from '../../Primitives'
@@ -14,14 +16,16 @@ function QueryDetails({ data, onQueryComponentsSearch }) {
   const [editedQueryComponents, setEditedQueryComponents] = useState('')
   const [error, setError] = useState(null)
   const [isExpanded, setIsExpanded] = useState(false)
+  const [copyStatus, setCopyStatus] = useState(null)
   const queryComponents = data?.raw_structured_data
+  const formattedQueryComponents = JSON.stringify(queryComponents, null, 2)
 
   if (!data || !queryComponents || !data.id) {
     return null
   }
 
   const handleEditStart = () => {
-    setEditedQueryComponents(JSON.stringify(queryComponents, null, 2))
+    setEditedQueryComponents(formattedQueryComponents)
     setError(null)
     setIsEditing(true)
   }
@@ -43,6 +47,28 @@ function QueryDetails({ data, onQueryComponentsSearch }) {
     setIsEditing(false)
     setEditedQueryComponents('')
     setError(null)
+  }
+
+  const handleCopy = async () => {
+    const textToCopy = isEditing
+      ? editedQueryComponents
+      : formattedQueryComponents
+
+    try {
+      if (!navigator?.clipboard?.writeText) {
+        throw new Error('Clipboard API is unavailable')
+      }
+
+      await navigator.clipboard.writeText(textToCopy)
+
+      setCopyStatus('copied')
+    } catch {
+      setCopyStatus('error')
+    }
+
+    window.setTimeout(() => {
+      setCopyStatus(null)
+    }, 2000)
   }
 
   return (
@@ -106,6 +132,38 @@ function QueryDetails({ data, onQueryComponentsSearch }) {
                 >
                   Query Components
                 </Text>
+                <Button
+                  variant="action"
+                  onClick={handleCopy}
+                  sx={{
+                    p: 1,
+                    ml: 0,
+                    fontSize: '12px',
+                    color: copyStatus === 'copied' ? '#68d391' : '#a0aec0',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    ':hover': {
+                      color: copyStatus === 'copied' ? '#9ae6b4' : '#e2e8f0',
+                    },
+                  }}
+                  title={
+                    copyStatus === 'copied'
+                      ? 'Copied query components'
+                      : 'Copy query components JSON'
+                  }
+                  aria-label={
+                    copyStatus === 'copied'
+                      ? 'Copied query components'
+                      : 'Copy query components JSON'
+                  }
+                >
+                  {copyStatus === 'copied' ? (
+                    <FiCheck size={14} />
+                  ) : (
+                    <FiCopy size={14} />
+                  )}
+                </Button>
                 {!isEditing && (
                   <Button
                     variant="action"
@@ -242,7 +300,7 @@ function QueryDetails({ data, onQueryComponentsSearch }) {
                       lineHeight: 1.4,
                     }}
                   >
-                    {JSON.stringify(queryComponents, null, 2)}
+                    {formattedQueryComponents}
                   </pre>
                 )}
               </Box>
