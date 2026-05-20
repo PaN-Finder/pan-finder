@@ -51,7 +51,7 @@ function FeedbackClassifier({
           gap: 2,
         }}
       >
-        <Text sx={{ fontSize: '12px', color: '#718096', flexShrink: 0 }}>
+        <Text sx={{ fontSize: '12px', color: '#99a5b9', flexShrink: 0 }}>
           Is this result
         </Text>
 
@@ -69,7 +69,7 @@ function FeedbackClassifier({
                 ? '1px solid rgba(99,179,237,0.4)'
                 : '1px solid rgba(255,255,255,0.12)',
               borderRadius: '4px',
-              color: selected ? '#90cdf4' : '#718096',
+              color: selected ? '#90cdf4' : '#99a5b9',
               cursor: feedbackLoading ? 'not-allowed' : 'pointer',
               fontSize: '12px',
               opacity: feedbackLoading ? 0.5 : 1,
