@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { FiEye } from 'react-icons/fi'
+import { FiEye, FiEyeOff } from 'react-icons/fi'
 import { Flex, Box, Text, Button } from '../../../Primitives'
 import { useDocumentData } from '../../contexts/DocumentDataContext'
 import { useFeedback } from '../../contexts/FeedbackContext'
@@ -77,6 +77,7 @@ function DocumentDetails({ details, isLoading, doi, statisticId }) {
   const [feedbackStatus, setFeedbackStatus] = useState(null)
   const [feedbackLoading, setFeedbackLoading] = useState(false)
   const [rawDataLoading, setRawDataLoading] = useState(false)
+  const [isMetadataVisible, setIsMetadataVisible] = useState(false)
 
   const rawData = details?.doi ? rawDataCache[details.doi] : null
 
@@ -93,6 +94,10 @@ function DocumentDetails({ details, isLoading, doi, statisticId }) {
       setFeedbackStatus(stored ?? null)
     }
   }, [details?.doi, feedbacks, currentQueryId])
+
+  useEffect(() => {
+    setIsMetadataVisible(false)
+  }, [details?.doi])
 
   const handleFeedback = async (type) => {
     if (!details?.doi || !currentQueryId) {
@@ -137,6 +142,19 @@ function DocumentDetails({ details, isLoading, doi, statisticId }) {
       setRawDataError(details.doi, error.message)
     } finally {
       setRawDataLoading(false)
+    }
+  }
+
+  const handleMetadataToggle = async () => {
+    if (isMetadataVisible) {
+      setIsMetadataVisible(false)
+      return
+    }
+
+    setIsMetadataVisible(true)
+
+    if (!rawData && !rawDataError) {
+      await handleFetchRawData()
     }
   }
 
@@ -324,18 +342,56 @@ function DocumentDetails({ details, isLoading, doi, statisticId }) {
               </Box>
             )}
 
-            {!details.raw && !rawData && (
+            {!details.raw && (
               <Button
                 variant="action"
+                aria-pressed={isMetadataVisible}
                 sx={{
-                  p: 1,
+                  p: '5px 10px',
                   ml: 0,
                   fontSize: '12px',
+                  display: 'inline-flex',
+                  width: 'fit-content',
                   alignItems: 'center',
-                  gap: 2,
+                  justifyContent: 'center',
+                  justifySelf: 'center',
+                  gap: 1,
+                  borderRadius: '999px',
+                  border: '1px solid',
+                  borderColor: isMetadataVisible
+                    ? 'rgba(99, 179, 237, 0.55)'
+                    : 'rgba(160, 174, 192, 0.22)',
+                  backgroundColor: isMetadataVisible
+                    ? 'rgba(99, 179, 237, 0.12)'
+                    : 'rgba(255, 255, 255, 0.04)',
+                  color: isMetadataVisible ? '#e6f4ff' : '#cbd5e0',
+                  transition:
+                    'background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease',
+                  ':hover': rawDataLoading
+                    ? undefined
+                    : {
+                        backgroundColor: isMetadataVisible
+                          ? 'rgba(99, 179, 237, 0.18)'
+                          : 'rgba(255, 255, 255, 0.08)',
+                        borderColor: isMetadataVisible
+                          ? 'rgba(99, 179, 237, 0.75)'
+                          : 'rgba(226, 232, 240, 0.35)',
+                        transform: 'translateY(-1px)',
+                      },
+                  ':active': {
+                    transform: 'translateY(0)',
+                  },
+                  ':focus-visible': {
+                    outline: '2px solid #63b3ed',
+                    outlineOffset: '2px',
+                  },
+                  '&:disabled': {
+                    opacity: 0.7,
+                    cursor: 'not-allowed',
+                  },
                 }}
-                title="Show Metadata"
-                onClick={handleFetchRawData}
+                title={isMetadataVisible ? 'Hide Metadata' : 'View Metadata'}
+                onClick={handleMetadataToggle}
                 disabled={rawDataLoading}
               >
                 {rawDataLoading ? (
@@ -355,13 +411,17 @@ function DocumentDetails({ details, isLoading, doi, statisticId }) {
                   </>
                 ) : (
                   <>
-                    <FiEye size={14} />
-                    Show Metadata
+                    {isMetadataVisible ? (
+                      <FiEyeOff size={14} />
+                    ) : (
+                      <FiEye size={14} />
+                    )}
+                    {isMetadataVisible ? 'Hide Metadata' : 'View Metadata'}
                   </>
                 )}
               </Button>
             )}
-            {rawDataError && (
+            {isMetadataVisible && rawDataError && (
               <DocumentField label="Metadata">
                 <Box sx={{ bg: '#742a2a', p: 3, borderRadius: '4px' }}>
                   <Text sx={{ color: '#fed7d7', fontSize: '13px' }}>
@@ -370,7 +430,7 @@ function DocumentDetails({ details, isLoading, doi, statisticId }) {
                 </Box>
               </DocumentField>
             )}
-            {rawData && (
+            {isMetadataVisible && rawData && (
               <DocumentField label="Metadata">
                 <RawDataViewer
                   rawData={rawData}
