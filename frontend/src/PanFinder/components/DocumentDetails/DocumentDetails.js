@@ -273,26 +273,6 @@ function DocumentDetails({ details, isLoading, doi, statisticId }) {
               </Text>
             </DocumentField>
 
-            {details.facility_name && (
-              <DocumentField label="Facility">
-                <Text sx={{ color: '#e2e8f0' }}>{details.facility_name}</Text>
-              </DocumentField>
-            )}
-
-            {details.instrument_name && (
-              <DocumentField label="Instrument">
-                <Text sx={{ color: '#e2e8f0' }}>{details.instrument_name}</Text>
-              </DocumentField>
-            )}
-
-            {details.publication_year && (
-              <DocumentField label="Publication Year">
-                <Text sx={{ color: '#e2e8f0' }}>
-                  {details.publication_year}
-                </Text>
-              </DocumentField>
-            )}
-
             {details.authors && (
               <DocumentField label="Authors">
                 <Text sx={{ color: '#e2e8f0' }}>{details.authors}</Text>
@@ -303,6 +283,45 @@ function DocumentDetails({ details, isLoading, doi, statisticId }) {
               <DocumentField label="Abstract">
                 <Text sx={{ color: '#e2e8f0' }}>{details.abstract}</Text>
               </DocumentField>
+            )}
+
+            {(details.facility_name ||
+              details.instrument_name ||
+              details.publication_year) && (
+              <Box
+                sx={{
+                  display: 'grid',
+                  gap: 2,
+                  gridTemplateColumns: [
+                    'minmax(0, 1fr)',
+                    'repeat(3, minmax(0, 1fr))',
+                  ],
+                }}
+              >
+                {details.facility_name && (
+                  <DocumentField label="Facility">
+                    <Text sx={{ color: '#e2e8f0' }}>
+                      {details.facility_name}
+                    </Text>
+                  </DocumentField>
+                )}
+
+                {details.instrument_name && (
+                  <DocumentField label="Instrument">
+                    <Text sx={{ color: '#e2e8f0' }}>
+                      {details.instrument_name}
+                    </Text>
+                  </DocumentField>
+                )}
+
+                {details.publication_year && (
+                  <DocumentField label="Publication Year">
+                    <Text sx={{ color: '#e2e8f0' }}>
+                      {details.publication_year}
+                    </Text>
+                  </DocumentField>
+                )}
+              </Box>
             )}
 
             {!details.raw && !rawData && (
