@@ -200,7 +200,7 @@ function PanFinderPage() {
         />
 
         <FacilitiesSection
-          only={['ESS', 'ESRF', 'ILL', 'PSI', 'MAXIV', 'DESY']}
+          only={['ESS', 'ESRF', 'ILL', 'PSI', 'MAXIV', 'DESY', 'HOA']}
         />
         <PanFinderFooter />
       </Box>
