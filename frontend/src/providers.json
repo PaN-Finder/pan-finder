@@ -1,5 +1,12 @@
 [
   {
+    "name": "Human Organ Atlas",
+    "abbr": "HOA",
+    "url": "https://human-organ-atlas.esrf.fr",
+    "homepage": "https://human-organ-atlas.esrf.fr",
+    "services": []
+  },
+  {
     "name": "European Synchrotron Radiation Facility",
     "abbr": "ESRF",
     "url": "https://icatplus.esrf.fr/api",

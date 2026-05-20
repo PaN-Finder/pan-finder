@@ -5,38 +5,70 @@ import {
   FiX,
   FiChevronDown,
   FiChevronRight,
+  FiCopy,
+  FiCheck,
 } from 'react-icons/fi'
 
 import { Box, Text, Button, Flex } from '../../Primitives'
 
-function QueryDetails({ data, onStructuredSearch }) {
+function QueryDetails({ data, onQueryComponentsSearch }) {
   const [isEditing, setIsEditing] = useState(false)
-  const [editedData, setEditedData] = useState('')
+  const [editedQueryComponents, setEditedQueryComponents] = useState('')
   const [error, setError] = useState(null)
   const [isExpanded, setIsExpanded] = useState(false)
+  const [copyStatus, setCopyStatus] = useState(null)
+  const queryComponents = data?.raw_structured_data
+  const formattedQueryComponents = JSON.stringify(queryComponents, null, 2)
 
-  if (!data || !data.raw_structured_data || !data.id) {
+  if (!data || !queryComponents || !data.id) {
     return null
   }
 
   const handleEditStart = () => {
-    setEditedData(JSON.stringify(data.raw_structured_data, null, 2))
+    setEditedQueryComponents(formattedQueryComponents)
+    setError(null)
     setIsEditing(true)
   }
 
   const handleSearch = () => {
     try {
-      const parsedData = JSON.parse(editedData)
-      onStructuredSearch(data.id, parsedData)
+      const parsedQueryComponents = JSON.parse(editedQueryComponents)
+      onQueryComponentsSearch(data.id, parsedQueryComponents)
+      setError(null)
       setIsEditing(false)
     } catch (error) {
-      setError(error.message || 'Please enter valid JSON data.')
+      setError(
+        error.message || 'Please enter valid JSON for the query components.',
+      )
     }
   }
 
   const handleCancel = () => {
     setIsEditing(false)
-    setEditedData('')
+    setEditedQueryComponents('')
+    setError(null)
+  }
+
+  const handleCopy = async () => {
+    const textToCopy = isEditing
+      ? editedQueryComponents
+      : formattedQueryComponents
+
+    try {
+      if (!navigator?.clipboard?.writeText) {
+        throw new Error('Clipboard API is unavailable')
+      }
+
+      await navigator.clipboard.writeText(textToCopy)
+
+      setCopyStatus('copied')
+    } catch {
+      setCopyStatus('error')
+    }
+
+    window.setTimeout(() => {
+      setCopyStatus(null)
+    }, 2000)
   }
 
   return (
@@ -80,7 +112,7 @@ function QueryDetails({ data, onStructuredSearch }) {
             p: 3,
           }}
         >
-          {data.raw_structured_data && (
+          {queryComponents && (
             <Box>
               <Flex
                 sx={{
@@ -98,8 +130,40 @@ function QueryDetails({ data, onStructuredSearch }) {
                     letterSpacing: '0.05em',
                   }}
                 >
-                  Structured Data
+                  Query Components
                 </Text>
+                <Button
+                  variant="action"
+                  onClick={handleCopy}
+                  sx={{
+                    p: 1,
+                    ml: 0,
+                    fontSize: '12px',
+                    color: copyStatus === 'copied' ? '#68d391' : '#a0aec0',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    ':hover': {
+                      color: copyStatus === 'copied' ? '#9ae6b4' : '#e2e8f0',
+                    },
+                  }}
+                  title={
+                    copyStatus === 'copied'
+                      ? 'Copied query components'
+                      : 'Copy query components JSON'
+                  }
+                  aria-label={
+                    copyStatus === 'copied'
+                      ? 'Copied query components'
+                      : 'Copy query components JSON'
+                  }
+                >
+                  {copyStatus === 'copied' ? (
+                    <FiCheck size={14} />
+                  ) : (
+                    <FiCopy size={14} />
+                  )}
+                </Button>
                 {!isEditing && (
                   <Button
                     variant="action"
@@ -116,7 +180,7 @@ function QueryDetails({ data, onStructuredSearch }) {
                         color: '#e2e8f0',
                       },
                     }}
-                    title="Edit structured data"
+                    title="Edit query components"
                   >
                     <FiEdit3 size={14} />
                     Edit JSON
@@ -160,9 +224,9 @@ function QueryDetails({ data, onStructuredSearch }) {
                 {isEditing ? (
                   <>
                     <textarea
-                      value={editedData}
-                      onChange={(e) => setEditedData(e.target.value)}
-                      aria-label="Edit structured data JSON"
+                      value={editedQueryComponents}
+                      onChange={(e) => setEditedQueryComponents(e.target.value)}
+                      aria-label="Edit query components JSON"
                       style={{
                         width: '100%',
                         minHeight: '200px',
@@ -219,7 +283,7 @@ function QueryDetails({ data, onStructuredSearch }) {
                             color: '#68d391',
                           },
                         }}
-                        title="Save and search"
+                        title="Save query components and search"
                       >
                         <FiSearch size={14} />
                         Save and Search
@@ -236,7 +300,7 @@ function QueryDetails({ data, onStructuredSearch }) {
                       lineHeight: 1.4,
                     }}
                   >
-                    {JSON.stringify(data.raw_structured_data, null, 2)}
+                    {formattedQueryComponents}
                   </pre>
                 )}
               </Box>

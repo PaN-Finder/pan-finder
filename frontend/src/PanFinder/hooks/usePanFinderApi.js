@@ -177,9 +177,9 @@ const usePanFinderApi = () => {
     [createSessionFromContext],
   )
 
-  const searchWithStructuredData = useCallback(
-    async (id, structuredData) => {
-      await executeSearch(api?.searchWithStructuredData, id, structuredData)
+  const searchWithQueryComponents = useCallback(
+    async (id, queryComponents) => {
+      await executeSearch(api?.searchWithStructuredData, id, queryComponents)
     },
     [executeSearch, api],
   )
@@ -287,7 +287,7 @@ const usePanFinderApi = () => {
     explanation,
     explanationError,
     search,
-    searchWithStructuredData,
+    searchWithQueryComponents,
     reset,
     fetchDocumentDetails,
     fetchRawDocument,

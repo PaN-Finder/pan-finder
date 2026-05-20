@@ -172,8 +172,8 @@ function SearchForm({
           flexWrap: 'wrap',
           textAlign: 'center',
           fontSize: 0,
-          color: 'muted',
-          opacity: disabled ? 0.6 : 0.8,
+          color: 'rgb(204, 204, 204);',
+          opacity: disabled ? 0.6 : 1,
         }}
       >
         <Text as="span" sx={{ color: 'inherit' }}>
@@ -187,10 +187,10 @@ function SearchForm({
           sx={{
             appearance: 'none',
             border: '1px solid',
-            borderColor: 'rgba(100, 110, 177, 0.35)',
+            borderColor: 'rgba(148, 163, 184, 0.55)',
             borderRadius: '999px',
-            bg: 'rgba(100, 110, 177, 0.08)',
-            color: 'inherit',
+            bg: 'rgba(45, 55, 72, 0.9)',
+            color: 'rgb(204, 204, 204)',
             fontSize: 'inherit',
             lineHeight: 1.2,
             px: 3,
@@ -200,8 +200,8 @@ function SearchForm({
             ':hover': disabled
               ? undefined
               : {
-                  bg: 'rgba(100, 110, 177, 0.16)',
-                  borderColor: 'rgba(100, 110, 177, 0.6)',
+                  bg: 'rgba(74, 85, 104, 0.95)',
+                  borderColor: 'rgba(226, 232, 240, 0.7)',
                 },
             '&:disabled': {
               opacity: 0.6,

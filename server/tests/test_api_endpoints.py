@@ -460,7 +460,7 @@ def make_statistic_with_results(doi_list):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "classification", ["Match", "Relevant", "Suggested", "Not_Fit"]
+    "classification", ["Match", "Relevant", "Suggested", "Not_Relevant"]
 )
 async def test_feedback_submit_success(async_client: AsyncClient, classification: str):
     statistic = make_statistic_with_results(["10.1000/xyz123"])
