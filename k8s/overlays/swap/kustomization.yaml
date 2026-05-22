@@ -6,7 +6,7 @@ resources:
   - frontend-service.yaml
   - pv.yaml
 
-patches:  
+patches:
   - path: ingress-patch.yaml
   - path: configmap-patch.yaml
   - path: pgvector-deployment-patch.yaml
@@ -15,11 +15,11 @@ patches:
 images:
   - name: ghcr.io/pan-finder/pan-finder-server
     newName: ghcr.io/pan-finder/pan-finder-server
-    newTag: v1.0.0-alpha.8
+    newTag: v1.0.0-alpha.9
   - name: ghcr.io/pan-finder/pan-finder-frontend
     newName: ghcr.io/pan-finder/pan-finder-frontend
-    newTag: v1.0.0-alpha.8
-    
+    newTag: v1.0.0-alpha.9
+
 labels:
   - pairs:
       environment: dev
