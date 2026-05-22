@@ -20,6 +20,7 @@ class AIPrompts:
 - Identify key terms that describe the subject of the search. These are used for full-text search or filtering.
 - Exclude stopwords and generic words like “find,” “search for,” “show,” etc.
 - Exclude common phrases like "papers on," "studies about", and generic resource/type words such as "document", "documents", "dataset", "datasets", "research", "papers", "studies", "publications", "articles", as well as field labels like "title", "abstract", "author".
+- If a word or phrase is clearly the value of an explicit filter clause (for example, `field is value`, `field = value`, or `field equals value`), represent it in `filters` instead of leaving it as a standalone keyword, unless the same term is also the main subject outside the filter clause.
 - If removing these terms leaves no meaningful subject terms, return an empty list: `"keywords": []`.
 - Remove punctuation from keywords.
 - Use singular or plural as in the query; do not normalize.
@@ -28,12 +29,18 @@ class AIPrompts:
 
 ### 3. Parsing Filters and Conditions
 - Identify constraints such as numerical ranges, comparisons, or categorical filters.
+- Generic field/value extraction: Whenever the query explicitly names a field, parameter, attribute, or property and assigns it a value, extract that pair as a filter even if the value is plain text rather than a number. This applies broadly to any explicit field name, not only the examples in this prompt.
+- Recognize common assignment patterns such as `field is value`, `field = value`, `field equals value`, `field named value`, `where field is value`, and similar constructions that clearly bind a value to a named field.
+- For string-valued filters, use `=` for exact categorical or identifier-like values, and use `ILIKE` for plain-language text values or when flexible matching is safer. Either operator is acceptable when the query clearly expresses an equality-style constraint.
+- When a value is attached to an explicit field in this way, keep the field/value pair in `filters`; do not leave the value only in `intention` or `keywords`.
 - Implicit Filter Recognition: Some filters might not be expressed as explicit key-value pairs. Recognize patterns where a value is associated with a specific concept through surrounding keywords or context.
   - Example: Identify phrases indicating an instrument or beamline, such as mentioning "instrument," "beamline" and extract the relevant value.
   - "uses the ID23 instrument" -> `{"name": "instrument", "operator": "=", "value": "ID23"}`
   - "utilizes the ID23 instrument" -> `{"name": "instrument", "operator": "=", "value": "ID23"}`
   - "experiment conducted at the ID23 instrument" -> `{"name": "instrument", "operator": "=", "value": "ID23"}`
   - "data from beamline P03" -> `{"name": "beamline", "operator": "=", "value": "P03"}`
+  - "Search for data where the material is wood" -> `{"name": "material", "operator": "ILIKE", "value": "wood"}`
+  - "Find datasets where sample type = powder" -> `{"name": "sample type", "operator": "=", "value": "powder"}`
 
   - Facilities and Organizations → publisher filter (special rule): When the query mentions a facility/organization (case-insensitive), add a filter with `name: "publisher"` and use the facility mention as the `value` exactly as it appears in the query. This rule is an exception to the "use the exact parameter names from the query" guideline specifically for facilities.
     - Preserve known abbreviations exactly as provided (do NOT expand abbreviations to full names). Likewise, preserve known full names as provided (do NOT abbreviate). Examples of known abbreviations include: `ESRF`, `PSI`, `ILL`, `ESS`, `MAX IV`, `MAXIV`, `DESY`, `PSI LMU`.
@@ -300,6 +307,50 @@ class AIPrompts:
   - Date (no time): `%Y-%m-%d` (e.g., `2025-08-22`)
   - Timestamp (date and time): `%Y-%m-%d %H:%M:%S` (e.g., `2025-08-22 14:05:00`)
 - Apply these formats consistently across all filters; do not change parameter names, only the value formatting."""
+
+    @staticmethod
+    def get_query_rephrase_prompt() -> str:
+        return """You rewrite user input into a single concise search sentence optimized for retrieval and structured query extraction.
+
+Your output will be used as search input in a RAG pipeline.
+
+## Goal
+- Convert chat-like, imperative, or action-oriented requests into a neutral search-oriented sentence.
+- Preserve the user's meaning exactly.
+- Make the main topic or subject easy to extract as the search intention.
+- Make constraints easy to extract as filters by expressing them as clear parameter/value style phrases when possible.
+- Keep the result as a single sentence with no bullets, no JSON, and no explanation.
+
+## Rules
+- Preserve all identifiers, accession numbers, donor IDs, proposal IDs, DOIs, instrument names, facility names, dates, numbers, units, chemical formulas, and quoted strings exactly as written.
+- Do not expand, abbreviate, normalize, translate, or correct identifiers such as `LADAF-2021-17`.
+- Do not add facts, constraints, synonyms, or domain assumptions that are not explicitly present.
+- Remove chat framing and action verbs such as "show me", "give me", "can you find", "I want", and similar phrasing.
+- Rewrite the request into a retrieval-oriented form such as "Retrieve ...", "Find ...", or "Search for ...".
+- Prefer wording that separates the topic from the constraints, for example: topic first, then `where`, `with`, `from`, `between`, `less than`, `greater than`, or similar filter-friendly phrasing.
+- When a query contains an identifiable subject, make that subject explicit near the start of the sentence so it can become the intention.
+- When a query mainly consists of constraints, keep the searched object from the user's wording and rewrite the constraints into explicit parameter/value style clauses.
+- When a relationship is implicit but clear from the request, make it explicit in a filter-friendly form without adding new facts. Example: `organs from donor LADAF-2021-17` -> `organs where donor ID is LADAF-2021-17`.
+- Keep explicit filter relationships intact, including AND/OR, comparison wording, ranges, dates, and units.
+- Preserve user-provided field names when they are already explicit; do not rename them unless needed to make an implicit relationship explicit.
+- If the user's input is already a good search sentence, return it unchanged except for minor cleanup.
+- Output only the rewritten sentence.
+
+## Examples
+- Input: "Show me all organs from donor LADAF-2021-17"
+  Output: "Retrieve organ records where donor ID is LADAF-2021-17."
+
+- Input: "Can you find datasets where the publisher is ESS and the resolution is below 2.1?"
+  Output: "Find datasets where the publisher is ESS and the resolution is below 2.1."
+
+- Input: "Search for datasets from ESRF"
+  Output: "Search for datasets where the publisher is ESRF."
+
+- Input: "Show me research about magnetic diffuse scattering in CuMnO2 between 1.5 K and 300 K"
+  Output: "Find research about magnetic diffuse scattering in CuMnO2 where the temperature is between 1.5 K and 300 K."
+
+- Input: "Give me proposals with D50 T tomograph and publication year 2018"
+  Output: "Find research proposals involving D50 T tomograph where the publication year is 2018."""
 
     @staticmethod
     def get_explanation_prompt() -> str:

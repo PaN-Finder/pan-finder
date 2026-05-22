@@ -33,7 +33,9 @@ function PanFinderPage() {
     data,
     error,
     isLoading,
+    isRephrasing,
     streamingSteps,
+    rephraseQuery,
     search,
     searchWithQueryComponents,
     fetchDocumentDetails,
@@ -122,24 +124,40 @@ function PanFinderPage() {
     }
   }
 
+  const prepareForNewSearch = () => {
+    setExpandedRows(new Set())
+    setLoadingDetails(new Set())
+    clearDocumentData()
+  }
+
   const handleSearch = async () => {
     if (!inputValue.trim()) {
       return
     }
 
-    // Clear previous results state to prepare for new search
-    setExpandedRows(new Set())
-    setLoadingDetails(new Set())
-    clearDocumentData()
+    prepareForNewSearch()
 
     await search(inputValue)
   }
 
+  const handleRephraseAndSearch = async () => {
+    if (!inputValue.trim()) {
+      return
+    }
+
+    prepareForNewSearch()
+
+    const rewrittenQuery = await rephraseQuery(inputValue)
+    if (!rewrittenQuery) {
+      return
+    }
+
+    setInputValue(rewrittenQuery)
+    await search(rewrittenQuery, { resetStreamingSteps: false })
+  }
+
   const handleQueryComponentsSearch = async (id, queryComponents) => {
-    // Clear previous results state to prepare for new search
-    setExpandedRows(new Set())
-    setLoadingDetails(new Set())
-    clearDocumentData()
+    prepareForNewSearch()
 
     await searchWithQueryComponents(id, queryComponents)
   }
@@ -178,7 +196,9 @@ function PanFinderPage() {
           handleInputChange={handleInputChange}
           handleKeyDown={handleKeyDown}
           handleSubmit={handleSubmit}
+          handleRephrase={handleRephraseAndSearch}
           isLoading={isLoading}
+          isRephrasing={isRephrasing}
           setInputValue={setInputValue}
           handleClear={handleClear}
           hasResults={!!data}

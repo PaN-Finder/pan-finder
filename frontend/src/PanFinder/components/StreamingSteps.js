@@ -63,6 +63,7 @@ function StreamingSteps({ streamingSteps }) {
                 transition: 'color 0.15s ease',
               }}
             >
+              {step.event === 'rephrasing_started' && 'Rephrasing...'}
               {step.event === 'explanation_started' &&
                 'Generating explanation...'}
               {step.event === 'analysis_started' && 'Analysis started...'}

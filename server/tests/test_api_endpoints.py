@@ -66,6 +66,52 @@ async def test_root_endpoint(async_client: AsyncClient):
     assert "version" in payload
 
 
+@pytest.mark.asyncio
+async def test_rephrase_endpoint_logic():
+    class DummyEngine:
+        async def rephrase_query_for_search(self, raw_query):
+            assert raw_query == "Show me all organs from donor LADAF-2021-17"
+            return "Retrieve all organ records associated with donor ID LADAF-2021-17."
+
+    with (
+        patch("src.routers.search.verify_session", return_value=None),
+        patch("src.routers.search.get_search_engine", return_value=DummyEngine()),
+    ):
+        from src.routers.search import RephraseRequest, rephrase_query
+
+        response = await rephrase_query(
+            RephraseRequest(query="Show me all organs from donor LADAF-2021-17"),
+            x_session_id=None,
+        )
+
+    assert response.original_query == "Show me all organs from donor LADAF-2021-17"
+    assert (
+        response.rewritten_query
+        == "Retrieve all organ records associated with donor ID LADAF-2021-17."
+    )
+
+
+@pytest.mark.asyncio
+async def test_rephrase_endpoint_falls_back_to_original_query():
+    class DummyEngine:
+        async def rephrase_query_for_search(self, raw_query):
+            return ""
+
+    with (
+        patch("src.routers.search.verify_session", return_value=None),
+        patch("src.routers.search.get_search_engine", return_value=DummyEngine()),
+    ):
+        from src.routers.search import RephraseRequest, rephrase_query
+
+        response = await rephrase_query(
+            RephraseRequest(query="Show me donor LADAF-2021-17"),
+            x_session_id=None,
+        )
+
+    assert response.original_query == "Show me donor LADAF-2021-17"
+    assert response.rewritten_query == "Show me donor LADAF-2021-17"
+
+
 # ----------------------------
 # Document endpoint tests
 # ----------------------------

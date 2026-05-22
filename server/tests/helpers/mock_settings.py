@@ -19,6 +19,7 @@ class MockSettings:
     openai_api_key = ""
     openai_base_url = ""
     default_model_name = "gpt-4.1-mini"
+    rephrase_model_name = "gpt-4.1-mini"
     explanation_model_name = "gpt-4.1"
     database_url = "postgresql://user:pass@localhost:5432/test"
     db_pool_min_size = 1

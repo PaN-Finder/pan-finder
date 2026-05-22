@@ -8,6 +8,12 @@ const SESSION_ID_REQUIRED_MSG = 'Session ID is required'
 const TURNSTILE_ENABLED =
   process.env.REACT_APP_ENABLE_TURNSTILE === 'true' || false
 
+const createProgressEvent = (event, data = null) => ({
+  event,
+  data,
+  timestamp: Date.now(),
+})
+
 const isUnauthorizedError = (error) =>
   error.message.includes('HTTP 401') || error.message.includes('Unauthorized')
 
@@ -15,6 +21,7 @@ const usePanFinderApi = () => {
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isRephrasing, setIsRephrasing] = useState(false)
   const [streamingSteps, setStreamingSteps] = useState([])
   const [explanation, setExplanation] = useState('')
   const [explanationError, setExplanationError] = useState(null)
@@ -87,12 +94,16 @@ const usePanFinderApi = () => {
   )
 
   const executeSearch = useCallback(
-    async (searchFunction, ...args) => {
+    async (searchFunction, searchArgs, options = {}) => {
+      const { resetStreamingSteps = true } = options
+
       setIsLoading(true)
       setError(null)
       setData(null)
       setCurrentQueryId(null)
-      setStreamingSteps([])
+      if (resetStreamingSteps) {
+        setStreamingSteps([])
+      }
       setExplanation('')
       setExplanationError(null)
 
@@ -112,7 +123,7 @@ const usePanFinderApi = () => {
           return
         }
 
-        await searchFunction(...args, handleEvent, controller.signal)
+        await searchFunction(...searchArgs, handleEvent, controller.signal)
       } catch (error_) {
         if (error_.name !== 'AbortError') {
           if (isUnauthorizedError(error_)) {
@@ -136,16 +147,58 @@ const usePanFinderApi = () => {
   )
 
   const search = useCallback(
-    async (query) => {
+    async (query, options = {}) => {
       if (!query || typeof query !== 'string' || query.trim() === '') {
         setError(new Error('Query is required and must be a non-empty string'))
         setIsLoading(false)
         return
       }
 
-      await executeSearch(api?.search, query)
+      await executeSearch(api?.search, [query], options)
     },
     [executeSearch, api],
+  )
+
+  const rephraseQuery = useCallback(
+    async (query) => {
+      if (!query || typeof query !== 'string' || query.trim() === '') {
+        setError(new Error('Query is required and must be a non-empty string'))
+        setStreamingSteps([])
+        return null
+      }
+
+      if (!api) {
+        if (TURNSTILE_ENABLED) {
+          setError(new Error(SESSION_ID_REQUIRED_MSG))
+        }
+        setStreamingSteps([])
+        return null
+      }
+
+      setIsRephrasing(true)
+      setError(null)
+      setData(null)
+      setCurrentQueryId(null)
+      setExplanation('')
+      setExplanationError(null)
+      setStreamingSteps([createProgressEvent('rephrasing_started')])
+
+      try {
+        const response = await api.rephraseQuery(query)
+        return response?.rewritten_query || query
+      } catch (error_) {
+        if (isUnauthorizedError(error_)) {
+          invalidateSession()
+        } else {
+          setError(error_)
+        }
+        setStreamingSteps([])
+        return null
+      } finally {
+        setIsRephrasing(false)
+      }
+    },
+    [api, invalidateSession, setCurrentQueryId],
   )
 
   const createSession = useCallback(
@@ -178,8 +231,12 @@ const usePanFinderApi = () => {
   )
 
   const searchWithQueryComponents = useCallback(
-    async (id, queryComponents) => {
-      await executeSearch(api?.searchWithStructuredData, id, queryComponents)
+    async (id, queryComponents, options = {}) => {
+      await executeSearch(
+        api?.searchWithStructuredData,
+        [id, queryComponents],
+        options,
+      )
     },
     [executeSearch, api],
   )
@@ -273,6 +330,7 @@ const usePanFinderApi = () => {
     setData(null)
     setError(null)
     setIsLoading(false)
+    setIsRephrasing(false)
     setStreamingSteps([])
     setCurrentQueryId(null)
     setExplanation('')
@@ -283,9 +341,11 @@ const usePanFinderApi = () => {
     data,
     error,
     isLoading,
+    isRephrasing,
     streamingSteps,
     explanation,
     explanationError,
+    rephraseQuery,
     search,
     searchWithQueryComponents,
     reset,

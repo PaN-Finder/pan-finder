@@ -101,6 +101,18 @@ async def test_search_structured_endpoint_requires_session(async_client: AsyncCl
 
 
 @pytest.mark.asyncio
+async def test_search_rephrase_endpoint_requires_session(async_client: AsyncClient):
+    """Test that /search/rephrase requires X-Session-ID header when Turnstile is enabled."""
+    response = await async_client.post(
+        "/search/rephrase",
+        json={"query": "Show me all organs from donor LADAF-2021-17"},
+    )
+
+    assert response.status_code == 401
+    assert "Session ID is required" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
 async def test_health_endpoint_not_protected(async_client: AsyncClient):
     """Test that /health endpoint is not protected even when Turnstile is enabled."""
     response = await async_client.get("/health")

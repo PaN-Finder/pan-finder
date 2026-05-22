@@ -49,6 +49,7 @@ class Settings:
         self.openai_base_url = os.getenv("OPENAI_BASE_URL", "").strip()
 
         self.default_model_name = os.getenv("DEFAULT_MODEL_NAME", "gpt-4.1-mini")
+        self.rephrase_model_name = os.getenv("REPHRASE_MODEL_NAME", "gpt-5.4-mini")
         self.explanation_model_name = os.getenv("EXPLANATION_MODEL_NAME", "gpt-4.1")
 
         self.embedding_model_path = os.getenv(

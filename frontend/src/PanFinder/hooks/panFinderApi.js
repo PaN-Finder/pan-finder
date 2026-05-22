@@ -98,6 +98,18 @@ export const createSessionRequest = async (turnstileToken) => {
 // sessionId can be null when Turnstile is disabled
 export const createPanFinderApi = (sessionId) => {
   return {
+    rephraseQuery: async (query) => {
+      const response = await apiRequest(
+        `${PAN_FINDER_API_BASE}/search/rephrase`,
+        {
+          method: 'POST',
+          headers: createHeaders(sessionId),
+          body: JSON.stringify({ query }),
+        },
+      )
+      return response.json()
+    },
+
     search: async (query, onEvent, signal) => {
       const searchData = { query }
       const response = await apiRequest(`${PAN_FINDER_API_BASE}/search`, {

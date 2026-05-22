@@ -1,6 +1,6 @@
 import { Textarea } from '@rebass/forms'
 import React from 'react'
-import { FiSearch, FiRotateCw } from 'react-icons/fi'
+import { FiEdit3, FiSearch, FiRotateCw } from 'react-icons/fi'
 
 import { Box, Button, Flex, Text } from '../../Primitives'
 
@@ -25,13 +25,16 @@ function SearchForm({
   handleInputChange,
   handleKeyDown,
   handleSubmit,
+  handleRephrase,
   isLoading,
+  isRephrasing = false,
   setInputValue,
   handleClear,
   hasResults = false,
   disabled = false,
 }) {
   const feedbackEmail = `${feedbackMailbox[0]}@${feedbackMailbox[1]}`
+  const isBusy = isLoading || isRephrasing
 
   const handleFeedbackClick = () => {
     window.location.href = `mailto:${feedbackEmail}`
@@ -70,7 +73,7 @@ function SearchForm({
               height: '100px',
               fontSize: 'large',
               resize: 'vertical',
-              paddingRight: '50px',
+              paddingRight: '150px',
               border: '1px solid #646eb1',
               borderRadius: '8px',
               opacity: disabled ? 0.6 : 1,
@@ -80,52 +83,109 @@ function SearchForm({
             }}
           />
         </Box>
-        <Button
-          aria-label="Search"
-          type="submit"
-          disabled={isLoading || disabled}
-          variant="buttons.base"
+        <Flex
           sx={{
             position: 'absolute',
             top: '8px',
             right: '8px',
-            minWidth: 'auto',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            px: '10px',
-            py: '10px',
-            bg: '#1a202c',
-            border: '1px solid #4a5568',
-            borderRadius: '6px',
-            color: '#e2e8f0',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            ':hover': {
-              bg: '#2d3748',
-              borderColor: '#646eb1',
-              color: '#e2e8f0',
-              transform: 'translateY(-1px)',
-              boxShadow: '0 2px 8px rgba(100, 110, 177, 0.3)',
-            },
-            ':active': {
-              transform: 'translateY(0)',
-            },
-            '&:disabled': {
-              opacity: 0.6,
-              cursor: 'not-allowed',
-            },
+            gap: 2,
           }}
         >
-          <FiSearch size={14} />
-        </Button>
+          <Button
+            aria-label="Rephrase Query"
+            type="button"
+            onClick={handleRephrase}
+            disabled={isBusy || disabled}
+            title="Rewrite into a search-friendly sentence and run search"
+            variant="buttons.base"
+            sx={{
+              minWidth: 'auto',
+              height: '36px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 2,
+              px: '10px',
+              py: '10px',
+              bg: '#1a202c',
+              border: '1px solid rgba(88, 176, 160, 0.55)',
+              borderRadius: '6px',
+              color: '#d9fff8',
+              fontSize: '12px',
+              fontWeight: '600',
+              letterSpacing: '0.01em',
+              lineHeight: 1,
+              cursor: 'pointer',
+              boxShadow: 'inset 0 0 0 1px rgba(43, 108, 99, 0.16)',
+              transition: 'all 0.2s ease',
+              ':hover': {
+                bg: '#243140',
+                borderColor: '#72d1c0',
+                color: '#ecfeff',
+                transform: 'translateY(-1px)',
+                boxShadow:
+                  'inset 0 0 0 1px rgba(88, 176, 160, 0.22), 0 2px 8px rgba(120, 211, 196, 0.22)',
+              },
+              ':active': {
+                transform: 'translateY(0)',
+              },
+              '&:disabled': {
+                opacity: 0.6,
+                cursor: 'not-allowed',
+              },
+            }}
+          >
+            <FiEdit3 size={13} />
+            Rephrase
+          </Button>
+          <Button
+            aria-label="Search"
+            type="submit"
+            disabled={isBusy || disabled}
+            variant="buttons.base"
+            sx={{
+              minWidth: 'auto',
+              height: '36px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              px: '10px',
+              py: '10px',
+              bg: '#1a202c',
+              border: '1px solid #4a5568',
+              borderRadius: '6px',
+              color: '#e2e8f0',
+              lineHeight: 1,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              ':hover': {
+                bg: '#2d3748',
+                borderColor: '#646eb1',
+                color: '#e2e8f0',
+                transform: 'translateY(-1px)',
+                boxShadow: '0 2px 8px rgba(100, 110, 177, 0.3)',
+              },
+              ':active': {
+                transform: 'translateY(0)',
+              },
+              '&:disabled': {
+                opacity: 0.6,
+                cursor: 'not-allowed',
+              },
+            }}
+          >
+            <FiSearch size={14} />
+          </Button>
+        </Flex>
         {handleClear && hasResults && (
           <Button
             aria-label="New Search"
             type="button"
             onClick={handleClear}
             title="Clear search and reset results"
-            disabled={disabled}
+            disabled={disabled || isBusy}
             variant="buttons.base"
             sx={{
               position: 'absolute',
@@ -219,11 +279,11 @@ function SearchForm({
         sx={{
           textAlign: 'center',
           transition: 'all 0.4s ease-in-out',
-          opacity: isLoading || hasResults ? 0 : 1,
-          maxHeight: isLoading || hasResults ? '0px' : '500px',
+          opacity: isBusy || hasResults ? 0 : 1,
+          maxHeight: isBusy || hasResults ? '0px' : '500px',
           overflow: 'hidden',
           transform:
-            isLoading || hasResults ? 'translateY(-20px)' : 'translateY(0)',
+            isBusy || hasResults ? 'translateY(-20px)' : 'translateY(0)',
         }}
       >
         <Text
@@ -241,7 +301,7 @@ function SearchForm({
           {exampleQueries.map((query) => (
             <Button
               key={query}
-              disabled={isLoading || disabled}
+              disabled={isBusy || disabled}
               onClick={() => setInputValue(query)}
               variant="outline"
               sx={{

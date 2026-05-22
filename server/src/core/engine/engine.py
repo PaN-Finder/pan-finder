@@ -130,6 +130,39 @@ class SearchEngine:
                 filters={},
             )
 
+    async def rephrase_query_for_search(self, query: str) -> str:
+        """Rewrite a user query into a retrieval-oriented sentence."""
+        if not query or not query.strip():
+            return ""
+
+        try:
+            messages = [
+                LLMMessage(
+                    role="system",
+                    content=AIPrompts.get_query_rephrase_prompt(),
+                ),
+                LLMMessage(role="user", content=query),
+            ]
+
+            request = self._llm_client.create_request(
+                messages=messages,
+                model=settings.rephrase_model_name,
+                max_tokens=200,
+                temperature=0.0,
+            )
+
+            response = await self._llm_client.complete(request)
+            rewritten_query = (response.content or "").strip()
+
+            if not rewritten_query:
+                return query
+
+            return rewritten_query
+
+        except Exception as e:
+            self._logger.error(f"LLM query rephrasing failed: {e}")
+            return query
+
     def _parse_openai_response(
         self, response_content: str | None, query: str
     ) -> StructuredQueryData:

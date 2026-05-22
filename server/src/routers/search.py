@@ -31,6 +31,11 @@ class SearchResponse(BaseModel):
     total_results: int
 
 
+class RephraseResponse(BaseModel):
+    original_query: str
+    rewritten_query: str
+
+
 class StructuredSearchRequest(BaseModel):
     modified_query_id: str = Field(
         ..., description="ID of the modified query (required)"
@@ -50,11 +55,31 @@ class ExplainRequest(BaseModel):
     doi: str = Field(..., min_length=1, description="DOI of the document to explain")
 
 
+class RephraseRequest(BaseModel):
+    query: str = Field(..., min_length=1, description="Query text to rewrite")
+
+
 # --- Helper functions for streaming events ---
 async def sse_yield(evt: StreamEvent):
     """Async generator that yields a formatted SSE event and sleeps briefly."""
     yield f"event: {evt.event}\ndata: {json.dumps(evt.data)}\n\n"
     await asyncio.sleep(0.1)  # Ensure client receives the event
+
+
+@router.post("/rephrase")
+async def rephrase_query(
+    request: RephraseRequest,
+    x_session_id: str | None = Header(None, alias="X-Session-ID"),
+) -> RephraseResponse:
+    verify_session(x_session_id)
+
+    engine = get_search_engine()
+    rewritten_query = await engine.rephrase_query_for_search(request.query)
+
+    return RephraseResponse(
+        original_query=request.query,
+        rewritten_query=rewritten_query or request.query,
+    )
 
 
 @router.post("")
