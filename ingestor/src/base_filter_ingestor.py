@@ -16,15 +16,21 @@ class BaseFilterIngestor:
 
     logger = logging.getLogger("BaseFilterIngestor")
     PUBLICATION_ROOT_KEY = "collection"
+    HOISTED_WRAPPER_KEYS = frozenset({"metadata", "scientificMetadata"})
 
     def __init__(
         self,
         db_conn_factory: Callable[[], AbstractContextManager[Any]],
         settings,
+        dry_run: bool = False,
     ) -> None:
         self.db_conn_factory = db_conn_factory
         self.settings = settings
-        self.encoder = SentenceTransformer(settings.embedding_model_path, device="cpu")
+        self.dry_run = dry_run
+        if not dry_run:
+            self.encoder = SentenceTransformer(
+                settings.embedding_model_path, device="cpu"
+            )
 
     @staticmethod
     def camel_case_to_spaces(text: str) -> str:
@@ -64,7 +70,10 @@ class BaseFilterIngestor:
                 )
             else:
                 for key, value in data.items():
-                    new_key = f"{parent_key}{sep}{key}" if parent_key else key
+                    if key in cls.HOISTED_WRAPPER_KEYS:
+                        new_key = parent_key
+                    else:
+                        new_key = f"{parent_key}{sep}{key}" if parent_key else key
                     items.extend(cls.flatten_json(value, new_key, sep=sep))
         elif isinstance(data, list):
             for value in data:
@@ -76,6 +85,20 @@ class BaseFilterIngestor:
     def fetch_documents_without_filters(
         self, cursor
     ) -> list[tuple[int, dict[str, Any]]]:
+        raise NotImplementedError
+
+    @classmethod
+    def _flatten_datasets(cls, datasets: Any) -> list[tuple[str, dict[str, Any]]]:
+        """Flatten datasets, hoisting wrapper containers into the dataset root."""
+        items: list[tuple[str, dict[str, Any]]] = []
+        entries = datasets if isinstance(datasets, list) else [datasets]
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            items.extend(cls.flatten_json(entry))
+        return items
+
+    def fetch_all_documents(self, cursor) -> list[tuple[int, dict[str, Any]]]:
         raise NotImplementedError
 
     def build_filters(
@@ -150,23 +173,41 @@ class BaseFilterIngestor:
                     batch_rows.extend(rows)
                     batch_keys.extend(keys)
                     if (i + 1) % self.BATCH_SIZE == 0:
-                        self.insert_filters(cursor, batch_rows)
-                        self.insert_filter_keys_with_embeddings(cursor, batch_keys)
-                        conn.commit()
-                        self.logger.info(
-                            "Committed batch ending at document ID: %s", doc_id
-                        )
+                        if self.dry_run:
+                            self.logger.info(
+                                "[dry-run] Would insert %d filter row(s) with key(s): %s",
+                                len(batch_rows),
+                                ", ".join(sorted(set(batch_keys))),
+                            )
+                        else:
+                            self.insert_filters(cursor, batch_rows)
+                            self.insert_filter_keys_with_embeddings(cursor, batch_keys)
+                            conn.commit()
+                            self.logger.info(
+                                "Committed batch ending at document ID: %s", doc_id
+                            )
                         batch_rows = []
                         batch_keys = []
                 if batch_rows or batch_keys:
-                    self.insert_filters(cursor, batch_rows)
-                    self.insert_filter_keys_with_embeddings(cursor, batch_keys)
-            conn.commit()
+                    if self.dry_run:
+                        self.logger.info(
+                            "[dry-run] Would insert %d filter row(s) with key(s): %s",
+                            len(batch_rows),
+                            ", ".join(sorted(set(batch_keys))),
+                        )
+                    else:
+                        self.insert_filters(cursor, batch_rows)
+                        self.insert_filter_keys_with_embeddings(cursor, batch_keys)
+            if not self.dry_run:
+                conn.commit()
 
     def run(self) -> None:
         try:
             with self.db_conn_factory() as conn, conn.cursor() as cursor:
-                documents = self.fetch_documents_without_filters(cursor)
+                if self.dry_run:
+                    documents = self.fetch_all_documents(cursor)
+                else:
+                    documents = self.fetch_documents_without_filters(cursor)
             self.process_documents(documents)
         except Exception as error:
             self.logger.exception("Error during populating filter table: %s", error)

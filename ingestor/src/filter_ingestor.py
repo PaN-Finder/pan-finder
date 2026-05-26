@@ -29,13 +29,24 @@ class FilterIngestor(BaseFilterIngestor):
         )
         return cursor.fetchall()
 
+    def fetch_all_documents(self, cursor) -> list[tuple[int, dict[str, Any]]]:
+        cursor.execute(
+            """
+            SELECT d.id, d.raw
+            FROM document d
+            WHERE NOT (d.raw ? %s)
+            """,
+            (self.PUBLICATION_ROOT_KEY,),
+        )
+        return cursor.fetchall()
+
     def build_filters(
         self, doc_id: int, raw: dict[str, Any]
     ) -> tuple[list[tuple], list[str]]:
         filters = (
             self.flatten_json(raw.get("document", {}))
             + self.flatten_json(raw.get("panosc", {}))
-            + self.flatten_json(raw.get("datasets", {}))
+            + self._flatten_datasets(raw.get("datasets", []))
             + self.flatten_json(raw.get("datacite", {}))
             + self.flatten_json(raw.get("catalogue", {}))
         )

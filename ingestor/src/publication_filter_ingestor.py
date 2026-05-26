@@ -29,6 +29,17 @@ class PublicationFilterIngestor(BaseFilterIngestor):
         )
         return cursor.fetchall()
 
+    def fetch_all_documents(self, cursor) -> list[tuple[int, dict[str, Any]]]:
+        cursor.execute(
+            """
+            SELECT d.id, d.raw
+            FROM document d
+            WHERE d.raw ? %s
+            """,
+            (self.PUBLICATION_ROOT_KEY,),
+        )
+        return cursor.fetchall()
+
     @staticmethod
     def filter_entries_with_parameters(entries: Any) -> list[Any]:
         if not isinstance(entries, list):
@@ -96,7 +107,7 @@ class PublicationFilterIngestor(BaseFilterIngestor):
         filters = (
             self.flatten_json(normalized.get("panosc", {}))
             + self.flatten_json(normalized.get("samples", []), "samples")
-            + self.flatten_json(normalized.get("datasets", []))
+            + self._flatten_datasets(normalized.get("datasets", []))
             + self.flatten_json(normalized.get("datacite", []))
             + self.flatten_json(normalized.get("users", []), "users")
             + self.flatten_json(normalized.get("reports", []), "reports")

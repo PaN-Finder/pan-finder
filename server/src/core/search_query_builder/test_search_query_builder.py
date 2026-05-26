@@ -9,12 +9,12 @@ from psycopg.sql import Composable
 VALUE_VECTOR_KEYS = (
     "authors",
     "creator",
-    "scientificMetadata.author",
+    "author",
     "owner",
-    "metadata.authors.name",
+    "authors.name",
     "principalInvestigator",
     "investigator",
-    "scientificMetadata.measurement.team",
+    "measurement.team",
 )
 
 # --- Dynamic Import ---

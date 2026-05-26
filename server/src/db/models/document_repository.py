@@ -12,7 +12,7 @@ class DocumentRepository:
 
     DETAIL_FILTER_KEYS_BY_FIELD = {
         "publication_year": {
-            1: ["metadata.publicationYear"],
+            1: ["publicationYear"],
             2: ["publicationYear"],
             3: ["publicationYear"],
             4: ["publicationYear"],
@@ -25,10 +25,10 @@ class DocumentRepository:
             3: ["beamline"], # PSI
             4: ["creationLocation"], # MAX IV
             5: ["beamline", "instruments.name"], # ESRF
-            6: ["scientificMetadata.instrument.name"], # DESY
+            6: ["instrument.name"], # DESY
         },
         "authors": {
-            1: ["metadata.authors.name"],
+            1: ["authors.name"],
             2: ["creator", "authors"],
             3: ["creator"],
             4: ["creator"],
