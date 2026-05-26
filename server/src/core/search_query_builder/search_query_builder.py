@@ -55,7 +55,9 @@ class SearchQueryBuilder:
 
     # --- Constants ---
     # Similarity threshold for finding similar filter names
-    _SIMILARITY_THRESHOLD_NAMES: float = 0.5
+    _SIMILARITY_THRESHOLD_KEY_NAMES: float = 0.5
+    # Similarity threshold for finding similar filter key descriptions (less strict than name matching)
+    _SIMILARITY_THRESHOLD_KEY_DESCRIPTIONS: float = 0.5
     # Minimum number of results to return when finding similar names
     _SIMILARITY_MINIMUM_RESULTS: int = 4
     # Similarity threshold for document title/summary vs intention
@@ -488,19 +490,19 @@ class SearchQueryBuilder:
                 (
                     query_vector,  # top_matches comparison
                     query_vector,  # top_matches WHERE
-                    self._SIMILARITY_THRESHOLD_NAMES,  # top_matches threshold
+                    self._SIMILARITY_THRESHOLD_KEY_NAMES,  # top_matches threshold
                     query_vector,  # description_matches comparison
                     query_vector,  # description_matches WHERE
-                    self._SIMILARITY_THRESHOLD_NAMES,  # description_matches threshold
+                    self._SIMILARITY_THRESHOLD_KEY_DESCRIPTIONS,  # description_matches threshold (less strict)
                     query_vector,  # fallback_matches comparison
                     query_vector,  # fallback_matches WHERE
-                    self._SIMILARITY_THRESHOLD_NAMES,  # fallback_matches threshold
+                    self._SIMILARITY_THRESHOLD_KEY_NAMES,  # fallback_matches threshold
                     self._SIMILARITY_MINIMUM_RESULTS,  # Ensure we always return at least this many results
                 ),
             )
             result = cursor.fetchall()
             self._logger.info(
-                f"Finding similar names for '{raw_name}'. Found: {[row['name'] for row in result[:5]]}"
+                f"Finding similar names for '{raw_name}'. Found: {[row['name'] for row in result]}"
             )
             if len(result) == 0:
                 return [raw_name]
