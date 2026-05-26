@@ -20,6 +20,7 @@ class AIPrompts:
 - Identify key terms that describe the subject of the search. These are used for full-text search or filtering.
 - Exclude stopwords and generic words like “find,” “search for,” “show,” etc.
 - Exclude common phrases like "papers on," "studies about", and generic resource/type words such as "document", "documents", "dataset", "datasets", "research", "papers", "studies", "publications", "articles", as well as field labels like "title", "abstract", "author".
+- If a word or phrase is clearly the value of an explicit filter clause (for example, `field is value`, `field = value`, or `field equals value`), represent it in `filters` instead of leaving it as a standalone keyword, unless the same term is also the main subject outside the filter clause.
 - If removing these terms leaves no meaningful subject terms, return an empty list: `"keywords": []`.
 - Remove punctuation from keywords.
 - Use singular or plural as in the query; do not normalize.
@@ -28,12 +29,18 @@ class AIPrompts:
 
 ### 3. Parsing Filters and Conditions
 - Identify constraints such as numerical ranges, comparisons, or categorical filters.
+- Generic field/value extraction: Whenever the query explicitly names a field, parameter, attribute, or property and assigns it a value, extract that pair as a filter even if the value is plain text rather than a number. This applies broadly to any explicit field name, not only the examples in this prompt.
+- Recognize common assignment patterns such as `field is value`, `field = value`, `field equals value`, `field named value`, `where field is value`, and similar constructions that clearly bind a value to a named field.
+- For string-valued filters, use `=` for exact categorical or identifier-like values, and use `ILIKE` for plain-language text values or when flexible matching is safer. Either operator is acceptable when the query clearly expresses an equality-style constraint.
+- When a value is attached to an explicit field in this way, keep the field/value pair in `filters`; do not leave the value only in `intention` or `keywords`.
 - Implicit Filter Recognition: Some filters might not be expressed as explicit key-value pairs. Recognize patterns where a value is associated with a specific concept through surrounding keywords or context.
   - Example: Identify phrases indicating an instrument or beamline, such as mentioning "instrument," "beamline" and extract the relevant value.
   - "uses the ID23 instrument" -> `{"name": "instrument", "operator": "=", "value": "ID23"}`
   - "utilizes the ID23 instrument" -> `{"name": "instrument", "operator": "=", "value": "ID23"}`
   - "experiment conducted at the ID23 instrument" -> `{"name": "instrument", "operator": "=", "value": "ID23"}`
   - "data from beamline P03" -> `{"name": "beamline", "operator": "=", "value": "P03"}`
+  - "Search for data where the material is wood" -> `{"name": "material", "operator": "ILIKE", "value": "wood"}`
+  - "Find datasets where sample type = powder" -> `{"name": "sample type", "operator": "=", "value": "powder"}`
 
   - Facilities and Organizations → publisher filter (special rule): When the query mentions a facility/organization (case-insensitive), add a filter with `name: "publisher"` and use the facility mention as the `value` exactly as it appears in the query. This rule is an exception to the "use the exact parameter names from the query" guideline specifically for facilities.
     - Preserve known abbreviations exactly as provided (do NOT expand abbreviations to full names). Likewise, preserve known full names as provided (do NOT abbreviate). Examples of known abbreviations include: `ESRF`, `PSI`, `ILL`, `ESS`, `MAX IV`, `MAXIV`, `DESY`, `PSI LMU`.
