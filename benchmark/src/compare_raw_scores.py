@@ -2,8 +2,8 @@
 
 New cache entries are resolved through metadata written by LLMClient:
 metadata.request.user_input, metadata.request.model, metadata.request.temperature,
-metadata.request.max_tokens, metadata.request.response_format, plus benchmark fields
-metadata.llm_model and metadata.system_prompt_version.
+metadata.request.max_tokens, metadata.request.response_format, plus benchmark-specific
+metadata.system_prompt_version.
 """
 
 from __future__ import annotations
@@ -188,7 +188,7 @@ def entry_lookup_key(entry: dict[str, Any]) -> CacheLookupKey | None:
     metadata = entry.get("metadata", {})
     request = metadata_request(entry)
 
-    model = metadata.get("llm_model") or request.get("model")
+    model = request.get("model") or metadata.get("llm_model")
     prompt_version = metadata.get("system_prompt_version")
     user_input = entry_user_input(entry)
     temperature = request.get("temperature", metadata.get("temperature"))
@@ -231,7 +231,11 @@ def detect_prompt_version(*, model: str, cache_entries: dict[str, Any]) -> str:
         {
             entry.get("metadata", {}).get("system_prompt_version")
             for entry in cache_entries.values()
-            if entry.get("metadata", {}).get("llm_model") == model
+            if (
+                metadata_request(entry).get("model")
+                or entry.get("metadata", {}).get("llm_model")
+            )
+            == model
             and isinstance(entry.get("metadata", {}).get("system_prompt_version"), str)
         }
     )
@@ -453,6 +457,18 @@ def payload_question(payload: dict[str, Any] | None) -> str | None:
     return None
 
 
+def score_direction(row: dict[str, Any]) -> str:
+    if not row["score_changed"]:
+        return "unchanged"
+    if row["average_delta"] > 1e-12:
+        return "better"
+    if row["average_delta"] < -1e-12:
+        return "worse"
+    if row["worst_delta"] < 0 and row["best_delta"] > 0:
+        return "mixed"
+    return "unchanged"
+
+
 def print_header(
     args: argparse.Namespace,
     old_resolver: CacheResolver,
@@ -485,7 +501,8 @@ def print_row_report(
     print("=" * 100)
     print(
         f"Query index {record.index} | score_changed={row['score_changed']} | "
-        f"response_changed={row['response_changed']} | avg delta {row['average_delta']:+.3f} | "
+        f"score={score_direction(row)} | response_changed={row['response_changed']} | "
+        f"avg delta {row['average_delta']:+.3f} | "
         f"worst {row['worst_delta']:+.3f} | best {row['best_delta']:+.3f}"
     )
     print(f"Dataset: {record.dataset}")

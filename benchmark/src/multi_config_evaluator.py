@@ -67,9 +67,7 @@ async def get_llm_response(prompt: str, query: str, **kwargs) -> str | None:
 
     # Create metadata for this specific cache entry
     cache_metadata = {
-        "llm_model": llm_model,
         "system_prompt_version": system_prompt_version,
-        **kwargs,
     }
 
     request = llm_client.create_request(
