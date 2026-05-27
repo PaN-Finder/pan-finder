@@ -12,7 +12,6 @@ from paths import benchmark_dir, include_server_modules
 from plotting import (
     plot_average_scores_per_dataset,
     plot_overall_changes,
-    plot_score_distribution_boxplot,
 )
 
 include_server_modules()
@@ -25,11 +24,10 @@ from src.db.connection import get_database_connection, get_database_pool
 logging.getLogger("multi_config_evaluator")
 
 # Define cache file path
-CACHE_FILE_PATH = benchmark_dir() / "cache" / "llm_cache.json"
 settings = get_settings()
 
 llm_model = "gpt-4.1-mini"
-system_prompt_version = "1_0_10.md"
+system_prompt_version = "1_0_12.md"
 
 # Global LLM client with file caching
 llm_client: LLMClient = get_llm_client(llm_model)
@@ -69,9 +67,7 @@ async def get_llm_response(prompt: str, query: str, **kwargs) -> str | None:
 
     # Create metadata for this specific cache entry
     cache_metadata = {
-        "llm_model": llm_model,
         "system_prompt_version": system_prompt_version,
-        **kwargs,
     }
 
     request = llm_client.create_request(
@@ -357,12 +353,6 @@ async def main() -> None:
             json.dump(all_scores_by_test_config, f, indent=2)
     except OSError as e:
         logging.info("Error saving raw scores data: %s", e)
-
-    plot_score_distribution_boxplot(
-        raw_scores_data_path,
-        results_dir / f"score_distribution_boxplot_{timestamp}.png",
-    )
-
     results_df = pd.DataFrame(all_test_results)
     plot_average_scores_per_dataset(
         results_df,
