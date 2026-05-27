@@ -135,11 +135,11 @@ class LLMClient:
         else:
             raise ValueError(f"Unsupported provider: {self._provider}")
 
-    def _generate_cache_key(self, request: LLMCompletionRequest) -> str:
+    def _generate_cache_key(self, request: LLMCompletionRequest, model: str) -> str:
         """Generate a unique cache key for the request."""
         # Create a hash of the key components
         key_data = {
-            "model": request.model,
+            "model": model,
             "messages": [
                 {"role": msg.role, "content": msg.content} for msg in request.messages
             ],
@@ -150,6 +150,34 @@ class LLMClient:
 
         key_string = json.dumps(key_data, sort_keys=True)
         return hashlib.sha256(key_string.encode("utf-8")).hexdigest()
+
+    def _build_cache_metadata(
+        self, request: LLMCompletionRequest, model: str
+    ) -> dict[str, Any]:
+        """Build metadata that makes cached responses inspectable by request."""
+        metadata = dict(request.cache_metadata or {})
+        user_input = next(
+            (msg.content for msg in reversed(request.messages) if msg.role == "user"),
+            None,
+        )
+        system_prompts = [
+            msg.content for msg in request.messages if msg.role == "system"
+        ]
+
+        metadata["request"] = {
+            "user_input": user_input,
+            "model": model,
+            "max_tokens": request.max_tokens,
+            "temperature": request.temperature,
+            "response_format": request.response_format,
+            "stream": request.stream,
+            "system_prompt_sha256": (
+                hashlib.sha256(system_prompts[-1].encode("utf-8")).hexdigest()
+                if system_prompts
+                else None
+            ),
+        }
+        return metadata
 
     def _build_token_limit_kwargs(
         self, model: str, max_tokens: int | None
@@ -179,7 +207,7 @@ class LLMClient:
         start_time = time.time()
 
         model = request.model or self._default_model
-        cache_key = self._generate_cache_key(request)
+        cache_key = self._generate_cache_key(request, model)
 
         # Check cache
         cached_response = self._cache.get(cache_key)
@@ -221,7 +249,8 @@ class LLMClient:
             Streaming content chunks
         """
         start_time = time.time()
-        cache_key = self._generate_cache_key(request)
+        model = request.model or self._default_model
+        cache_key = self._generate_cache_key(request, model)
 
         # Check cache first
         cached_response = self._cache.get(cache_key)
@@ -300,7 +329,8 @@ class LLMClient:
             "created_at": time.time(),
         }
 
-        self._cache.put(cache_key, json.dumps(response_data), request.cache_metadata)
+        cache_metadata = self._build_cache_metadata(request, model)
+        self._cache.put(cache_key, json.dumps(response_data), cache_metadata)
 
         response_time = int((time.time() - start_time) * 1000)
         return LLMCompletionResponse(
@@ -362,10 +392,9 @@ class LLMClient:
                 "usage": None,  # Usage not available in streaming
                 "created_at": time.time(),
             }
+            cache_metadata = self._build_cache_metadata(request, model)
 
-            self._cache.put(
-                cache_key, json.dumps(response_data), request.cache_metadata
-            )
+            self._cache.put(cache_key, json.dumps(response_data), cache_metadata)
 
     async def _call_with_retry(
         self, func: Callable, max_attempts: int = 3, base_backoff: float = 1.0
