@@ -29,7 +29,7 @@ CACHE_FILE_PATH = benchmark_dir() / "cache" / "llm_cache.json"
 settings = get_settings()
 
 llm_model = "gpt-4.1-mini"
-system_prompt_version = "1_0_11.md"
+system_prompt_version = "1_0_12.md"
 
 # Global LLM client with file caching
 llm_client: LLMClient = get_llm_client(llm_model)
