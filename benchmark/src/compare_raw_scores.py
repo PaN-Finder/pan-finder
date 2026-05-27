@@ -103,7 +103,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--show-all-differences",
         action="store_true",
-        help="Include score improvements as well as regressions",
+        help="Deprecated; all differences are included by default",
+    )
+    parser.add_argument(
+        "--only-regressions",
+        action="store_true",
+        help="Only include regressions and response changes in the detailed row output",
     )
     parser.add_argument(
         "--output",
@@ -438,9 +443,9 @@ def summarize_differences(
 
 
 def filter_rows(
-    rows: list[dict[str, Any]], show_all_differences: bool
+    rows: list[dict[str, Any]], show_all_differences: bool, only_regressions: bool
 ) -> list[dict[str, Any]]:
-    if show_all_differences:
+    if show_all_differences or not only_regressions:
         return rows
     return [row for row in rows if row["response_changed"] or row["average_delta"] < 0]
 
@@ -469,6 +474,25 @@ def score_direction(row: dict[str, Any]) -> str:
     return "unchanged"
 
 
+def score_direction_from_delta(delta: float) -> str:
+    if delta > 1e-12:
+        return "better"
+    if delta < -1e-12:
+        return "worse"
+    return "unchanged"
+
+
+def score_direction_counts(rows: list[dict[str, Any]]) -> dict[str, int]:
+    counts = {"better": 0, "worse": 0, "mixed": 0, "unchanged": 0}
+    for row in rows:
+        counts[score_direction(row)] += 1
+    return counts
+
+
+def average_score(values: list[float]) -> float:
+    return sum(values) / len(values) if values else 0.0
+
+
 def print_header(
     args: argparse.Namespace,
     old_resolver: CacheResolver,
@@ -487,6 +511,39 @@ def print_header(
         "Cache hits: "
         f"old={old_resolver.hits}/{total_queries}, "
         f"new={new_resolver.hits}/{total_queries}"
+    )
+    print()
+
+
+def print_score_summary(
+    *,
+    old_scores: dict[str, list[float]],
+    new_scores: dict[str, list[float]],
+    configs: list[str],
+    differing_rows: list[dict[str, Any]],
+    detail_rows: list[dict[str, Any]],
+) -> None:
+    print("Overall score summary:")
+    for config in configs:
+        old_average = average_score(old_scores[config])
+        new_average = average_score(new_scores[config])
+        delta = new_average - old_average
+        print(
+            f"  - {config}: old={old_average:.4f}, new={new_average:.4f}, "
+            f"delta={delta:+.4f}, score={score_direction_from_delta(delta)}"
+        )
+
+    counts = score_direction_counts(differing_rows)
+    detail_counts = score_direction_counts(detail_rows)
+    print(
+        "Score direction counts across all differing rows: "
+        f"better={counts['better']}, worse={counts['worse']}, "
+        f"mixed={counts['mixed']}, unchanged={counts['unchanged']}"
+    )
+    print(
+        "Rows selected for detail: "
+        f"better={detail_counts['better']}, worse={detail_counts['worse']}, "
+        f"mixed={detail_counts['mixed']}, unchanged={detail_counts['unchanged']}"
     )
     print()
 
@@ -622,12 +679,27 @@ def run_report(args: argparse.Namespace) -> None:
         temperature=args.temperature,
         max_tokens=args.max_tokens,
     )
-    differing_rows = filter_rows(differing_rows, args.show_all_differences)
+    detail_rows = filter_rows(
+        differing_rows, args.show_all_differences, args.only_regressions
+    )
 
-    print(f"Found {len(differing_rows)} differing query rows after filtering.")
+    print_score_summary(
+        old_scores=old_scores,
+        new_scores=new_scores,
+        configs=configs,
+        differing_rows=differing_rows,
+        detail_rows=detail_rows,
+    )
+
+    print(f"Found {len(differing_rows)} differing query rows.")
+    if len(detail_rows) != len(differing_rows):
+        print(f"Showing {len(detail_rows)} rows after detail filtering.")
+    print(
+        "Detail rows are sorted by average delta ascending, so limited output shows the worst rows first."
+    )
     print()
 
-    for row in differing_rows[: args.limit]:
+    for row in detail_rows[: args.limit]:
         record = query_records[row["index"]]
         old_entry = resolve_entry_with_resolver(
             old_resolver,
@@ -648,8 +720,8 @@ def run_report(args: argparse.Namespace) -> None:
             new_payload=parse_cache_payload(new_entry),
         )
 
-    if len(differing_rows) > args.limit:
-        remaining = len(differing_rows) - args.limit
+    if len(detail_rows) > args.limit:
+        remaining = len(detail_rows) - args.limit
         print("=" * 100)
         print(
             f"Truncated output. {remaining} additional differing rows were not printed."
