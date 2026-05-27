@@ -25,7 +25,6 @@ from src.db.connection import get_database_connection, get_database_pool
 logging.getLogger("multi_config_evaluator")
 
 # Define cache file path
-CACHE_FILE_PATH = benchmark_dir() / "cache" / "llm_cache.json"
 settings = get_settings()
 
 llm_model = "gpt-4.1-mini"
