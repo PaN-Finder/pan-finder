@@ -12,7 +12,6 @@ from paths import benchmark_dir, include_server_modules
 from plotting import (
     plot_average_scores_per_dataset,
     plot_overall_changes,
-    plot_score_distribution_boxplot,
 )
 
 include_server_modules()
@@ -356,12 +355,6 @@ async def main() -> None:
             json.dump(all_scores_by_test_config, f, indent=2)
     except OSError as e:
         logging.info("Error saving raw scores data: %s", e)
-
-    plot_score_distribution_boxplot(
-        raw_scores_data_path,
-        results_dir / f"score_distribution_boxplot_{timestamp}.png",
-    )
-
     results_df = pd.DataFrame(all_test_results)
     plot_average_scores_per_dataset(
         results_df,
