@@ -454,3 +454,5 @@
 "scanType","Scan type can be `step_by_step` or `continuous`"
 "startDate","Scan starting date"
 "xrf_definition","Technique used to collect this dataset"
+"authors.name","Author"
+"authors.name","Creator"
