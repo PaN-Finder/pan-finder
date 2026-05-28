@@ -186,6 +186,7 @@ def test_document_repository_get_by_doi_deduplicates_combined_and_individual_aut
         ("creator", "Peter R. Crane"),
         ("creator", "Kaj Raunsgaard Pedersen"),
         ("creator", "Federica Marone"),
+        ("creator", "X, Y"),
     ]
 
     conn = MagicMock()
@@ -203,7 +204,7 @@ def test_document_repository_get_by_doi_deduplicates_combined_and_individual_aut
 
     assert (
         document.authors
-        == "Else Marie Friis - Peter R. Crane - Kaj Raunsgaard Pedersen - Federica Marone"
+        == "Else Marie Friis - Peter R. Crane - Kaj Raunsgaard Pedersen - Federica Marone - X, Y"
     )
 
 

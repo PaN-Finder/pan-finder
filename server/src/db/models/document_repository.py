@@ -49,6 +49,28 @@ class DocumentRepository:
         return []
 
     @classmethod
+    def _split_detail_value(
+        cls, field_name: str, key: str, value: str
+    ) -> list[str]:
+        stripped_value = value.strip()
+        if not stripped_value:
+            return []
+
+        if field_name == "authors":
+            parts = [part.strip() for part in stripped_value.split(",") if part.strip()]
+            if len(parts) <= 1:
+                return parts
+
+            # Keep surname-first names like "x, y" intact while still
+            # splitting obvious combined author rows like "x y, x y".
+            if all(" " in part for part in parts):
+                return parts
+
+            return [stripped_value]
+
+        return [part.strip() for part in stripped_value.split(",") if part.strip()]
+
+    @classmethod
     def _get_detail_field_values(
         cls, conn, document_id: int | None, field_names: list[str], facility_id: int | None
     ) -> dict[str, str | None]:
@@ -89,10 +111,7 @@ class DocumentRepository:
             for key, value in rows:
                 if key not in valid_keys:
                     continue
-                for part in value.split(","):
-                    part = part.strip()
-                    if not part:
-                        continue
+                for part in cls._split_detail_value(field_name, key, value):
                     dedupe_key = part.casefold()
                     if dedupe_key in seen_values:
                         continue
