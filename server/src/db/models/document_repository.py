@@ -16,7 +16,7 @@ class DocumentRepository:
             2: ["publicationYear"],
             3: ["publicationYear"],
             4: ["publicationYear"],
-            5: ["publicationYear", "attributes.publicationYear"],
+            5: ["publicationYear"],
             6: ["publicationYear"],
         },
         "instrument_name": {
@@ -32,7 +32,7 @@ class DocumentRepository:
             2: ["creator", "authors"],
             3: ["creator"],
             4: ["creator"],
-            5: ["creators.name", "users.fullName", "attributes.creators.name"],
+            5: ["creators.name"],
             6: ["creator"],
         },
     }

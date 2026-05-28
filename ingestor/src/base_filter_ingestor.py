@@ -16,7 +16,7 @@ class BaseFilterIngestor:
 
     logger = logging.getLogger("BaseFilterIngestor")
     PUBLICATION_ROOT_KEY = "collection"
-    HOISTED_WRAPPER_KEYS = frozenset({"metadata", "scientificMetadata"})
+    HOISTED_WRAPPER_KEYS = frozenset({"metadata", "scientificMetadata", "attributes"})
 
     def __init__(
         self,
@@ -27,6 +27,7 @@ class BaseFilterIngestor:
         self.db_conn_factory = db_conn_factory
         self.settings = settings
         self.dry_run = dry_run
+        self._known_filter_keys: set[str] = set()
         if not dry_run:
             self.encoder = SentenceTransformer(
                 settings.embedding_model_path, device="cpu"
@@ -141,15 +142,32 @@ class BaseFilterIngestor:
             cursor: Database cursor for executing SQL
             keys: Iterable of filter key names to process
         """
-        unique_keys = list(set(keys))
+        unique_keys = list(dict.fromkeys(keys))
         if not unique_keys:
             return
 
-        normalized = [self.normalize_filter_key(key) for key in unique_keys]
+        candidate_keys = [
+            key for key in unique_keys if key not in self._known_filter_keys
+        ]
+        if not candidate_keys:
+            return
+
+        cursor.execute(
+            "SELECT name FROM filter_key WHERE name = ANY(%s)",
+            (candidate_keys,),
+        )
+        existing_keys = {row[0] for row in cursor.fetchall()}
+        self._known_filter_keys.update(existing_keys)
+
+        new_keys = [key for key in candidate_keys if key not in self._known_filter_keys]
+        if not new_keys:
+            return
+
+        normalized = [self.normalize_filter_key(key) for key in new_keys]
         vectors = self.encoder.encode(normalized)
         if hasattr(vectors, "tolist"):
             vectors = vectors.tolist()
-        key_embeddings = list(zip(unique_keys, vectors, strict=True))
+        key_embeddings = list(zip(new_keys, vectors, strict=True))
         cursor.executemany(
             """
             INSERT INTO filter_key (name, name_vector)
@@ -158,6 +176,7 @@ class BaseFilterIngestor:
             """,
             key_embeddings,
         )
+        self._known_filter_keys.update(new_keys)
 
     BATCH_SIZE = 100
 
