@@ -40,8 +40,7 @@ class InferredFilterIngestor(BaseFilterIngestor):
         "summary",
         "title",
         "titles.title",
-        "scientificMetadata.title",
-        "scientificMetadata.measurement.proposalTitle",
+        "measurement.proposalTitle",
         "parameters.SamplePatient_organ_description",
     )
 

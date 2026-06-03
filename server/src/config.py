@@ -10,16 +10,15 @@ load_dotenv()
 DEFAULT_VALUE_VECTOR_KEYS: tuple[tuple[str, bool], ...] = (
     ("authors", True),
     ("creator", True),
-    ("scientificMetadata.author", True),
+    ("author", True),
     ("owner", True),
-    ("metadata.authors.name", True),
+    ("authors.name", True),
     ("principalInvestigator", True),
     ("investigator", True),
-    ("scientificMetadata.measurement.team", True),
+    ("measurement.team", True),
     ("users.fullName", True),
-    ("attributes.creators.name", True),
+    ("creators.name", True),
     ("publisher", False),
-    ("attributes.publisher", False),
     ("parameters.SamplePatient_info", False),
 )
 

@@ -12,11 +12,11 @@ class DocumentRepository:
 
     DETAIL_FILTER_KEYS_BY_FIELD = {
         "publication_year": {
-            1: ["metadata.publicationYear"],
+            1: ["publicationYear"],
             2: ["publicationYear"],
             3: ["publicationYear"],
             4: ["publicationYear"],
-            5: ["publicationYear", "attributes.publicationYear"],
+            5: ["publicationYear"],
             6: ["publicationYear"],
         },
         "instrument_name": {
@@ -25,14 +25,14 @@ class DocumentRepository:
             3: ["beamline"], # PSI
             4: ["creationLocation"], # MAX IV
             5: ["beamline", "instruments.name"], # ESRF
-            6: ["scientificMetadata.instrument.name"], # DESY
+            6: ["instrument.name"], # DESY
         },
         "authors": {
-            1: ["metadata.authors.name"],
+            1: ["authors.name"],
             2: ["creator", "authors"],
             3: ["creator"],
             4: ["creator"],
-            5: ["creators.name", "users.fullName", "attributes.creators.name"],
+            5: ["creators.name"],
             6: ["creator"],
         },
     }
@@ -47,6 +47,28 @@ class DocumentRepository:
         if facility_id is not None and facility_id in field_mappings:
             return field_mappings[facility_id]
         return []
+
+    @classmethod
+    def _split_detail_value(
+        cls, field_name: str, key: str, value: str
+    ) -> list[str]:
+        stripped_value = value.strip()
+        if not stripped_value:
+            return []
+
+        if field_name == "authors":
+            parts = [part.strip() for part in stripped_value.split(",") if part.strip()]
+            if len(parts) <= 1:
+                return parts
+
+            # Keep surname-first names like "x, y" intact while still
+            # splitting obvious combined author rows like "x y, x y".
+            if all(" " in part for part in parts):
+                return parts
+
+            return [stripped_value]
+
+        return [part.strip() for part in stripped_value.split(",") if part.strip()]
 
     @classmethod
     def _get_detail_field_values(
@@ -89,10 +111,7 @@ class DocumentRepository:
             for key, value in rows:
                 if key not in valid_keys:
                     continue
-                for part in value.split(","):
-                    part = part.strip()
-                    if not part:
-                        continue
+                for part in cls._split_detail_value(field_name, key, value):
                     dedupe_key = part.casefold()
                     if dedupe_key in seen_values:
                         continue

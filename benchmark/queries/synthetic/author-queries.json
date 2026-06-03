@@ -156,5 +156,42 @@
         "min_position": 8
       }
     ]
+  },
+  {
+    "doi": "10.5291/ILL-DATA.5-42-421",
+    "queries": [
+      {
+        "query": "datasets from Taylor Jonathan",
+        "min_position": 3
+      },
+      {
+        "query": "datasets from Jonathan Taylor",
+        "min_position": 3
+      },
+      {
+        "query": "datasets where the creator is Taylor Jonathan",
+        "min_position": 3
+      },
+      {
+        "query": "datasets where the creator is Jonathan Taylor",
+        "min_position": 3
+      },
+      {
+        "query": "datasets where the contributor is Taylor Jonathan",
+        "min_position": 3
+      },
+      {
+        "query": "datasets where the contributor is Jonathan Taylor",
+        "min_position": 3
+      },
+      {
+        "query": "datasets where the user is Taylor Jonathan",
+        "min_position": 3
+      },
+      {
+        "query": "datasets where the user is Jonathan Taylor",
+        "min_position": 3
+      }
+    ]
   }
 ]

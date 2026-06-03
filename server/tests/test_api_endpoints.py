@@ -121,8 +121,8 @@ def test_document_repository_get_by_doi_loads_mapped_detail_fields():
     detail_cursor = MagicMock()
     detail_cursor.fetchall.return_value = [
         ("instruments.name", "Instrument A"),
-        ("metadata.publicationYear", "2024"),
-        ("metadata.authors.name", "Ada Lovelace"),
+        ("publicationYear", "2024"),
+        ("authors.name", "Ada Lovelace"),
     ]
 
     conn = MagicMock()
@@ -144,8 +144,8 @@ def test_document_repository_get_by_doi_loads_mapped_detail_fields():
     assert document.facility_name == "Facility A"
     assert conn.execute.call_args_list[1].args[1] == [
         1,
-        ["instruments.name", "metadata.publicationYear", "metadata.authors.name"],
-        ["instruments.name", "metadata.publicationYear", "metadata.authors.name"],
+        ["instruments.name", "publicationYear", "authors.name"],
+        ["instruments.name", "publicationYear", "authors.name"],
     ]
 
 
@@ -186,6 +186,7 @@ def test_document_repository_get_by_doi_deduplicates_combined_and_individual_aut
         ("creator", "Peter R. Crane"),
         ("creator", "Kaj Raunsgaard Pedersen"),
         ("creator", "Federica Marone"),
+        ("creator", "X, Y"),
     ]
 
     conn = MagicMock()
@@ -203,7 +204,7 @@ def test_document_repository_get_by_doi_deduplicates_combined_and_individual_aut
 
     assert (
         document.authors
-        == "Else Marie Friis - Peter R. Crane - Kaj Raunsgaard Pedersen - Federica Marone"
+        == "Else Marie Friis - Peter R. Crane - Kaj Raunsgaard Pedersen - Federica Marone - X, Y"
     )
 
 

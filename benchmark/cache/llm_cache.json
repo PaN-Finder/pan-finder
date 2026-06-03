@@ -18054,6 +18054,142 @@
           "system_prompt_sha256": "6f3147faf0d3a4c5a0db8f519e481c2026392c44f3400d3889f1923f5b304e6a"
         }
       }
+    },
+    "91166cfc5ed3c4827de0e2fc6dc6c1d36d168cb47bdec494f31ff6cbb9bea6c2": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"author\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"Taylor Jonathan\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 62, \"prompt_tokens\": 4541, \"total_tokens\": 4603}, \"created_at\": 1779965494.5919921}",
+      "metadata": {
+        "system_prompt_version": "1_0_12.md",
+        "request": {
+          "user_input": "datasets from Taylor Jonathan",
+          "model": "gpt-4.1-mini",
+          "max_tokens": 500,
+          "temperature": 0,
+          "response_format": {
+            "type": "json_object"
+          },
+          "stream": false,
+          "system_prompt_sha256": "6f3147faf0d3a4c5a0db8f519e481c2026392c44f3400d3889f1923f5b304e6a"
+        }
+      }
+    },
+    "f2931bb440b470f805f403202f14509d593c89a5a147024c93ee13872b369b00": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"author\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"Jonathan Taylor\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 62, \"prompt_tokens\": 4541, \"total_tokens\": 4603}, \"created_at\": 1779965642.868305}",
+      "metadata": {
+        "system_prompt_version": "1_0_12.md",
+        "request": {
+          "user_input": "datasets from Jonathan Taylor",
+          "model": "gpt-4.1-mini",
+          "max_tokens": 500,
+          "temperature": 0,
+          "response_format": {
+            "type": "json_object"
+          },
+          "stream": false,
+          "system_prompt_sha256": "6f3147faf0d3a4c5a0db8f519e481c2026392c44f3400d3889f1923f5b304e6a"
+        }
+      }
+    },
+    "b2da0f5b77217043ba8c486b7677ffa4d71793e71d08e78aa67e02d2d57ca805": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"creator\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"Taylor Jonathan\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 62, \"prompt_tokens\": 4544, \"total_tokens\": 4606}, \"created_at\": 1779965847.059165}",
+      "metadata": {
+        "system_prompt_version": "1_0_12.md",
+        "request": {
+          "user_input": "datasets where the creator is Taylor Jonathan",
+          "model": "gpt-4.1-mini",
+          "max_tokens": 500,
+          "temperature": 0,
+          "response_format": {
+            "type": "json_object"
+          },
+          "stream": false,
+          "system_prompt_sha256": "6f3147faf0d3a4c5a0db8f519e481c2026392c44f3400d3889f1923f5b304e6a"
+        }
+      }
+    },
+    "2663cae35b2b9a964ad4a88ec3cdb628e546d0a1cc2fcd5ea71caaad2c471caa": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"creator\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"Jonathan Taylor\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 62, \"prompt_tokens\": 4544, \"total_tokens\": 4606}, \"created_at\": 1779967755.190721}",
+      "metadata": {
+        "system_prompt_version": "1_0_12.md",
+        "request": {
+          "user_input": "datasets where the creator is Jonathan Taylor",
+          "model": "gpt-4.1-mini",
+          "max_tokens": 500,
+          "temperature": 0,
+          "response_format": {
+            "type": "json_object"
+          },
+          "stream": false,
+          "system_prompt_sha256": "6f3147faf0d3a4c5a0db8f519e481c2026392c44f3400d3889f1923f5b304e6a"
+        }
+      }
+    },
+    "e10ddbc6b7dda788fdd9a510e74b10e9aa548cd3d0ba6c163c267e6449753450": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"contributor\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"Taylor Jonathan\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 63, \"prompt_tokens\": 4544, \"total_tokens\": 4607}, \"created_at\": 1779967800.240119}",
+      "metadata": {
+        "system_prompt_version": "1_0_12.md",
+        "request": {
+          "user_input": "datasets where the contributor is Taylor Jonathan",
+          "model": "gpt-4.1-mini",
+          "max_tokens": 500,
+          "temperature": 0,
+          "response_format": {
+            "type": "json_object"
+          },
+          "stream": false,
+          "system_prompt_sha256": "6f3147faf0d3a4c5a0db8f519e481c2026392c44f3400d3889f1923f5b304e6a"
+        }
+      }
+    },
+    "581c9e38417a41cb7ef974522a486600a8cc3b11e84fe63ddcb9d16ab6336385": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"contributor\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"Jonathan Taylor\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 63, \"prompt_tokens\": 4544, \"total_tokens\": 4607}, \"created_at\": 1779967802.547858}",
+      "metadata": {
+        "system_prompt_version": "1_0_12.md",
+        "request": {
+          "user_input": "datasets where the contributor is Jonathan Taylor",
+          "model": "gpt-4.1-mini",
+          "max_tokens": 500,
+          "temperature": 0,
+          "response_format": {
+            "type": "json_object"
+          },
+          "stream": false,
+          "system_prompt_sha256": "6f3147faf0d3a4c5a0db8f519e481c2026392c44f3400d3889f1923f5b304e6a"
+        }
+      }
+    },
+    "14c59964987e1a1aeb0b17ab546945ed12259a26ffafa70af080cd7bfb3503f9": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"user\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"Taylor Jonathan\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 62, \"prompt_tokens\": 4544, \"total_tokens\": 4606}, \"created_at\": 1779967865.775118}",
+      "metadata": {
+        "system_prompt_version": "1_0_12.md",
+        "request": {
+          "user_input": "datasets where the user is Taylor Jonathan",
+          "model": "gpt-4.1-mini",
+          "max_tokens": 500,
+          "temperature": 0,
+          "response_format": {
+            "type": "json_object"
+          },
+          "stream": false,
+          "system_prompt_sha256": "6f3147faf0d3a4c5a0db8f519e481c2026392c44f3400d3889f1923f5b304e6a"
+        }
+      }
+    },
+    "cb9e318f6dd2a2ebd70d4024faed8db90b3359a10b6db6a3ef302372f9961a6b": {
+      "response": "{\"content\": \"{\\n  \\\"intention\\\": \\\"\\\",\\n  \\\"keywords\\\": [],\\n  \\\"filters\\\": {\\n    \\\"logic\\\": \\\"AND\\\",\\n    \\\"conditions\\\": [\\n      {\\n        \\\"name\\\": \\\"user\\\",\\n        \\\"operator\\\": \\\"ILIKE\\\",\\n        \\\"value\\\": \\\"Jonathan Taylor\\\"\\n      }\\n    ]\\n  }\\n}\", \"model\": \"gpt-4.1-mini\", \"usage\": {\"completion_tokens\": 62, \"prompt_tokens\": 4544, \"total_tokens\": 4606}, \"created_at\": 1779967868.2128}",
+      "metadata": {
+        "system_prompt_version": "1_0_12.md",
+        "request": {
+          "user_input": "datasets where the user is Jonathan Taylor",
+          "model": "gpt-4.1-mini",
+          "max_tokens": 500,
+          "temperature": 0,
+          "response_format": {
+            "type": "json_object"
+          },
+          "stream": false,
+          "system_prompt_sha256": "6f3147faf0d3a4c5a0db8f519e481c2026392c44f3400d3889f1923f5b304e6a"
+        }
+      }
     }
   }
 }

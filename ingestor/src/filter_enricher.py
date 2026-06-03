@@ -64,7 +64,7 @@ class FilterEnricher:
 
         - ESRF (facility_id=5): instrument.name, instrumentName → beamline
         - MAX IV (facility_id=4): instrumentGroup → beamline
-        - PSI (facility_id=3): scientificMetadata.measurement.beamline → beamline
+        - PSI (facility_id=3): measurement.beamline → beamline
 
         Only creates new entries if:
         - Source value is non-NULL and non-empty
@@ -82,7 +82,7 @@ class FilterEnricher:
                         SELECT DISTINCT f.document_id, 'beamline', f.value, 'DERIVED'::filter_type
                         FROM filter f
                         INNER JOIN document d ON d.id = f.document_id
-                        WHERE f.key IN ('instrument.name', 'instrumentName', 'instrumentGroup', 'scientificMetadata.measurement.beamline')
+                        WHERE f.key IN ('instrument.name', 'instrumentName', 'instrumentGroup', 'measurement.beamline')
                           AND f.value IS NOT NULL
                           AND f.value != ''
                           AND d.facility_id IN (3, 4, 5)
