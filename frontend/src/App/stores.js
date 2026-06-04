@@ -1,4 +1,36 @@
-import create from 'zustand'
+import { useSyncExternalStore } from 'react'
+
+function createStore(initializer) {
+  let state
+  const listeners = new Set()
+
+  const getState = () => state
+
+  const setState = (partial) => {
+    const nextState = typeof partial === 'function' ? partial(state) : partial
+
+    if (!nextState) {
+      return
+    }
+
+    state = { ...state, ...nextState }
+    listeners.forEach((listener) => listener())
+  }
+
+  const subscribe = (listener) => {
+    listeners.add(listener)
+
+    return () => {
+      listeners.delete(listener)
+    }
+  }
+
+  state = initializer(setState, getState)
+
+  return function useStore(selector = (snapshot) => snapshot) {
+    return useSyncExternalStore(subscribe, () => selector(getState()))
+  }
+}
 
 // const preset =
 //   localStorage.getItem('isDark') === 'true' ||
@@ -6,7 +38,7 @@ import create from 'zustand'
 //     ? true
 //     : false;
 
-export const useAppStore = create(() => ({
+export const useAppStore = createStore(() => ({
   isDark: true, // preset,
   // toggleTheme: () => {
   //   const newTheme = !get().isDark;
@@ -15,7 +47,7 @@ export const useAppStore = create(() => ({
   // },
 }))
 
-export const useSearchStore = create((set, get) => ({
+export const useSearchStore = createStore((set, get) => ({
   count: undefined,
   setCount: (count) => set(() => ({ count })),
   search: '',
