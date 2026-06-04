@@ -18,6 +18,7 @@ DEFAULT_VALUE_VECTOR_KEYS: tuple[tuple[str, bool], ...] = (
     ("measurement.team", True),
     ("users.fullName", True),
     ("creators.name", True),
+    ("contributors.name", True),
     ("publisher", False),
     ("parameters.SamplePatient_info", False),
 )

@@ -65,7 +65,7 @@ class SearchQueryBuilder:
     # Similarity threshold for document chunks vs intention
     _SIMILARITY_THRESHOLD_CHUNKS: float = 0.5
     # Similarity threshold for filter value vector similarity search
-    _SIMILARITY_THRESHOLD_FILTER_VALUE: float = 0.35
+    _SIMILARITY_THRESHOLD_FILTER_VALUE: float = 0.30
     # Final result limit
     _RESULTS_SET_SIZE: int = 20
     # Default RRF K value (can be used as a common default)
