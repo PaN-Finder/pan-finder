@@ -15,10 +15,10 @@ patches:
 images:
   - name: ghcr.io/pan-finder/pan-finder-server
     newName: ghcr.io/pan-finder/pan-finder-server
-    newTag: v1.0.0-alpha.9
+    newTag: v1.0.0-alpha.10
   - name: ghcr.io/pan-finder/pan-finder-frontend
     newName: ghcr.io/pan-finder/pan-finder-frontend
-    newTag: v1.0.0-alpha.9
+    newTag: v1.0.0-alpha.10
 
 labels:
   - pairs:
