@@ -32,8 +32,8 @@ class DocumentRepository:
             2: ["creator", "authors"],
             3: ["creator"],
             4: ["creator"],
-            5: ["creators.name"],
-            6: ["creator"],
+            5: ["creators.name", "contributors.name"],
+            6: ["creator","contributors.name"],
         },
     }
 

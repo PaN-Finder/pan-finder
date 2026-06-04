@@ -288,7 +288,7 @@ def test_generate_filter_flags_vector_string_operator(builder, snapshot):
     )
     assert "f.key IN ('authors')" in flag_sql
     assert "f.value_vector IS NOT NULL" in flag_sql
-    assert "< 0.35 THEN 1" in flag_sql
+    assert "< 0.3 THEN 1" in flag_sql
 
 
 @pytest.mark.parametrize("operator", ["!=", "NOT LIKE", "NOT ILIKE"])
@@ -319,7 +319,7 @@ def test_generate_filter_flags_negative_vector_string_operator(builder, operator
     )
     assert "f.key IN ('authors')" in flag_sql
     assert "f.value_vector IS NOT NULL" in flag_sql
-    assert "> 0.35 THEN 1" in flag_sql
+    assert "> 0.3 THEN 1" in flag_sql
 
 
 def test_generate_filter_flags_negative_vector_string_operator_snapshot(

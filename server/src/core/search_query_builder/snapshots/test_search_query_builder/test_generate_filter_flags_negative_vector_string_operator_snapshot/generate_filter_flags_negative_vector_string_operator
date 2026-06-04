@@ -1,5 +1,5 @@
 MAX(CASE
                         WHEN f.key IN ('authors', 'publisher') AND f.value NOT ILIKE '%ESS%' THEN 1
-                        WHEN f.key IN ('authors') AND f.value_vector IS NOT NULL AND f.value_vector <=> '{0.1,0.2,0.3}'::float8[]::vector > 0.35 THEN 1
+                        WHEN f.key IN ('authors') AND f.value_vector IS NOT NULL AND f.value_vector <=> '{0.1,0.2,0.3}'::float8[]::vector > 0.3 THEN 1
                         ELSE 0
                     END) AS "has_condition_1"
