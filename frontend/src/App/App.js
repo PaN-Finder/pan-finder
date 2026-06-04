@@ -12,12 +12,14 @@ import Footer from './Footer'
 import GlobalStyles from './GlobalStyles'
 import Navigation from './Navigation'
 import ScrollToTop from './ScrollToTop'
+import Umami from './Umami'
 
 function App() {
   const theme = useTheme()
 
   return (
     <ThemeProvider theme={theme}>
+      <Umami />
       <GlobalStyles />
 
       <Flex column sx={{ minHeight: '100vh' }}>
