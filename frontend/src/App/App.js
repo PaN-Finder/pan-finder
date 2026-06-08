@@ -27,7 +27,7 @@ function App() {
 
         <Box
           mx={[3, 3, 3, 4]}
-          mb={5}
+          mb={3}
           sx={{ flexGrow: 1, maxWidth: ['none', 'none', 'none', 'none'] }}
         >
           <SessionProvider>
