@@ -30,11 +30,10 @@ function PageHeader() {
               lineHeight: 1.1,
               letterSpacing: '-0.015em',
               position: 'relative',
-              pr: [4, 4, 5],
               '::after': {
                 content: '""',
                 position: 'absolute',
-                left: '40%',
+                left: '50%',
                 bottom: '-0.4rem',
                 transform: 'translateX(-50%)',
                 width: '60%',
