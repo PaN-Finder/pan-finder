@@ -17,83 +17,124 @@ function Footer() {
         <Box
           as="section"
           sx={{
-            padding: '1.25rem 1.875rem',
+            padding: '.25rem 1.875rem',
             display: 'flex',
             flexWrap: 'wrap',
-            justifyContent: 'space-evenly',
+            justifyContent: 'space-between',
             flexDirection: ['column', 'row', 'row', 'row'],
             alignItems: ['flex-start', 'stretch', 'stretch', 'stretch'],
+            width: '100%',
             maxWidth: ['none', 'none', 'none', '1440px'],
           }}
         >
-          <Box as="div" sx={{ padding: '1.25rem', minWidth: '12.5rem' }}>
-            <Link href="https://www.panosc.eu/" target="_blank">
-              <Image
-                src="https://www.panosc.eu/wp-content/uploads/2019/04/logo.svg"
-                alt="PaNOSC"
-              />
-            </Link>
-          </Box>
-          <Box as="div" sx={{ padding: '1.25rem', minWidth: '12.5rem' }}>
-            <Heading sx={{ paddingBottom: '0.625rem' }}>Fundings</Heading>
-            <Text as="p" style={{ maxWidth: '300px' }}>
-              <Image
-                src="https://i0.wp.com/expands.eu/wp-content/uploads/2019/09/eulogo.jpg?resize=100%2C67&amp;ssl=1"
-                alt="EU Logo"
-                sx={{ float: 'left', marginRight: '10px' }}
-              />
-              This project receives funding from the{' '}
-              <i>
-                European Union’s Horizon 2020 research and innovation programme{' '}
-              </i>
-              under grant agreement No 857641
-            </Text>
-          </Box>
-          <Box as="div" sx={{ padding: '1.25rem', minWidth: '12.5rem' }}>
-            <Heading sx={{ paddingBottom: '0.625rem' }}>
-              Partner Project
-            </Heading>
-            <Link
-              href="https://expands.eu/"
-              sx={{ paddingLeft: 0 }}
-              target="_blank"
-            >
-              <Image
-                src="https://i0.wp.com/expands.eu/wp-content/uploads/2019/09/Expands_text_header.png?fit=400%2C55&amp;ssl=1"
-                sx={{ background: 'white', height: '40px', padding: '10px' }}
-                alt="ExPaNDS"
-              />
-            </Link>
-          </Box>
-          <Box as="div" sx={{ padding: '1.25rem', minWidth: '12.5rem' }}>
-            <Heading sx={{ paddingBottom: '0.625rem' }}>Get in Touch</Heading>
-            <Link href="https://twitter.com/Panosc_eu" target="_blank">
-              <Image
-                src="https://www.panosc.eu/wp-content/uploads/2019/03/icon-twitter.svg"
-                alt="Twitter logo"
-                sx={{
-                  display: 'inline-block',
-                  verticalAlign: 'middle',
-                  marginRight: '10px',
-                }}
-              />
-              <Box
-                as="span"
-                style={{
-                  display: 'inline-block',
-                  verticalAlign: 'middle',
-                  fontSize: '28px',
-                }}
+          <Box
+            as="div"
+            sx={{
+              padding: '1.25rem',
+              minWidth: '12.5rem',
+              width: ['100%', '50%', '50%', '50%'],
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <Heading sx={{ paddingBottom: '0.625rem' }}>Funding</Heading>
+            <Text as="p" style={{ maxWidth: '300px', textAlign: 'center' }}>
+              The{' '}
+              <Link
+                href="https://oscars-project.eu/projects/pan-finder-photon-and-neutron-federated-knowledge-finder"
+                target="_blank"
               >
-                Follow us
-              </Box>
-            </Link>
-            <Text as="p" style={{ paddingTop: '1.25rem' }}>
-              Something's not right?{' '}
-              <Link href="mailto:feedback@panosc.eu" target="_blank">
-                Please, let us know!
+                PaN-Finder (Photon and Neutron federated knowledge finder)
+              </Link>{' '}
+              project is founded by the{' '}
+              <Link href="https://oscars-project.eu/" target="_blank">
+                OSCARS project
               </Link>
+              . The authors acknowledge the{' '}
+              <Link href="https://oscars-project.eu/" target="_blank">
+                OSCARS project
+              </Link>
+              , which has received funding from the European Commission's
+              Horizon Europe Research and Innovation programme under grant
+              agreement No. 101129751.
             </Text>
+            <Image
+              src={`${process.env.PUBLIC_URL}/OSCARS-logo-EUflag-500x80.png`}
+              sx={{
+                marginTop: '1rem',
+                height: '80px',
+                width: 'auto',
+                maxWidth: '100%',
+                objectFit: 'contain',
+              }}
+              alt="OSCARS and EU funding logo"
+            />
+          </Box>
+          <Box
+            as="div"
+            sx={{
+              padding: '1.25rem',
+              minWidth: '12.5rem',
+              width: ['100%', '50%', '50%', '50%'],
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <Heading sx={{ paddingBottom: '0.625rem' }}>
+              Partner Projects
+            </Heading>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '.75rem',
+                flexWrap: 'nowrap',
+                width: '100%',
+              }}
+            >
+              <Link
+                href="https://www.panosc.eu/"
+                target="_blank"
+                sx={{ display: 'inline-flex', alignItems: 'center' }}
+              >
+                <Image
+                  src={`${process.env.PUBLIC_URL}/panosc-logo.svg`}
+                  sx={{
+                    height: '80px',
+                    width: 'auto',
+                    maxWidth: '100%',
+                    padding: '10px',
+                    objectFit: 'contain',
+                  }}
+                  alt="PaNOSC"
+                />
+              </Link>
+              <Link
+                href="https://expands.eu/"
+                sx={{
+                  paddingLeft: 0,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                }}
+                target="_blank"
+              >
+                <Image
+                  src={`${process.env.PUBLIC_URL}/Expands_text_header.png`}
+                  sx={{
+                    background: 'white',
+                    height: '40px',
+                    width: 'auto',
+                    maxWidth: '100%',
+                    padding: '10px',
+                    objectFit: 'contain',
+                  }}
+                  alt="ExPaNDS"
+                />
+              </Link>
+            </Box>
           </Box>
         </Box>
 
