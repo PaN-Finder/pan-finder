@@ -1,5 +1,5 @@
 import React from 'react'
-import { Route, Switch } from 'react-router-dom'
+import { Redirect, Route, Switch } from 'react-router-dom'
 import { ThemeProvider } from 'styled-components'
 
 import PanFinderPage from '../PanFinder/PanFinderPage'
@@ -40,6 +40,7 @@ function App() {
                   </DocumentDataProvider>
                 </FeedbackProvider>
               </Route>
+              <Redirect to="/" />
             </Switch>
           </SessionProvider>
         </Box>
