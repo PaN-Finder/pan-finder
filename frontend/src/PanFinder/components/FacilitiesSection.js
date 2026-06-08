@@ -10,7 +10,7 @@ function FacilitiesSection({ only = [] }) {
   return (
     <Box
       sx={{
-        mt: 5,
+        mt: 4,
         mb: 2,
         display: 'flex',
         flexDirection: 'column',
