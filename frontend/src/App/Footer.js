@@ -32,14 +32,17 @@ function Footer() {
             sx={{
               padding: '1.25rem',
               minWidth: '12.5rem',
-              width: ['100%', '50%', '50%', '50%'],
+              width: ['100%', '33.3333%', '33.3333%', '33.3333%'],
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center',
+              alignItems: 'flex-start',
             }}
           >
             <Heading sx={{ paddingBottom: '0.625rem' }}>Funding</Heading>
-            <Text as="p" style={{ maxWidth: '300px', textAlign: 'center' }}>
+            <Text
+              as="p"
+              style={{ width: '100%', maxWidth: '500px', textAlign: 'justify' }}
+            >
               The{' '}
               <Link
                 href="https://oscars-project.eu/projects/pan-finder-photon-and-neutron-federated-knowledge-finder"
@@ -59,24 +62,58 @@ function Footer() {
               Horizon Europe Research and Innovation programme under grant
               agreement No. 101129751.
             </Text>
-            <Image
-              src={`${process.env.PUBLIC_URL}/OSCARS-logo-EUflag-500x80.png`}
-              sx={{
-                marginTop: '1rem',
-                height: '80px',
-                width: 'auto',
-                maxWidth: '100%',
-                objectFit: 'contain',
-              }}
-              alt="OSCARS and EU funding logo"
-            />
           </Box>
           <Box
             as="div"
             sx={{
               padding: '1.25rem',
               minWidth: '12.5rem',
-              width: ['100%', '50%', '50%', '50%'],
+              width: ['100%', '33.3333%', '33.3333%', '33.3333%'],
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '1rem',
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '1rem',
+                width: '100%',
+              }}
+            >
+              <Image
+                src={`${process.env.PUBLIC_URL}/OSCARS.png`}
+                sx={{
+                  width: '100%',
+                  maxWidth: '220px',
+                  height: 'auto',
+                  objectFit: 'contain',
+                }}
+                alt="OSCARS"
+              />
+              <Image
+                src={`${process.env.PUBLIC_URL}/EU.png`}
+                sx={{
+                  width: '100%',
+                  maxWidth: '220px',
+                  height: 'auto',
+                  objectFit: 'contain',
+                }}
+                alt="European Union"
+              />
+            </Box>
+          </Box>
+          <Box
+            as="div"
+            sx={{
+              padding: '1.25rem',
+              minWidth: '12.5rem',
+              width: ['100%', '33.3333%', '33.3333%', '33.3333%'],
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -88,10 +125,10 @@ function Footer() {
             <Box
               sx={{
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '.75rem',
-                flexWrap: 'nowrap',
+                gap: '1rem',
                 width: '100%',
               }}
             >
@@ -103,10 +140,9 @@ function Footer() {
                 <Image
                   src={`${process.env.PUBLIC_URL}/panosc-logo.svg`}
                   sx={{
-                    height: '80px',
-                    width: 'auto',
-                    maxWidth: '100%',
-                    padding: '10px',
+                    width: '100%',
+                    maxWidth: '220px',
+                    height: 'auto',
                     objectFit: 'contain',
                   }}
                   alt="PaNOSC"
@@ -125,10 +161,10 @@ function Footer() {
                   src={`${process.env.PUBLIC_URL}/Expands_text_header.png`}
                   sx={{
                     background: 'white',
-                    height: '40px',
-                    width: 'auto',
-                    maxWidth: '100%',
-                    padding: '10px',
+                    width: '100%',
+                    padding: '0.25rem',
+                    maxWidth: '220px',
+                    height: 'auto',
                     objectFit: 'contain',
                   }}
                   alt="ExPaNDS"
