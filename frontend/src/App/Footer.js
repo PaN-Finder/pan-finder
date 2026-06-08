@@ -130,7 +130,7 @@ function Footer() {
                 color: 'rgb(204, 204, 204)',
               }}
             >
-              &copy; 2019, 2025 PaNOSC photon and neutron open science cloud
+              &copy; 2019, 2026 PaNOSC photon and neutron open science cloud
             </li>
           </ul>
         </Box>
