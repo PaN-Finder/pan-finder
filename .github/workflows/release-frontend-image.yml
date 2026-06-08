@@ -62,3 +62,4 @@ jobs:
             VERSION=${{ github.ref_name }}
             ENABLE_TURNSTILE=true
             TURNSTILE_SITE_KEY=${{ secrets.TURNSTILE_SITE_KEY }}
+            UMAMI_WEBSITE_ID=${{ secrets.UMAMI_WEBSITE_ID }}
