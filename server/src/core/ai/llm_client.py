@@ -371,13 +371,16 @@ class LLMClient:
 
         try:
             for chunk in stream:
-                if hasattr(chunk, "choices") and len(chunk.choices) > 0:
-                    content = getattr(chunk.choices[0].delta, "content", "")
-                    if content:
-                        collected_content += content
-                        yield content
-                else:
-                    self._logger.warning(f"Unexpected chunk format: {chunk}")
+                choices = getattr(chunk, "choices", None)
+                # In Azure OpenAI streaming, metadata (like prompt_filter_results) may come as separate chunks without 'choices'
+                # We skip those chunks for content collection but still allow the stream to continue.
+                if not choices:
+                    continue
+
+                content = getattr(choices[0].delta, "content", "")
+                if content:
+                    collected_content += content
+                    yield content
 
         except Exception as e:
             self._logger.error(f"Streaming error: {e}")
