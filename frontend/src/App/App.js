@@ -1,5 +1,5 @@
 import React from 'react'
-import { Route, Switch } from 'react-router-dom'
+import { Redirect, Route, Switch } from 'react-router-dom'
 import { ThemeProvider } from 'styled-components'
 
 import PanFinderPage from '../PanFinder/PanFinderPage'
@@ -27,7 +27,7 @@ function App() {
 
         <Box
           mx={[3, 3, 3, 4]}
-          mb={5}
+          mb={3}
           sx={{ flexGrow: 1, maxWidth: ['none', 'none', 'none', 'none'] }}
         >
           <SessionProvider>
@@ -40,6 +40,7 @@ function App() {
                   </DocumentDataProvider>
                 </FeedbackProvider>
               </Route>
+              <Redirect to="/" />
             </Switch>
           </SessionProvider>
         </Box>

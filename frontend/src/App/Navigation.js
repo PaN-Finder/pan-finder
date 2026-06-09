@@ -1,4 +1,6 @@
-import { Box, Flex, NavLink } from '../Primitives'
+import { Link as RouterLink } from 'react-router-dom'
+
+import { Box, Flex } from '../Primitives'
 import PanFinderLogo from '../PanFinder/components/PanFinderLogo'
 
 function Navigation() {
@@ -15,7 +17,20 @@ function Navigation() {
         bg: 'bgNav',
       }}
     >
-      <NavLink to="/" exact>
+      <Flex
+        as={RouterLink}
+        to="/"
+        sx={{
+          alignItems: 'center',
+          px: [2, 3],
+          color: 'inherit',
+          fontSize: [0, 1],
+          fontWeight: 'semibold',
+          textDecoration: 'none',
+          textTransform: 'uppercase',
+          ':hover': { color: 'text', bg: 'background' },
+        }}
+      >
         <Box sx={{ height: ['40px', '50px'], py: [1, 0] }}>
           <PanFinderLogo
             showText={true}
@@ -23,7 +38,7 @@ function Navigation() {
             style={{ height: '100%', width: 'auto', display: 'block' }}
           />
         </Box>
-      </NavLink>
+      </Flex>
     </Flex>
   )
 }
