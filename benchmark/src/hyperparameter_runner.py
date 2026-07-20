@@ -241,6 +241,42 @@ async def process_comparative_test_pair(
     )
     logging.info("process_comparative_test_pair: end: insert test pair metrics")
 
+def assign_group(
+        doi,
+        overall_score,
+        relevant_dois: list[dict],
+        match_threshold
+):
+    if doi in relevant_dois:
+        if overall_score > match_threshold :
+            return "M"
+        else:
+            return "R"
+    return "S"
+
+async def assign_group_results(hyperparameters, results):
+    """
+    this function reorganize the output from the engine
+    so it uses the 4 groups name: Match, Relevant, Suggested, Not relevant
+    """
+
+    relevant_doi = [e.doi for e in results["knee_point_results"].filtered_results]
+
+    return {
+        r["DOI"]: {
+            "index": i,
+            "overall_score": r["Overall Score"],
+            "actual_group": assign_group(
+                r["DOI"],
+                r["Overall Score"],
+                relevant_doi,
+                hyperparameters["application"]["match_threshold"]
+            )
+        }
+        for i, r
+        in results["results_set"].iterrows()
+    }
+
 
 async def process_extended_test_pair(
     hyperparameters: dict,
@@ -286,16 +322,16 @@ async def process_extended_test_pair(
     # results["knee_point_results"] = knee_point_instance.filter_with_stats(results["results_set"])
     logging.info("process_extended_test_pair: end: computing knee point")
 
+    results["results_groups"] = await assign_group_results(hyperparameters,results)
+
     logging.info("process_extended_test_pair: begin: target doi %s", doi)
-    hr_dois = [r.doi for r in results["knee_point_results"].filtered_results]
-    results_set = results["results_set"]
-    index = next(iter(results_set.index[results_set["DOI"] == doi]), -1)
-    results["rank"] = index + 1
-    overall_score = results_set.iloc[index, 1] if index != -1 else 0
-    results["actual_group"] = "HR" if doi in hr_dois else "LR" if index >= 0 else "NP"
+    element = results["results_groups"][doi] if doi in results["results_groups"] else {"index":-2,"overall_score":0.0,"actual_group":"N"}
+    results["rank"] = element["index"] + 1
+    overall_score = element["overall_score"]
+    results["actual_group"] = element["actual_group"]
     logging.info("process_extended_test_pair: end: target doi")
     logging.info(
-        f"process_extended_test_pair: Rank: {results['rank']} (Index: {index})"
+        f"process_extended_test_pair: Rank: {results['rank']} (Index: {element["index"]})"
     )
     logging.info(f"process_extended_test_pair: Overall Score: {overall_score}")
     logging.info(f"process_extended_test_pair: Actual group: {results['actual_group']}")

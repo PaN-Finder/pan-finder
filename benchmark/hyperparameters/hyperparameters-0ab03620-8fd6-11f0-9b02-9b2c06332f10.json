@@ -16,7 +16,8 @@
       "temperature" : 0,
       "max_tokens": 500,
       "seed": 0
-    }
+    },
+    "match_threshold": 0.95
   },
   "score_weights": {
     "rrf_k_document": 1,
@@ -51,15 +52,22 @@
         "EP": {
           "function" : "EP_at_1k",
           "weights" : {
-            "HR,HR" : 1,
-            "HR,LR" : 0.6,
-            "HR,NP" : 0,
-            "LR,HR" : 0.6,
-            "LR,LR" : 1,
-            "LR,NP" : 0,
-            "NP,HR" : 0,
-            "NP,LR" : 0,
-            "NP,NP" : 1
+            "M,M": 1,
+            "M,R": 0.6,
+            "M,S": 0.3,
+            "M,N": 0,
+            "R,M": 0.5,
+            "R,R": 1,
+            "R,S": 0.6,
+            "R,N": 0,
+            "S,M": 0.2,
+            "S,R": 0.5,
+            "S,S": 1,
+            "S,N": 0,
+            "N,M": 0,
+            "N,R": 0,
+            "N,S": 0,
+            "N,N": 1
           }
         }
       },
