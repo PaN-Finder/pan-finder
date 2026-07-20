@@ -1,0 +1,19 @@
+name: pan-finder-benchmarks
+services:
+  pan-finder-benchmarks-database:
+    build:
+      context: ../database
+      dockerfile: Dockerfile.postgresql
+    ports:
+      - 5432:5432
+    volumes:
+      - ./database/data:/var/lib/postgresql/data # for persisting data
+      - ./database/init:/docker-entrypoint-initdb.d # for initializing db
+      - ./database/backups:/backups # for easy backup and restore
+    environment:
+      - POSTGRES_DB=pan-finder
+      - POSTGRES_USER=usr
+      - POSTGRES_PASSWORD=pwd
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d pan-finder -U usr" ]
+
