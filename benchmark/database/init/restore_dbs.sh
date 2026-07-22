@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Wait for PostgreSQL to start
 until pg_isready -U usr; do
@@ -11,5 +12,11 @@ createdb -U usr pan-finder-benchmarks
 
 # Restore the dumps
 pg_restore -U usr -d pan-finder /backups/pan-finder-database-production.dump
-pg_restore -U usr -d pan-finder-benchmarks /backups/pan-finder-benchmarks-init.dump
+psql -U usr -d pan-finder -f /backups/pan-finder-functions-production.sql
+
+psql -U usr -d pan-finder-benchmarks -f /backups/pan-finder-benchmarks-schema.sql
+psql -U usr -d pan-finder-benchmarks -f /backups/pan-finder-benchmarks-test-pairs.sql
+
+# create empty dataset to signal that is ready
+createdb -U usr pan-finder-test
 

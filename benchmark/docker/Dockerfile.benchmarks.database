@@ -1,0 +1,16 @@
+FROM pgvector/pgvector:0.8.0-pg17
+
+# Set proxy environment variables
+ENV http_proxy="http://10.100.1.2:8123" \
+    https_proxy="http://10.100.1.2:8123" \
+    no_proxy="localhost,127.0.0.1,10.100.0.21,10.100.200.71,smartproxydmscdaq01.esss.dk,puppetdb6prod01.esss.dk,scicatingestor07.daq.esss.dk,scicatingestor07"
+
+# Configure apt to use the proxy
+RUN echo 'Acquire::http::Proxy "http://10.100.1.2:8123";' > /etc/apt/apt.conf.d/01proxy && \
+    echo 'Acquire::https::Proxy "http://10.100.1.2:8123";' >> /etc/apt/apt.conf.d/01proxy && \
+    echo 'Acquire::http::Proxy::no_proxy "localhost,127.0.0.1,10.100.0.21,10.100.200.71,smartproxydmscdaq01.esss.dk,puppetdb6prod01.esss.dk,scicatingestor07.daq.esss.dk,scicatingestor07";' >> /etc/apt/apt.conf.d/01proxy
+
+# Install additional postgresql-unit extension (postgresql-17-unit)
+RUN apt-get update && \
+    apt-get install -y postgresql-17-unit && \
+    rm -rf /var/lib/apt/lists/*
