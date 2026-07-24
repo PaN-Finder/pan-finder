@@ -1,0 +1,40 @@
+FROM python:3.12-slim
+
+
+# Copy the proxy script
+#COPY benchmark/docker/set_proxy.sh /set_proxy.sh
+#RUN chmod +x /set_proxy.sh
+
+# Execute the proxy script to set environment variables and configure apt
+#RUN /set_proxy.sh
+
+# Set proxy environment variables
+#ENV http_proxy="http://10.100.1.2:8123" \
+#    https_proxy="http://10.100.1.2:8123" \
+#    no_proxy="localhost,127.0.0.1,10.100.0.21,10.100.200.71,smartproxydmscdaq01.esss.dk,puppetdb6prod01.esss.dk,scicatingestor07.daq.esss.dk,scicatingestor07"
+
+# Configure apt to use the proxy
+#RUN echo 'Acquire::http::Proxy "http://10.100.1.2:8123";' > /etc/apt/apt.conf.d/01proxy && \
+#    echo 'Acquire::https::Proxy "http://10.100.1.2:8123";' >> /etc/apt/apt.conf.d/01proxy && \
+#    echo 'Acquire::http::Proxy::no_proxy "localhost,127.0.0.1,10.100.0.21,10.100.200.71,smartproxydmscdaq01.esss.dk,puppetdb6prod01.esss.dk,scicatingestor07.daq.esss.dk,scicatingestor07";' >> /etc/apt/apt.conf.d/01proxy
+
+WORKDIR /code
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install Python dependencies
+COPY benchmark/requirements.txt .
+#RUN /set_proxy.sh
+RUN pip install -vvv --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY server .
+COPY benchmark .
+COPY benchmark/hyperparameters.json .
+
+# Run the application
+CMD ["python", "/code/benchmark/src/hyperparameter_runner.py", "-p", "/code/hyperparameters.json"]
+

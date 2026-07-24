@@ -174,3 +174,8 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+
+# PaN-Finder 
+# exclude database dumps 
+benchmark/database/backups/*.dump
+benchmark/database/backups/*.sql
