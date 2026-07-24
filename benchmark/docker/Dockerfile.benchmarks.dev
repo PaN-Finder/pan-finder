@@ -2,11 +2,11 @@ FROM python:3.12-slim
 
 
 # Copy the proxy script
-COPY benchmark/docker/set_proxy.sh /set_proxy.sh
-RUN chmod +x /set_proxy.sh
+#COPY benchmark/docker/set_proxy.sh /set_proxy.sh
+#RUN chmod +x /set_proxy.sh
 
 # Execute the proxy script to set environment variables and configure apt
-RUN /set_proxy.sh
+#RUN /set_proxy.sh
 
 # Set proxy environment variables
 #ENV http_proxy="http://10.100.1.2:8123" \
@@ -27,7 +27,7 @@ RUN apt-get update && apt-get install -y \
 
 # Copy requirements and install Python dependencies
 COPY benchmark/requirements.txt .
-RUN /set_proxy.sh
+#RUN /set_proxy.sh
 RUN pip install -vvv --no-cache-dir -r requirements.txt
 
 # Copy application code
