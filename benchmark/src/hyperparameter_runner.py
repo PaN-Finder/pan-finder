@@ -325,7 +325,7 @@ async def process_extended_test_pair(
     results["results_groups"] = await assign_group_results(hyperparameters,results)
 
     logging.info("process_extended_test_pair: begin: target doi %s", doi)
-    element = results["results_groups"][doi] if doi in results["results_groups"] else {"index":-2,"overall_score":0.0,"actual_group":"N"}
+    element = results["results_groups"].get(doi, {"index": -2, "overall_score": 0.0, "actual_group": "N"})
     results["rank"] = element["index"] + 1
     overall_score = element["overall_score"]
     results["actual_group"] = element["actual_group"]
